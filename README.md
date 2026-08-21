@@ -80,13 +80,11 @@ instead of raw hex values so the whole app stays visually consistent.
 
 **Done so far:**
 - Project scaffold, Tailwind design tokens, reusable UI kit
-- Choose your role, Sign in, Sign up (Business), Sign up (Auditor)
-- Business portal shell (sidebar + top bar) + full Dashboard page
-- Business Documents page — stat tiles, drag & drop upload zone (UI only), document table with status badges + AI confidence bars
-- Business Financials page — summary tiles, "Submit to Auditor" button, tabbed table (Income Statement / Balance Sheet / Trial Balance / General Ledger / Fixed Assets)
-- Auditor portal shell (sidebar + top bar)
-- Placeholder pages for everything else so nothing 404s
+- Choose your role, Sign in, Sign up (Business), Sign up (Auditor) — all route into a portal on submit (mocked, see TODOs)
+- Business portal: Dashboard, Documents, Financials, Auditor Review, Settings — all fully built
+- Auditor portal shell (sidebar + top bar) — pages still placeholders
+- Placeholder pages for the Auditor portal so nothing 404s
 
-**Next up:** Business Auditor Review + Settings, then the whole Auditor
-portal (Dashboard, Companies, Review Queue, Issues, Audit Log, Settings),
-then wiring Supabase auth + your FastAPI endpoints, then polish.
+**Next up:** the whole Auditor portal — Dashboard, Companies, Review
+Queue, Issues, Audit Log, Settings — then wiring Supabase auth + your
+FastAPI endpoints, then polish.

@@ -1,4 +1,10 @@
-import { DashboardSummary, DocumentsSummary, FinancialsSummary } from "@/lib/types";
+import {
+  DashboardSummary,
+  DocumentsSummary,
+  FinancialsSummary,
+  AuditorReviewSummary,
+  CompanySettings,
+} from "@/lib/types";
 
 // --- DATA LAYER ---------------------------------------------------------
 // Every page fetches data through a function in lib/api/*, never by
@@ -162,5 +168,58 @@ export async function getFinancialsSummary(): Promise<FinancialsSummary> {
         { item: "Current Year Depreciation", amount: "1,800,000", source: "Fixed Asset Schedule.xlsx" },
       ],
     },
+  };
+}
+
+export async function getAuditorReviewSummary(): Promise<AuditorReviewSummary> {
+  // TODO (Week 2): fetch(`${API_BASE_URL}/companies/{id}/auditor-review`)
+  return {
+    auditorName: "Mr. Karunaratne & Associates",
+    auditorFirm: "Chartered Accountants",
+    reviewStatus: "Waiting for Review",
+    submittedDate: "16 Aug 2026",
+    expectedByDate: "20 Aug 2026",
+    reviewedPercent: 80,
+    approvedCount: 12,
+    warningsCount: 3,
+    criticalCount: 1,
+    pendingCount: 0,
+    issues: [
+      {
+        id: "issue_1",
+        status: "action_required",
+        title: "Entertainment Expense Documentation",
+        comment:
+          "Please provide supporting documentation for the entertainment expense. Invoices and business purpose required.",
+        source: "Financial Statements — Page 14",
+      },
+      {
+        id: "issue_2",
+        status: "pending_clarification",
+        title: "Fixed Asset Depreciation Method",
+        comment:
+          "Confirm the depreciation method applied is consistent with previous year and company accounting policy.",
+        source: "Fixed Asset Schedule",
+      },
+      {
+        id: "issue_3",
+        status: "pending_clarification",
+        title: "General Ledger November 2025",
+        comment: "Minor discrepancy detected in November 2025. Please reconcile and confirm.",
+        source: "General Ledger",
+      },
+    ],
+  };
+}
+
+export async function getCompanySettings(): Promise<CompanySettings> {
+  // TODO (Week 2): fetch(`${API_BASE_URL}/companies/{id}/settings`)
+  return {
+    companyName: "ABC (Pvt) Ltd",
+    registrationNumber: "PV 00123456",
+    tinNumber: "134578291",
+    financialYear: "2025/26",
+    contactEmail: "admin@abc.lk",
+    contactPhone: "+94 11 234 5678",
   };
 }

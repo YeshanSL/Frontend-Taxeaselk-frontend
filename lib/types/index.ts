@@ -64,3 +64,38 @@ export interface FinancialsSummary {
   taxAdjustments: string;
   tabs: Record<FinancialsTab, FinancialLineItem[]>;
 }
+
+// --- Auditor Review page (business side) ---
+
+export interface AuditorReviewIssue {
+  id: string;
+  status: "action_required" | "pending_clarification";
+  title: string;
+  comment: string;
+  source: string;
+}
+
+export interface AuditorReviewSummary {
+  auditorName: string;
+  auditorFirm: string;
+  reviewStatus: string; // e.g. "Waiting for Review"
+  submittedDate: string;
+  expectedByDate: string;
+  reviewedPercent: number;
+  approvedCount: number;
+  warningsCount: number;
+  criticalCount: number;
+  pendingCount: number;
+  issues: AuditorReviewIssue[];
+}
+
+// --- Settings page (business side) ---
+
+export interface CompanySettings {
+  companyName: string;
+  registrationNumber: string;
+  tinNumber: string;
+  financialYear: string;
+  contactEmail: string;
+  contactPhone: string;
+}

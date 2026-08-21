@@ -1,13 +1,25 @@
-import { Settings } from "lucide-react";
-import ComingSoon from "@/components/layout/ComingSoon";
+import SettingsTabs from "@/components/business/SettingsTabs";
+import CompanySettingsForm from "@/components/business/CompanySettingsForm";
+import { getCompanySettings } from "@/lib/api/business";
 
-export default function BusinessSettingsPage() {
+// Matches the "Settings" Figma screen. The tab bar is a Client
+// Component (needs local state); the Company form's initial values are
+// fetched here on the server and passed down.
+export default async function BusinessSettingsPage() {
+  const settings = await getCompanySettings();
+
   return (
-    <ComingSoon
-      title="Settings"
-      description="Manage your company profile, users, and security settings."
-      icon={Settings}
-      day="Day 7"
-    />
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+      <p className="mt-1 text-sm text-gray-500">
+        Manage your company profile and preferences.
+      </p>
+
+      <div className="mt-6">
+        <SettingsTabs
+          companyTabContent={<CompanySettingsForm initial={settings} />}
+        />
+      </div>
+    </div>
   );
 }
