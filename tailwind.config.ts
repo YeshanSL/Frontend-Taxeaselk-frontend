@@ -36,6 +36,15 @@ const config: Config = {
       boxShadow: {
         card: "0 1px 2px rgba(16, 24, 40, 0.05)",
       },
+      keyframes: {
+        "loading-bar": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(300%)" },
+        },
+      },
+      animation: {
+        "loading-bar": "loading-bar 1.1s ease-in-out infinite",
+      },
     },
   },
   plugins: [],

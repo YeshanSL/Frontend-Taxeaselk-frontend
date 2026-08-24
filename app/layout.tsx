@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AppSplash from "@/components/layout/AppSplash";
 
 export const metadata: Metadata = {
   title: "TaxEaseLK",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <AppSplash>{children}</AppSplash>
+      </body>
     </html>
   );
 }

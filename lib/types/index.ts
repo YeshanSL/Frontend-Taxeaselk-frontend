@@ -23,15 +23,19 @@ export interface DashboardSummary {
 
 // --- Documents page ---
 
-export type DocumentStatus = "processed" | "review_required" | "missing";
+// "processing" is a client-only transient state used right after a
+// browser upload, before we know whether the file needs review — it's
+// never returned by the mock/real API for existing documents.
+export type DocumentStatus = "processed" | "review_required" | "missing" | "processing";
 
 export interface DocumentRow {
   id: string;
   name: string;
   type: string; // e.g. "Financial Statements", "Trial Balance"
   status: DocumentStatus;
-  aiConfidencePercent: number | null; // null when status is "missing"
+  aiConfidencePercent: number | null; // null when status is "missing" or "processing"
   uploadedDate: string | null; // null when status is "missing"
+  sizeLabel?: string; // e.g. "2.4 MB" — only set for files uploaded client-side
 }
 
 export interface DocumentsSummary {
@@ -98,4 +102,131 @@ export interface CompanySettings {
   financialYear: string;
   contactEmail: string;
   contactPhone: string;
+}
+
+// --- Auditor portal: shared ---
+
+export type CitStatus =
+  | "Draft"
+  | "Under Review"
+  | "Ready for Auditor"
+  | "Approved"
+  | "Waiting for Company";
+
+export interface CompanyRow {
+  id: string;
+  name: string;
+  tin: string;
+  financialYear: string;
+  citStatus: CitStatus;
+  subStatusLabel: string; // e.g. "In Progress", "Not Started"
+  criticalCount: number;
+  warningsCount: number;
+  progressPercent: number;
+  dueDate: string;
+}
+
+// --- Auditor Dashboard (home) ---
+
+export interface AuditorDashboardSummary {
+  companiesAssigned: number;
+  pendingReviews: number;
+  criticalIssues: number;
+  completedThisPeriod: number;
+  priorityReviews: {
+    companyName: string;
+    tag: "critical" | "attention" | "ready";
+    tagLabel: string;
+    detail: string;
+    progressPercent: number;
+    dueDate: string;
+  }[];
+  workload: {
+    pending: number;
+    inProgress: number;
+    waitingForCompany: number;
+    readyForApproval: number;
+    completed: number;
+  };
+  recentActivity: { title: string; company: string; timeAgo: string }[];
+}
+
+// --- Companies page ---
+
+export interface CompaniesSummary {
+  companies: CompanyRow[];
+}
+
+// --- Review Queue page ---
+
+export type ReviewQueueFilter =
+  | "All"
+  | "Pending"
+  | "In Progress"
+  | "Waiting for Company"
+  | "Ready for Approval"
+  | "Completed";
+
+export interface ReviewQueueRow {
+  id: string;
+  companyName: string;
+  tin: string;
+  status: string;
+  criticalCount: number;
+  warningsCount: number;
+  progressPercent: number;
+  dueDate: string;
+}
+
+export interface ReviewQueueSummary {
+  rows: ReviewQueueRow[];
+}
+
+// --- Issues page ---
+
+export type IssueSeverity = "Critical" | "Warning" | "Information" | "Resolved";
+
+export interface IssueRow {
+  id: string;
+  title: string;
+  company: string;
+  amount: string;
+  severity: IssueSeverity;
+  status: "Open" | "Resolved";
+  source: string;
+}
+
+export interface IssuesSummary {
+  criticalCount: number;
+  warningsCount: number;
+  informationCount: number;
+  resolvedCount: number;
+  issues: IssueRow[];
+}
+
+// --- Audit Log page ---
+
+export interface AuditLogRow {
+  id: string;
+  timestamp: string;
+  company: string;
+  user: string;
+  action: string;
+  actionTone: "success" | "warning" | "info" | "pending";
+  details: string;
+}
+
+export interface AuditLogSummary {
+  entries: AuditLogRow[];
+}
+
+// --- Auditor Settings page ---
+
+export interface AuditorProfileSettings {
+  fullName: string;
+  email: string;
+  phone: string;
+  licenseNumber: string;
+  organization: string;
+  designation: string;
 }

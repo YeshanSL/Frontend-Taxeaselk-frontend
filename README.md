@@ -37,7 +37,7 @@ components/
   layout/            Sidebar, TopBar, AuthBrandPanel, ComingSoon
 
 lib/
-  api/               Data-fetching functions, ONE PER FEATURE (e.g. business.ts).
+  api/               Data-fetching functions, ONE FILE PER PORTAL (business.ts, auditor.ts).
                      Pages call these instead of fetching directly, so we can
                      swap mock data for real FastAPI calls without touching
                      any page.
@@ -62,12 +62,10 @@ file should follow the same shape.
 
 ### "Coming soon" placeholders
 
-Pages not yet built (Documents, Financials, Auditor Review, Settings, and
-the whole Auditor portal) currently render a `<ComingSoon />` placeholder
-so the app is fully clickable today with no broken links. Each is labeled
-with the day it's scheduled to be built, per the roadmap. Replace the
-placeholder's contents in-place when its day comes — the routing and
-layout around it won't need to change.
+A few settings tabs (Users/Security/Notifications on the business side;
+Security/Notifications/Preferences on the auditor side) render a short
+placeholder — those forms weren't in the Figma export beyond their tab
+label. Everything else in the app is fully built.
 
 ## Design tokens
 
@@ -81,10 +79,51 @@ instead of raw hex values so the whole app stays visually consistent.
 **Done so far:**
 - Project scaffold, Tailwind design tokens, reusable UI kit
 - Choose your role, Sign in, Sign up (Business), Sign up (Auditor) — all route into a portal on submit (mocked, see TODOs)
-- Business portal: Dashboard, Documents, Financials, Auditor Review, Settings — all fully built
-- Auditor portal shell (sidebar + top bar) — pages still placeholders
-- Placeholder pages for the Auditor portal so nothing 404s
+- **Business portal: fully built** — Dashboard, Documents, Financials, Auditor Review, Settings
+- **Auditor portal: fully built** — Dashboard, Companies, Review Queue (filterable), Issues (filterable), Audit Log, Settings
 
-**Next up:** the whole Auditor portal — Dashboard, Companies, Review
-Queue, Issues, Audit Log, Settings — then wiring Supabase auth + your
-FastAPI endpoints, then polish.
+**Next up:** wiring Supabase auth + your FastAPI endpoints (swap the
+inside of every function in `lib/api/business.ts` and `lib/api/auditor.ts`
+for real `fetch()` calls), then polish and demo prep.
+
+## Local file upload (works without a backend)
+
+The Documents page (`components/business/DocumentsManager.tsx` +
+`DocumentUploadZone.tsx`) uses the browser's real file picker / drag-and-
+drop — this needed no backend to build:
+
+- **Validation** (`lib/files.ts`) rejects wrong file types or files over
+  10MB, with an inline error message per rejected file.
+- **Accepted files appear in the table immediately** with a "Processing"
+  status (spinning icon), then resolve to "Processed" or "Review
+  Required" after a short simulated delay with a random AI confidence —
+  standing in for what your FastAPI backend's real AI extraction step
+  will eventually return.
+- **Remove** (trash icon) deletes a row from the list.
+- Stat tiles (Uploaded/Processed/Review Required) recompute live from
+  the actual list, so they can never drift out of sync with the table.
+
+When the backend is ready, the only change needed is inside
+`handleFilesAccepted` in `DocumentsManager.tsx` — swap the
+`setTimeout(...)` simulation for a real `fetch()` POST with
+`FormData`, per the TODO comment there.
+
+The auditor Settings "Change Photo" button works the same way — picks a
+local image and previews it immediately via `URL.createObjectURL`, no
+upload required to see the preview.
+
+## Splash screen (shows once per app load, not per tab)
+
+`components/layout/AppSplash.tsx` shows the TaxEaseLK splash (matching
+the Figma "Loading screen" asset) for about a second when the app is
+first opened or hard-refreshed, then fades out. It's mounted once in
+the root `app/layout.tsx`.
+
+This intentionally does NOT use Next.js's `loading.tsx` file convention
+— that convention shows a loading UI on every navigation where a page
+suspends while fetching data, which would make the splash reappear
+every time you click a sidebar link. Since Next.js keeps the root
+layout mounted across client-side navigation and only remounts it on
+an actual browser page load, a plain client component with local state
+is the right tool for a true one-time splash.
+

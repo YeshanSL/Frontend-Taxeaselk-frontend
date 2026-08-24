@@ -1,13 +1,20 @@
-import { Settings } from "lucide-react";
-import ComingSoon from "@/components/layout/ComingSoon";
+import AuditorSettingsTabs from "@/components/auditor/AuditorSettingsTabs";
+import AuditorProfileForm from "@/components/auditor/AuditorProfileForm";
+import { getAuditorProfileSettings } from "@/lib/api/auditor";
 
-export default function AuditorSettingsPage() {
+// Matches the auditor "Settings" Figma screen.
+export default async function AuditorSettingsPage() {
+  const profile = await getAuditorProfileSettings();
+
   return (
-    <ComingSoon
-      title="Settings"
-      description="Manage your profile, security, and notification preferences."
-      icon={Settings}
-      day="Day 11"
-    />
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+
+      <div className="mt-6">
+        <AuditorSettingsTabs
+          profileTabContent={<AuditorProfileForm initial={profile} />}
+        />
+      </div>
+    </div>
   );
 }

@@ -30,9 +30,10 @@ export default function BusinessLayout({
       <Sidebar
         workspaceLabel="Company User"
         navItems={navItems}
-        userName="Professional Auditor"
-        userEmail="auditor@example.com"
-        userInitials="PA"
+        userName="Admin User"
+        userEmail="admin@abc.lk"
+        userInitials="AU"
+        settingsHref="/settings"
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar

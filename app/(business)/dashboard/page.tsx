@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CheckCircle2, AlertTriangle, Circle, Upload, Sparkles, FileBarChart } from "lucide-react";
 import Card from "@/components/ui/Card";
 import ProgressBar from "@/components/ui/ProgressBar";
@@ -94,23 +95,28 @@ export default async function DashboardPage() {
         <Card className="p-5">
           <p className="mb-4 font-semibold text-gray-800">Quick Actions</p>
           <div className="flex flex-col gap-2.5">
-            <Button icon={<Upload className="h-4 w-4" />} className="justify-start">
-              Upload Documents
-            </Button>
+            <Link href="/documents">
+              <Button icon={<Upload className="h-4 w-4" />} className="w-full justify-start">
+                Upload Documents
+              </Button>
+            </Link>
             <Button
               variant="secondary"
               icon={<Sparkles className="h-4 w-4 text-brand-blue" />}
               className="justify-start bg-blue-50 text-brand-blue"
+              title="AI Guidance is on the roadmap — not built yet"
             >
               AI Guidance
             </Button>
-            <Button
-              variant="secondary"
-              icon={<FileBarChart className="h-4 w-4" />}
-              className="justify-start"
-            >
-              View Reports
-            </Button>
+            <Link href="/financials">
+              <Button
+                variant="secondary"
+                icon={<FileBarChart className="h-4 w-4" />}
+                className="w-full justify-start"
+              >
+                View Reports
+              </Button>
+            </Link>
           </div>
         </Card>
 
@@ -152,9 +158,12 @@ export default async function DashboardPage() {
                       </p>
                     </div>
                   </div>
-                  <button className="shrink-0 text-xs font-medium text-brand-blue whitespace-nowrap">
+                  <Link
+                    href="/financials"
+                    className="shrink-0 text-xs font-medium text-brand-blue whitespace-nowrap hover:underline"
+                  >
                     Review →
-                  </button>
+                  </Link>
                 </div>
               </div>
             ))}

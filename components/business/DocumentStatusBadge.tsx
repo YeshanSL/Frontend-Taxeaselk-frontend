@@ -1,4 +1,4 @@
-import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { CheckCircle2, AlertTriangle, XCircle, Loader2 } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import { DocumentStatus } from "@/lib/types";
 
@@ -9,6 +9,13 @@ export default function DocumentStatusBadge({
 }: {
   status: DocumentStatus;
 }) {
+  if (status === "processing") {
+    return (
+      <Badge tone="info">
+        <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Processing
+      </Badge>
+    );
+  }
   if (status === "processed") {
     return (
       <Badge tone="success">

@@ -25,6 +25,7 @@ interface SidebarProps {
   userName: string;
   userEmail: string;
   userInitials: string;
+  settingsHref: string; // where the "Profile" button should send you
 }
 
 // One Sidebar component drives both the Business and Auditor portals —
@@ -36,6 +37,7 @@ export default function Sidebar({
   userName,
   userEmail,
   userInitials,
+  settingsHref,
 }: SidebarProps) {
   const pathname = usePathname();
 
@@ -97,9 +99,12 @@ export default function Sidebar({
           </div>
         </div>
         <div className="flex gap-2">
-          <button className="flex-1 rounded-lg border border-gray-200 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50">
+          <Link
+            href={settingsHref}
+            className="flex-1 rounded-lg border border-gray-200 py-1.5 text-center text-xs font-medium text-gray-600 hover:bg-gray-50"
+          >
             Profile
-          </button>
+          </Link>
           <Link
             href="/sign-in"
             className="flex-1 rounded-lg border border-gray-200 py-1.5 text-center text-xs font-medium text-gray-600 hover:bg-gray-50"

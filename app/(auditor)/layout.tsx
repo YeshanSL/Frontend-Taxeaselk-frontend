@@ -35,6 +35,7 @@ export default function AuditorLayout({
         userName="Professional Auditor"
         userEmail="auditor@example.com"
         userInitials="PA"
+        settingsHref="/auditor-settings"
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar
