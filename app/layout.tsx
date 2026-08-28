@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AppSplash from "@/components/layout/AppSplash";
+import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 
 export const metadata: Metadata = {
   title: "TaxEaseLK",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <AppSplash>{children}</AppSplash>
+        <LanguageProvider>
+          <AppSplash>{children}</AppSplash>
+        </LanguageProvider>
       </body>
     </html>
   );

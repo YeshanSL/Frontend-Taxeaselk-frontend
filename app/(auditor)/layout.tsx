@@ -8,14 +8,15 @@ import {
 } from "lucide-react";
 import Sidebar, { NavItem } from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
+import T from "@/components/layout/T";
 
 const navItems: NavItem[] = [
-  { href: "/auditor-dashboard", label: "Dashboard", icon: <LayoutGrid className="h-4 w-4" /> },
-  { href: "/companies", label: "Companies", icon: <Building2 className="h-4 w-4" /> },
-  { href: "/review-queue", label: "Review Queue", icon: <ClipboardList className="h-4 w-4" />, badge: 4 },
-  { href: "/issues", label: "Issues", icon: <AlertTriangle className="h-4 w-4" />, badge: 2 },
-  { href: "/audit-log", label: "Audit Log", icon: <History className="h-4 w-4" /> },
-  { href: "/auditor-settings", label: "Settings", icon: <SettingsIcon className="h-4 w-4" /> },
+  { href: "/auditor-dashboard", labelKey: "sidebar.dashboard", icon: <LayoutGrid className="h-4 w-4" /> },
+  { href: "/companies", labelKey: "sidebar.companies", icon: <Building2 className="h-4 w-4" /> },
+  { href: "/review-queue", labelKey: "sidebar.reviewQueue", icon: <ClipboardList className="h-4 w-4" />, badge: 4 },
+  { href: "/issues", labelKey: "sidebar.issues", icon: <AlertTriangle className="h-4 w-4" />, badge: 2 },
+  { href: "/audit-log", labelKey: "sidebar.auditLog", icon: <History className="h-4 w-4" /> },
+  { href: "/auditor-settings", labelKey: "sidebar.settings", icon: <SettingsIcon className="h-4 w-4" /> },
 ];
 
 // Shared shell for every page under the Auditor portal. Mirrors
@@ -30,7 +31,7 @@ export default function AuditorLayout({
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar
-        workspaceLabel="Auditor Workspace"
+        workspaceLabelKey="sidebar.auditorWorkspace"
         navItems={navItems}
         userName="Professional Auditor"
         userEmail="auditor@example.com"
@@ -41,10 +42,13 @@ export default function AuditorLayout({
         <TopBar
           roleLabel="Auditor"
           userInitials="PA"
+          displayName="Professional Auditor"
+          email="auditor@example.com"
+          settingsHref="/auditor-settings"
           leftContent={
             <>
               <span className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600">
-                All Companies
+                <T k="common.allCompanies" />
               </span>
               <span className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600">
                 2025/26

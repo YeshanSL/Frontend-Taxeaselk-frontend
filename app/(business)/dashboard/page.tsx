@@ -4,6 +4,7 @@ import Card from "@/components/ui/Card";
 import ProgressBar from "@/components/ui/ProgressBar";
 import StatCard from "@/components/ui/StatCard";
 import Button from "@/components/ui/Button";
+import T from "@/components/layout/T";
 import { getDashboardSummary } from "@/lib/api/business";
 
 // Server Component: fetches through the data layer (lib/api/business.ts)
@@ -14,9 +15,11 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Income Tax Dashboard</h1>
+      <h1 className="text-2xl font-bold text-gray-900">
+        <T k="pages.dashboard.title" />
+      </h1>
       <p className="mt-1 text-sm text-gray-500">
-        Financial Year 2025/26 — ABC (Pvt) Ltd
+        <T k="pages.dashboard.subtitle" />
       </p>
 
       {/* Progress card */}

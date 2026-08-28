@@ -2,6 +2,7 @@ import { UserCheck } from "lucide-react";
 import StatCard from "@/components/ui/StatCard";
 import Button from "@/components/ui/Button";
 import FinancialsTable from "@/components/business/FinancialsTable";
+import T from "@/components/layout/T";
 import { getFinancialsSummary } from "@/lib/api/business";
 
 // Matches the "Financials" Figma screen: 4 summary tiles, a
@@ -13,10 +14,11 @@ export default async function FinancialsPage() {
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Financials</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            <T k="pages.financials.title" />
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Review the structured financial information extracted from your
-            documents.
+            <T k="pages.financials.subtitle" />
           </p>
         </div>
         <Button icon={<UserCheck className="h-4 w-4" />}>

@@ -127,3 +127,46 @@ layout mounted across client-side navigation and only remounts it on
 an actual browser page load, a plain client component with local state
 is the right tool for a true one-time splash.
 
+## Language toggle (EN / SI / TA)
+
+A hand-rolled i18n system lives in `lib/i18n/` — no external package,
+since the sandbox this was built in has no npm registry access, but
+also because the app's translation needs are simple enough (static UI
+copy, no pluralization/interpolation) that a ~40-line Context is easier
+to understand and extend for a demo than configuring a full library.
+
+- `lib/i18n/translations.ts` — flat dictionaries for `en`, `si`, `ta`.
+  Add new keys here as you translate more of the app; keep all three
+  languages in sync (the same key set) or `t()` silently falls back to
+  English for a missing key.
+- `lib/i18n/LanguageContext.tsx` — `<LanguageProvider>` (wraps the app
+  in `app/layout.tsx`) + `useLanguage()` hook exposing `{ language,
+  setLanguage, t }`. Persists the choice to `localStorage`.
+- `components/layout/T.tsx` — `<T k="pages.dashboard.title" />`. Drop
+  this into any **Server Component** page to render translated text
+  without converting the whole page to a Client Component — only the
+  `<T>` itself re-renders when the language changes.
+- `components/layout/LanguageToggle.tsx` — the EN / සිං / தமி switch in
+  the top bar of both portals, next to the company/FY (or "All
+  Companies") pickers.
+
+**Scope today:** sidebar nav labels, top bar chrome, and every page's
+`<h1>` + subtitle are translated (40 keys total, verified in sync
+across all three languages). Table contents, mock company names, and
+document names are treated as **data** rather than UI copy and are
+left untranslated — that content will eventually come from the FastAPI
+backend, which may have its own localization strategy. Extending
+coverage further just means adding more keys to `translations.ts` and
+wrapping more strings in `<T k="..." />`.
+
+## Notification panel + profile dropdown
+
+- `components/layout/NotificationBell.tsx` — clicking the bell opens a
+  real dropdown panel (mock notifications for now — swap the
+  `NOTIFICATIONS` array for a fetch once there's a backend endpoint).
+  Closes on an outside click.
+- `components/layout/ProfileMenu.tsx` — clicking the avatar in the top
+  bar opens a panel with name/email, a Profile/Settings link, and
+  Logout. Same outside-click-to-close pattern.
+
+Both replaced what were previously dead, non-functional buttons.

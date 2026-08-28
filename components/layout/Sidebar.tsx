@@ -5,10 +5,12 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { ReactNode } from "react";
 import Logo from "@/components/ui/Logo";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { TranslationKey } from "@/lib/i18n/translations";
 
 export interface NavItem {
   href: string;
-  label: string;
+  labelKey: TranslationKey;
   // A rendered icon element (e.g. <LayoutGrid className="h-4 w-4" />),
   // NOT the component reference itself. Server Components (our layouts)
   // can pass already-rendered JSX to a Client Component like this one,
@@ -20,7 +22,7 @@ export interface NavItem {
 }
 
 interface SidebarProps {
-  workspaceLabel: string; // e.g. "Company User" or "Auditor Workspace"
+  workspaceLabelKey: TranslationKey; // e.g. "sidebar.companyUser"
   navItems: NavItem[];
   userName: string;
   userEmail: string;
@@ -30,9 +32,11 @@ interface SidebarProps {
 
 // One Sidebar component drives both the Business and Auditor portals —
 // only the nav items and labels passed in differ. Keeps the two
-// sidebars visually identical without duplicating markup.
+// sidebars visually identical without duplicating markup. Labels are
+// translation keys (not literal strings) so the sidebar updates
+// instantly when the language toggle in the top bar is changed.
 export default function Sidebar({
-  workspaceLabel,
+  workspaceLabelKey,
   navItems,
   userName,
   userEmail,
@@ -40,17 +44,18 @@ export default function Sidebar({
   settingsHref,
 }: SidebarProps) {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-gray-100 bg-white">
       <div className="border-b border-gray-100 px-5 py-5">
         <Logo size="sm" />
-        <p className="mt-1 pl-9 text-xs text-gray-400">{workspaceLabel}</p>
+        <p className="mt-1 pl-9 text-xs text-gray-400">{t(workspaceLabelKey)}</p>
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
         <p className="px-3 pb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-          Navigation
+          {t("sidebar.navigation")}
         </p>
         {navItems.map((item) => {
           const active = pathname.startsWith(item.href);
@@ -67,7 +72,7 @@ export default function Sidebar({
             >
               <span className="flex items-center gap-3">
                 {item.icon}
-                {item.label}
+                {t(item.labelKey)}
               </span>
               {item.badge ? (
                 <span
@@ -103,13 +108,13 @@ export default function Sidebar({
             href={settingsHref}
             className="flex-1 rounded-lg border border-gray-200 py-1.5 text-center text-xs font-medium text-gray-600 hover:bg-gray-50"
           >
-            Profile
+            {t("common.profile")}
           </Link>
           <Link
             href="/sign-in"
             className="flex-1 rounded-lg border border-gray-200 py-1.5 text-center text-xs font-medium text-gray-600 hover:bg-gray-50"
           >
-            Logout
+            {t("common.logout")}
           </Link>
         </div>
       </div>

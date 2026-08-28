@@ -1,4 +1,5 @@
 import ReviewQueueTable from "@/components/auditor/ReviewQueueTable";
+import T from "@/components/layout/T";
 import { getReviewQueueSummary } from "@/lib/api/auditor";
 
 // Matches the "Review Queue" Figma screen. Data is fetched here on the
@@ -9,9 +10,11 @@ export default async function ReviewQueuePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Review Queue</h1>
+      <h1 className="text-2xl font-bold text-gray-900">
+        <T k="pages.reviewQueue.title" />
+      </h1>
       <p className="mt-1 text-sm text-gray-500">
-        Review CIT computations submitted by assigned companies.
+        <T k="pages.reviewQueue.subtitle" />
       </p>
 
       <ReviewQueueTable rows={data.rows} />

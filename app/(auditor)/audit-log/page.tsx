@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import Card from "@/components/ui/Card";
 import AuditActionBadge from "@/components/auditor/AuditActionBadge";
+import T from "@/components/layout/T";
 import { getAuditLogSummary } from "@/lib/api/auditor";
 
 // Matches the "Audit Log" Figma screen: filter bar (visual only for
@@ -19,9 +20,11 @@ export default async function AuditLogPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Audit Log</h1>
+      <h1 className="text-2xl font-bold text-gray-900">
+        <T k="pages.auditLog.title" />
+      </h1>
       <p className="mt-1 text-sm text-gray-500">
-        Immutable history of actions performed within the tax review.
+        <T k="pages.auditLog.subtitle" />
       </p>
 
       <Card className="mt-6 overflow-hidden">

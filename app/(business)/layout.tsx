@@ -9,11 +9,11 @@ import Sidebar, { NavItem } from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: <LayoutGrid className="h-4 w-4" /> },
-  { href: "/documents", label: "Documents", icon: <FileText className="h-4 w-4" /> },
-  { href: "/financials", label: "Financials", icon: <DollarSign className="h-4 w-4" /> },
-  { href: "/auditor-review", label: "Auditor Review", icon: <UserCheck className="h-4 w-4" /> },
-  { href: "/settings", label: "Settings", icon: <SettingsIcon className="h-4 w-4" /> },
+  { href: "/dashboard", labelKey: "sidebar.dashboard", icon: <LayoutGrid className="h-4 w-4" /> },
+  { href: "/documents", labelKey: "sidebar.documents", icon: <FileText className="h-4 w-4" /> },
+  { href: "/financials", labelKey: "sidebar.financials", icon: <DollarSign className="h-4 w-4" /> },
+  { href: "/auditor-review", labelKey: "sidebar.auditorReview", icon: <UserCheck className="h-4 w-4" /> },
+  { href: "/settings", labelKey: "sidebar.settings", icon: <SettingsIcon className="h-4 w-4" /> },
 ];
 
 // Shared shell for every page under the Business Owner portal.
@@ -28,7 +28,7 @@ export default function BusinessLayout({
   return (
     <div className="flex h-screen bg-brand-bgblue">
       <Sidebar
-        workspaceLabel="Company User"
+        workspaceLabelKey="sidebar.companyUser"
         navItems={navItems}
         userName="Admin User"
         userEmail="admin@abc.lk"
@@ -38,7 +38,10 @@ export default function BusinessLayout({
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar
           roleLabel="Admin"
-          userInitials="A"
+          userInitials="AU"
+          displayName="Admin User"
+          email="admin@abc.lk"
+          settingsHref="/settings"
           leftContent={
             <>
               <span className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-brand-blue">

@@ -1,5 +1,6 @@
 import SettingsTabs from "@/components/business/SettingsTabs";
 import CompanySettingsForm from "@/components/business/CompanySettingsForm";
+import T from "@/components/layout/T";
 import { getCompanySettings } from "@/lib/api/business";
 
 // Matches the "Settings" Figma screen. The tab bar is a Client
@@ -10,9 +11,11 @@ export default async function BusinessSettingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+      <h1 className="text-2xl font-bold text-gray-900">
+        <T k="pages.settings.title" />
+      </h1>
       <p className="mt-1 text-sm text-gray-500">
-        Manage your company profile and preferences.
+        <T k="pages.settings.subtitle" />
       </p>
 
       <div className="mt-6">

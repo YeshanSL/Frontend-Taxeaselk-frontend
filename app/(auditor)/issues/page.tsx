@@ -1,5 +1,6 @@
 import StatCard from "@/components/ui/StatCard";
 import IssuesTable from "@/components/auditor/IssuesTable";
+import T from "@/components/layout/T";
 import { getIssuesSummary } from "@/lib/api/auditor";
 
 // Matches the "Issues" Figma screen: 4 count tiles, then filterable
@@ -9,9 +10,11 @@ export default async function IssuesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Issues</h1>
+      <h1 className="text-2xl font-bold text-gray-900">
+        <T k="pages.issues.title" />
+      </h1>
       <p className="mt-1 text-sm text-gray-500">
-        Review and resolve issues across all assigned companies.
+        <T k="pages.issues.subtitle" />
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">

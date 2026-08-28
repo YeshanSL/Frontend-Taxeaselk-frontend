@@ -3,6 +3,7 @@ import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import ProgressBar from "@/components/ui/ProgressBar";
 import SummaryCountRow from "@/components/business/SummaryCountRow";
+import T from "@/components/layout/T";
 import { getAuditorReviewSummary } from "@/lib/api/business";
 
 // Matches the "Auditor Review" Figma screen: assigned auditor card +
@@ -12,9 +13,11 @@ export default async function AuditorReviewPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Auditor Review</h1>
+      <h1 className="text-2xl font-bold text-gray-900">
+        <T k="pages.auditorReview.title" />
+      </h1>
       <p className="mt-1 text-sm text-gray-500">
-        Track the status with the assigned Auditor.
+        <T k="pages.auditorReview.subtitle" />
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">

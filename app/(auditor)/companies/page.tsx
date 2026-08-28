@@ -4,6 +4,7 @@ import Button from "@/components/ui/Button";
 import ProgressBar from "@/components/ui/ProgressBar";
 import CitStatusBadge from "@/components/auditor/CitStatusBadge";
 import IssueCountPair from "@/components/auditor/IssueCountPair";
+import T from "@/components/layout/T";
 import { getCompaniesSummary } from "@/lib/api/auditor";
 
 // Matches the "Companies" Figma screen: search/filters bar, "Add
@@ -16,9 +17,11 @@ export default async function CompaniesPage() {
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Companies</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            <T k="pages.companies.title" />
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage companies assigned to you for Corporate Income Tax review.
+            <T k="pages.companies.subtitle" />
           </p>
         </div>
         <div className="flex gap-2">

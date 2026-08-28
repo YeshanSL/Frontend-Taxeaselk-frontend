@@ -1,4 +1,5 @@
 import DocumentsManager from "@/components/business/DocumentsManager";
+import T from "@/components/layout/T";
 import { getDocumentsSummary } from "@/lib/api/business";
 
 // Matches the "Documents" Figma screen. The interactive parts (upload,
@@ -9,9 +10,11 @@ export default async function DocumentsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
+      <h1 className="text-2xl font-bold text-gray-900">
+        <T k="pages.documents.title" />
+      </h1>
       <p className="mt-1 text-sm text-gray-500">
-        Manage financial documents used for Corporate Income Tax preparation.
+        <T k="pages.documents.subtitle" />
       </p>
 
       <DocumentsManager initial={data} />
