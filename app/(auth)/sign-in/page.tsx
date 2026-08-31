@@ -4,30 +4,57 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthBrandPanel from "@/components/layout/AuthBrandPanel";
-import { Field, Input, Select } from "@/components/ui/Input";
+import { Field, Input } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import { supabase } from "@/lib/supabase";
 
-// Matches the "Sign in" Figma screen. Form state is local for now —
-// Week 2 swaps handleSubmit's body for a Supabase auth call.
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // DEV ONLY: Supabase isn't wired up yet, so there's no real user/role
-  // to route by. This picker lets you preview either portal. Delete it
-  // once real auth returns the user's role automatically.
-  const [devRole, setDevRole] = useState<"business" | "auditor">("business");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
     setLoading(true);
-    // TODO (Week 2): replace with supabase.auth.signInWithPassword({ email, password })
-    // then route based on the returned user's role instead of devRole.
-    setTimeout(() => {
+
+    try {
+      // 1. Sign in with Supabase Auth
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) throw signInError;
+
+      if (!data.user) throw new Error("Sign in failed. Please try again.");
+
+      // 2. Get user role from profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // 3. Redirect based on role
+      const role = profile?.role;
+
+      if (role === "auditor") {
+        router.push("/auditor-dashboard");
+      } else {
+        // business_owner, business_admin, accountant, viewer
+        router.push("/dashboard");
+      }
+
+    } catch (err: any) {
+      setError(err.message || "Invalid email or password.");
+    } finally {
       setLoading(false);
-      router.push(devRole === "business" ? "/dashboard" : "/auditor-dashboard");
-    }, 400);
+    }
   }
 
   return (
@@ -38,12 +65,22 @@ export default function SignInPage() {
           Enter your email and password to sign in!
         </p>
 
+        {error && (
+          <div className="mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
           <Field label="Email">
             <Input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError("");
+              }}
+              placeholder="you@company.com"
               required
             />
           </Field>
@@ -51,29 +88,27 @@ export default function SignInPage() {
             <Input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError("");
+              }}
+              placeholder="Your password"
               required
             />
           </Field>
 
-          <Field label="Preview as (dev only, remove after real auth is wired up)">
-            <Select
-              value={devRole}
-              onChange={(e) => setDevRole(e.target.value as "business" | "auditor")}
-            >
-              <option value="business">Business Owner</option>
-              <option value="auditor">Auditor</option>
-            </Select>
-          </Field>
-
           <Link
-            href="#"
+            href="/forgot-password"
             className="-mt-2 self-end text-sm text-brand-blue hover:underline"
           >
-            Forgot Password
+            Forgot Password?
           </Link>
 
-          <Button type="submit" disabled={loading} className="w-full py-3">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3"
+          >
             {loading ? "Signing in..." : "Sign In"}
           </Button>
 
