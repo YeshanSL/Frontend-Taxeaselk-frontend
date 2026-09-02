@@ -3,6 +3,7 @@
 import { useState, ReactNode } from "react";
 import clsx from "clsx";
 import Card from "@/components/ui/Card";
+import UsersTab from "./UsersTab";
 
 // Figma's Settings screen has a "Users" tab appearing twice with a
 // "Notifications" label rendered underneath it — a layout overlap in
@@ -36,9 +37,13 @@ export default function SettingsTabs({ companyTabContent }: { companyTabContent:
         ))}
       </div>
 
+
+
       <Card className="p-6">
         {activeTab === "Company" ? (
           companyTabContent
+        ) : activeTab === "Users" ? (
+          <UsersTab />
         ) : (
           <p className="py-10 text-center text-sm text-gray-400">
             {activeTab} settings — coming soon.
