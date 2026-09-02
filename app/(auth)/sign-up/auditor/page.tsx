@@ -7,46 +7,92 @@ import { ChevronLeft } from "lucide-react";
 import AuthBrandPanel from "@/components/layout/AuthBrandPanel";
 import { Field, Input, Select } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import { supabase } from "@/lib/supabase";
 
-// Figma's auditor sign-up reused the "Business Category" field/label
-// verbatim, which looks like a copy-paste leftover from the business
-// form. Kept the same field here for now (labeled generically) so the
-// two forms line up — flag this to your team before demo day in case
-// it should read "Specialization" instead.
-const CATEGORIES = [
-  "Manufacturing",
-  "Trading / Retail",
-  "Services",
-  "Construction",
-  "Hospitality",
+const SPECIALIZATIONS = [
+  "Corporate Tax",
+  "VAT & Indirect Tax",
+  "Audit & Assurance",
+  "Accounting & Bookkeeping",
+  "Financial Advisory",
   "Other",
 ];
 
 export default function AuditorSignUpPage() {
   const router = useRouter();
   const [form, setForm] = useState({
-    name: "",
+    fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    category: "",
+    specialization: "",
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   function update<K extends keyof typeof form>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
+    setError("");
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
+
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
     setLoading(true);
-    // TODO (Week 2): supabase.auth.signUp(...) then create the auditor
-    // profile record via the FastAPI backend. Until then, fake a short
-    // delay and route into the auditor dashboard for testing/demo.
-    setTimeout(() => {
-      setLoading(false);
+
+    try {
+      // 1. Sign up with Supabase Auth
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: {
+            full_name: form.fullName,
+          },
+        },
+      });
+
+      if (signUpError) throw signUpError;
+
+      if (!data.user) throw new Error("Signup failed. Please try again.");
+
+      // 2. Update role to auditor in profiles table
+      const { error: roleError } = await supabase
+        .from("profiles")
+        .update({ role: "auditor" })
+        .eq("id", data.user.id);
+
+      if (roleError) throw roleError;
+
+      // 3. Create auditor profile row
+      const { error: profileError } = await supabase
+        .from("auditor_profiles")
+        .insert({
+          id: data.user.id,
+          designation: form.specialization,
+        });
+
+      if (profileError) throw profileError;
+
+      // 4. Redirect to auditor dashboard
       router.push("/auditor-dashboard");
-    }, 400);
+
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -61,12 +107,20 @@ export default function AuditorSignUpPage() {
         </Link>
 
         <h1 className="text-3xl font-extrabold text-brand-navy">Sign up</h1>
+        <p className="mt-2 text-sm text-gray-500">Create your auditor account</p>
+
+        {error && (
+          <div className="mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
-          <Field label="Auditor name">
+          <Field label="Full name">
             <Input
-              value={form.name}
-              onChange={(e) => update("name", e.target.value)}
+              value={form.fullName}
+              onChange={(e) => update("fullName", e.target.value)}
+              placeholder="Your full name"
               required
             />
           </Field>
@@ -75,6 +129,7 @@ export default function AuditorSignUpPage() {
               type="email"
               value={form.email}
               onChange={(e) => update("email", e.target.value)}
+              placeholder="you@firm.com"
               required
             />
           </Field>
@@ -84,6 +139,7 @@ export default function AuditorSignUpPage() {
                 type="password"
                 value={form.password}
                 onChange={(e) => update("password", e.target.value)}
+                placeholder="Min 6 characters"
                 required
               />
             </Field>
@@ -92,22 +148,23 @@ export default function AuditorSignUpPage() {
                 type="password"
                 value={form.confirmPassword}
                 onChange={(e) => update("confirmPassword", e.target.value)}
+                placeholder="Repeat password"
                 required
               />
             </Field>
           </div>
-          <Field label="Business Category">
+          <Field label="Specialization">
             <Select
-              value={form.category}
-              onChange={(e) => update("category", e.target.value)}
+              value={form.specialization}
+              onChange={(e) => update("specialization", e.target.value)}
               required
             >
               <option value="" disabled>
-                Select a category
+                Select your specialization
               </option>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {SPECIALIZATIONS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
                 </option>
               ))}
             </Select>

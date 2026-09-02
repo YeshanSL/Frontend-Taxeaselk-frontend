@@ -7,6 +7,7 @@ import { ChevronLeft } from "lucide-react";
 import AuthBrandPanel from "@/components/layout/AuthBrandPanel";
 import { Field, Input, Select } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import { supabase } from "@/lib/supabase";
 
 const BUSINESS_CATEGORIES = [
   "Manufacturing",
@@ -17,8 +18,6 @@ const BUSINESS_CATEGORIES = [
   "Other",
 ];
 
-// Matches the "Sign up" (Business Owner) Figma screen — form on the
-// left, navy brand panel on the right.
 export default function BusinessSignUpPage() {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -29,22 +28,74 @@ export default function BusinessSignUpPage() {
     category: "",
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   function update<K extends keyof typeof form>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
+    setError("");
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
+
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
     setLoading(true);
-    // TODO (Week 2): supabase.auth.signUp(...) then create the company
-    // record via the FastAPI backend. Until then, we fake a short delay
-    // and route straight into the dashboard so the rest of the app is
-    // reachable for testing/demo purposes.
-    setTimeout(() => {
-      setLoading(false);
+
+    try {
+      // 1. Sign up with Supabase Auth
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: {
+            full_name: form.companyName,
+          },
+          // This sets the role in app_metadata so our DB trigger knows
+          // to create a business profile
+        },
+      });
+
+      if (signUpError) throw signUpError;
+
+      if (!data.user) throw new Error("Signup failed. Please try again.");
+
+      // 2. Create business profile row
+      const { error: profileError } = await supabase
+        .from("business_profiles")
+        .insert({
+          id: data.user.id,
+          company_name: form.companyName,
+          industry: form.category,
+        });
+
+      if (profileError) throw profileError;
+
+      // 3. Update role in profiles table
+      const { error: roleError } = await supabase
+        .from("profiles")
+        .update({ role: "business_owner" })
+        .eq("id", data.user.id);
+
+      if (roleError) throw roleError;
+
+      // 4. Redirect to dashboard
       router.push("/dashboard");
-    }, 400);
+
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -59,12 +110,20 @@ export default function BusinessSignUpPage() {
         </Link>
 
         <h1 className="text-3xl font-extrabold text-brand-navy">Sign up</h1>
+        <p className="mt-2 text-sm text-gray-500">Create your business account</p>
+
+        {error && (
+          <div className="mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
           <Field label="Company name">
             <Input
               value={form.companyName}
               onChange={(e) => update("companyName", e.target.value)}
+              placeholder="ABC (Pvt) Ltd"
               required
             />
           </Field>
@@ -73,6 +132,7 @@ export default function BusinessSignUpPage() {
               type="email"
               value={form.email}
               onChange={(e) => update("email", e.target.value)}
+              placeholder="you@company.com"
               required
             />
           </Field>
@@ -82,6 +142,7 @@ export default function BusinessSignUpPage() {
                 type="password"
                 value={form.password}
                 onChange={(e) => update("password", e.target.value)}
+                placeholder="Min 6 characters"
                 required
               />
             </Field>
@@ -90,6 +151,7 @@ export default function BusinessSignUpPage() {
                 type="password"
                 value={form.confirmPassword}
                 onChange={(e) => update("confirmPassword", e.target.value)}
+                placeholder="Repeat password"
                 required
               />
             </Field>
