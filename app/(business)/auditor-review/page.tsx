@@ -1,9 +1,10 @@
-import { User, AlertTriangle } from "lucide-react";
+import { User, AlertTriangle, UserPlus } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import ProgressBar from "@/components/ui/ProgressBar";
 import SummaryCountRow from "@/components/business/SummaryCountRow";
 import T from "@/components/layout/T";
+import Button from "@/components/ui/Button";
 import { getAuditorReviewSummary } from "@/lib/api/business";
 
 // Matches the "Auditor Review" Figma screen: assigned auditor card +
@@ -13,12 +14,23 @@ export default async function AuditorReviewPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">
-        <T k="pages.auditorReview.title" />
-      </h1>
-      <p className="mt-1 text-sm text-gray-500">
-        <T k="pages.auditorReview.subtitle" />
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            <T k="pages.auditorReview.title" />
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            <T k="pages.auditorReview.subtitle" />
+          </p>
+        </div>
+        <Button
+          variant="primary"
+          icon={<UserPlus className="h-4 w-4" />}
+          className="shrink-0"
+        >
+          Invite Auditor
+        </Button>
+      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <Card className="p-6">
