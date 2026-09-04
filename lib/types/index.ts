@@ -230,3 +230,72 @@ export interface AuditorProfileSettings {
   organization: string;
   designation: string;
 }
+
+// --- Auditor Documents page ---
+
+export interface AuditorDocumentRow {
+  id: string;
+  companyName: string;
+  documentName: string;
+  documentType: string;
+  status: "processed" | "review_required" | "verified";
+  aiConfidencePercent: number;
+  uploadedDate: string;
+  sizeLabel: string;
+}
+
+export interface AuditorDocumentsSummary {
+  totalDocuments: number;
+  pendingReviewCount: number;
+  verifiedCount: number;
+  documents: AuditorDocumentRow[];
+}
+
+// --- Auditor Requests page ---
+
+export interface AuditorRequestRow {
+  id: string;
+  requestId: string;
+  companyName: string;
+  title: string;
+  description: string;
+  category: string;
+  status: "pending" | "responded" | "resolved";
+  priority: "high" | "medium" | "low";
+  requestedDate: string;
+  dueDate: string;
+}
+
+export interface AuditorRequestsSummary {
+  totalRequests: number;
+  pendingCount: number;
+  respondedCount: number;
+  resolvedCount: number;
+  requests: AuditorRequestRow[];
+}
+
+// --- Auditor Discussions page ---
+
+export interface DiscussionMessage {
+  id: string;
+  sender: string;
+  senderRole: "Auditor" | "Company";
+  text: string;
+  timestamp: string;
+}
+
+export interface DiscussionThread {
+  id: string;
+  companyName: string;
+  topic: string;
+  lastMessage: string;
+  lastUpdated: string;
+  unreadCount: number;
+  status: "Open" | "Closed";
+  messages: DiscussionMessage[];
+}
+
+export interface AuditorDiscussionsSummary {
+  threads: DiscussionThread[];
+}
+

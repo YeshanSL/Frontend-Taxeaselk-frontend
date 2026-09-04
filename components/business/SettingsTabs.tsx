@@ -3,7 +3,6 @@
 import { useState } from "react";
 import clsx from "clsx";
 import Card from "@/components/ui/Card";
-import UsersTab from "./UsersTab";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 // All data here uses the shape your API will return.
@@ -370,23 +369,11 @@ export default function SettingsTabs({ companyTabContent }: { companyTabContent:
 
 
       <Card className="p-6">
-<<<<<<< HEAD
         {activeTab === "Company" && companyTabContent}
         {activeTab === "Users" && <UsersTab />}
         {activeTab === "Security" && <SecurityTab />}
         {activeTab === "Notifications" && <NotificationsTab />}
         {activeTab === "Audit Log" && <AuditLogTab />}
-=======
-        {activeTab === "Company" ? (
-          companyTabContent
-        ) : activeTab === "Users" ? (
-          <UsersTab />
-        ) : (
-          <p className="py-10 text-center text-sm text-gray-400">
-            {activeTab} settings — coming soon.
-          </p>
-        )}
->>>>>>> 89f93c8419cb822f9f1a60cadfcd5925751e575c
       </Card>
     </div>
   );

@@ -1,9 +1,10 @@
 import {
   LayoutGrid,
   Building2,
+  FileText,
   ClipboardList,
-  AlertTriangle,
-  History,
+  Inbox,
+  MessagesSquare,
   Settings as SettingsIcon,
 } from "lucide-react";
 import Sidebar, { NavItem } from "@/components/layout/Sidebar";
@@ -13,9 +14,10 @@ import T from "@/components/layout/T";
 const navItems: NavItem[] = [
   { href: "/auditor-dashboard", labelKey: "sidebar.dashboard", icon: <LayoutGrid className="h-4 w-4" /> },
   { href: "/companies", labelKey: "sidebar.companies", icon: <Building2 className="h-4 w-4" /> },
+  { href: "/auditor-documents", labelKey: "sidebar.documents", icon: <FileText className="h-4 w-4" /> },
   { href: "/review-queue", labelKey: "sidebar.reviewQueue", icon: <ClipboardList className="h-4 w-4" />, badge: 4 },
-  { href: "/issues", labelKey: "sidebar.issues", icon: <AlertTriangle className="h-4 w-4" />, badge: 2 },
-  { href: "/audit-log", labelKey: "sidebar.auditLog", icon: <History className="h-4 w-4" /> },
+  { href: "/requests", labelKey: "sidebar.requests", icon: <Inbox className="h-4 w-4" />, badge: 3 },
+  { href: "/discussions", labelKey: "sidebar.discussions", icon: <MessagesSquare className="h-4 w-4" />, badge: 1 },
   { href: "/auditor-settings", labelKey: "sidebar.settings", icon: <SettingsIcon className="h-4 w-4" /> },
 ];
 

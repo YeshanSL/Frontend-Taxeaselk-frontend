@@ -39,6 +39,8 @@ export const translations = {
     "sidebar.settings": "Settings",
     "sidebar.companies": "Companies",
     "sidebar.reviewQueue": "Review Queue",
+    "sidebar.requests": "Requests",
+    "sidebar.discussions": "Discussions",
     "sidebar.issues": "Issues",
     "sidebar.auditLog": "Audit Log",
     "sidebar.companyUser": "Company User",
@@ -49,6 +51,8 @@ export const translations = {
     "pages.documents.title": "Documents",
     "pages.documents.subtitle":
       "Manage financial documents used for Corporate Income Tax preparation.",
+    "pages.auditorDocuments.title": "Client Documents",
+    "pages.auditorDocuments.subtitle": "Review and verify financial documents uploaded by assigned companies.",
     "pages.financials.title": "Financials",
     "pages.financials.subtitle":
       "Review the structured financial information extracted from your documents.",
@@ -62,6 +66,10 @@ export const translations = {
     "pages.reviewQueue.title": "Review Queue",
     "pages.reviewQueue.subtitle":
       "Review CIT computations submitted by assigned companies.",
+    "pages.requests.title": "Requests",
+    "pages.requests.subtitle": "Manage document and clarification requests sent to companies.",
+    "pages.discussions.title": "Discussions",
+    "pages.discussions.subtitle": "Direct audit discussion threads and clarifications with client companies.",
     "pages.issues.title": "Issues",
     "pages.issues.subtitle": "Review and resolve issues across all assigned companies.",
     "pages.auditLog.title": "Audit Log",
@@ -88,6 +96,8 @@ export const translations = {
     "sidebar.settings": "සැකසුම්",
     "sidebar.companies": "සමාගම්",
     "sidebar.reviewQueue": "සමාලෝචන පෝලිම",
+    "sidebar.requests": "ඉල්ලීම්",
+    "sidebar.discussions": "සාකච්ඡා",
     "sidebar.issues": "ගැටළු",
     "sidebar.auditLog": "විගණන ලේඛනය",
     "sidebar.companyUser": "සමාගම් පරිශීලක",
@@ -98,6 +108,8 @@ export const translations = {
     "pages.documents.title": "ලේඛන",
     "pages.documents.subtitle":
       "සංස්ථාගත ආදායම් බදු සකස් කිරීම සඳහා භාවිත වන මූල්‍ය ලේඛන කළමනාකරණය කරන්න.",
+    "pages.auditorDocuments.title": "සේවාදායක ලේඛන",
+    "pages.auditorDocuments.subtitle": "පවරන ලද සමාගම් විසින් උඩුගත කරන ලද මූල්‍ය ලේඛන සමාලෝචනය සහ තහවුරු කිරීම.",
     "pages.financials.title": "මූල්‍ය තොරතුරු",
     "pages.financials.subtitle":
       "ඔබේ ලේඛනවලින් උපුටාගත් සංයුක්ත මූල්‍ය තොරතුරු සමාලෝචනය කරන්න.",
@@ -110,6 +122,10 @@ export const translations = {
       "සංස්ථාගත ආදායම් බදු සමාලෝචනය සඳහා ඔබට පවරන ලද සමාගම් කළමනාකරණය කරන්න.",
     "pages.reviewQueue.title": "සමාලෝචන පෝලිම",
     "pages.reviewQueue.subtitle": "පවරන ලද සමාගම් විසින් ඉදිරිපත් කළ CIT ගණනය කිරීම් සමාලෝචනය කරන්න.",
+    "pages.requests.title": "ඉල්ලීම්",
+    "pages.requests.subtitle": "සේවාදායක සමාගම් වෙත ඉදිරිපත් කරන ලද ලේඛන සහ තොරතුරු ඉල්ලීම් කළමනාකරණය කරන්න.",
+    "pages.discussions.title": "සාකච්ඡා",
+    "pages.discussions.subtitle": "සේවාදායක සමාගම් සමඟ සෘජු විගණන සාකච්ඡා සහ පැහැදිලි කිරීම්.",
     "pages.issues.title": "ගැටළු",
     "pages.issues.subtitle": "පවරන ලද සියලුම සමාගම් හරහා ගැටළු සමාලෝචනය කර විසඳන්න.",
     "pages.auditLog.title": "විගණන ලේඛනය",
@@ -135,6 +151,8 @@ export const translations = {
     "sidebar.settings": "அமைப்புகள்",
     "sidebar.companies": "நிறுவனங்கள்",
     "sidebar.reviewQueue": "மதிப்பாய்வு வரிசை",
+    "sidebar.requests": "கோரிக்கைகள்",
+    "sidebar.discussions": "விவாதங்கள்",
     "sidebar.issues": "சிக்கல்கள்",
     "sidebar.auditLog": "தணிக்கை பதிவு",
     "sidebar.companyUser": "நிறுவன பயனர்",
@@ -145,6 +163,8 @@ export const translations = {
     "pages.documents.title": "ஆவணங்கள்",
     "pages.documents.subtitle":
       "பொது வருமான வரி தயாரிப்புக்குப் பயன்படுத்தப்படும் நிதி ஆவணங்களை நிர்வகிக்கவும்.",
+    "pages.auditorDocuments.title": "வாடிக்கையாளர் ஆவணங்கள்",
+    "pages.auditorDocuments.subtitle": "ஒதுக்கப்பட்ட நிறுவனங்களால் பதிவேற்றப்பட்ட நிதி ஆவணங்களை மதிப்பாய்வு செய்து சரிபார்க்கவும்.",
     "pages.financials.title": "நிதி விவரங்கள்",
     "pages.financials.subtitle":
       "உங்கள் ஆவணங்களிலிருந்து பெறப்பட்ட கட்டமைக்கப்பட்ட நிதித் தகவலை மதிப்பாய்வு செய்யவும்.",
@@ -158,6 +178,10 @@ export const translations = {
     "pages.reviewQueue.title": "மதிப்பாய்வு வரிசை",
     "pages.reviewQueue.subtitle":
       "ஒதுக்கப்பட்ட நிறுவனங்களால் சமர்ப்பிக்கப்பட்ட CIT கணக்கீடுகளை மதிப்பாய்வு செய்யவும்.",
+    "pages.requests.title": "கோரிக்கைகள்",
+    "pages.requests.subtitle": "வாடிக்கையாளர் நிறுவனங்களுக்கு சமர்ப்பிக்கப்பட்ட ஆவணங்கள் மற்றும் தகவல் கோரிக்கைகளை நிர்வகிக்கவும்.",
+    "pages.discussions.title": "விவாதங்கள்",
+    "pages.discussions.subtitle": "வாடிக்கையாளர் நிறுவனங்களுடனான நேரடி தணிக்கை விவாதங்கள் மற்றும் விளக்கங்கள்.",
     "pages.issues.title": "சிக்கல்கள்",
     "pages.issues.subtitle": "ஒதுக்கப்பட்ட அனைத்து நிறுவனங்களிலும் உள்ள சிக்கல்களை மதிப்பாய்வு செய்து தீர்க்கவும்.",
     "pages.auditLog.title": "தணிக்கை பதிவு",
