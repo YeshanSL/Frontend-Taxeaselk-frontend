@@ -7,7 +7,6 @@ import { ChevronLeft } from "lucide-react";
 import AuthBrandPanel from "@/components/layout/AuthBrandPanel";
 import { Field, Input, Select } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
-import { supabase } from "@/lib/supabase";
 
 const SPECIALIZATIONS = [
   "Corporate Tax",
@@ -52,40 +51,33 @@ export default function AuditorSignUpPage() {
     setLoading(true);
 
     try {
-      // 1. Sign up with Supabase Auth
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-        options: {
-          data: {
-            full_name: form.fullName,
-          },
-        },
+      // 1. Call FastAPI backend register endpoint
+      const res = await fetch("http://localhost:8000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+          display_name: form.fullName,
+          role: "AUDITOR_PARTNER",
+          specialization: form.specialization,
+        }),
       });
 
-      if (signUpError) throw signUpError;
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Signup failed. Please try again.");
+      }
 
-      if (!data.user) throw new Error("Signup failed. Please try again.");
+      const data = await res.json();
 
-      // 2. Update role to auditor in profiles table
-      const { error: roleError } = await supabase
-        .from("profiles")
-        .update({ role: "auditor" })
-        .eq("id", data.user.id);
+      // 2. Save JWT token and user profile
+      localStorage.setItem("taxease_token", data.access_token);
+      localStorage.setItem("taxease_user", JSON.stringify(data.user));
+      document.cookie = `taxease_token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`;
 
-      if (roleError) throw roleError;
+      // 3. Redirect to auditor dashboard
 
-      // 3. Create auditor profile row
-      const { error: profileError } = await supabase
-        .from("auditor_profiles")
-        .insert({
-          id: data.user.id,
-          designation: form.specialization,
-        });
-
-      if (profileError) throw profileError;
-
-      // 4. Redirect to auditor dashboard
       router.push("/auditor-dashboard");
 
     } catch (err: any) {

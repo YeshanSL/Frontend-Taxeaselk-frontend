@@ -86,13 +86,21 @@ export default function ProfileMenu({
           <div className="border-t border-gray-100 p-1.5">
             <Link
               href="/sign-in"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  localStorage.removeItem("taxease_token");
+                  localStorage.removeItem("taxease_user");
+                  document.cookie = "taxease_token=; path=/; max-age=0; SameSite=Lax";
+                }
+                setOpen(false);
+              }}
               className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-status-critical hover:bg-red-50"
             >
               <LogOut className="h-4 w-4" />
               {t("common.logout")}
             </Link>
           </div>
+
         </div>
       )}
     </div>

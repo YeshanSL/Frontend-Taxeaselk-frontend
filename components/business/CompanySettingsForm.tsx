@@ -15,17 +15,50 @@ export default function CompanySettingsForm({
 }) {
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   function update<K extends keyof CompanySettings>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    // TODO (Week 2): PUT/PATCH to `${API_BASE_URL}/companies/{id}/settings`
-    setTimeout(() => setSaving(false), 400);
+    setSaved(false);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${apiUrl}/api/settings`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const comp = data.company || data;
+        setForm((prev) => ({
+          ...prev,
+          companyName: comp.companyName || comp.name || prev.companyName,
+          registrationNumber: comp.registrationNumber || comp.registration_number || prev.registrationNumber,
+          tinNumber: comp.tinNumber || comp.tin_number || prev.tinNumber,
+          financialYear: comp.financialYear || comp.current_fiscal_year || prev.financialYear,
+          contactEmail: comp.contactEmail || comp.contact_email || prev.contactEmail,
+          contactPhone: comp.contactPhone || comp.contact_phone || prev.contactPhone,
+        }));
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      }
+    } catch (err) {
+      console.error("Failed to save company settings:", err);
+    } finally {
+      setSaving(false);
+    }
   }
+
 
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-5">
@@ -73,8 +106,9 @@ export default function CompanySettingsForm({
       </div>
 
       <Button type="submit" disabled={saving} className="mt-2 w-fit">
-        {saving ? "Saving..." : "Save Changes"}
+        {saved ? "Saved!" : saving ? "Saving..." : "Save Changes"}
       </Button>
+
     </form>
   );
 }

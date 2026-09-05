@@ -1,10 +1,10 @@
-import { User, AlertTriangle, UserPlus } from "lucide-react";
+import { User, AlertTriangle } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import ProgressBar from "@/components/ui/ProgressBar";
 import SummaryCountRow from "@/components/business/SummaryCountRow";
+import InviteAuditorButton from "@/components/business/InviteAuditorButton";
 import T from "@/components/layout/T";
-import Button from "@/components/ui/Button";
 import { getAuditorReviewSummary } from "@/lib/api/business";
 
 // Matches the "Auditor Review" Figma screen: assigned auditor card +
@@ -23,14 +23,9 @@ export default async function AuditorReviewPage() {
             <T k="pages.auditorReview.subtitle" />
           </p>
         </div>
-        <Button
-          variant="primary"
-          icon={<UserPlus className="h-4 w-4" />}
-          className="shrink-0"
-        >
-          Invite Auditor
-        </Button>
+        <InviteAuditorButton />
       </div>
+
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <Card className="p-6">
@@ -117,9 +112,9 @@ export default async function AuditorReviewPage() {
                     </Badge>
                     <p className="font-semibold text-gray-900">{issue.title}</p>
                   </div>
-                  <button className="text-sm font-medium text-brand-blue">
+                  <a href="/financials" className="text-sm font-medium text-brand-blue hover:underline">
                     View Issue →
-                  </button>
+                  </a>
                 </div>
                 <p className="mt-2 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
                   &ldquo;{issue.comment}&rdquo;

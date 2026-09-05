@@ -111,11 +111,16 @@ export default async function AuditorDashboardPage() {
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <Button variant={review.tag === "ready" ? "success" : "primary"}>
-                    {review.tag === "ready" ? "Approve" : "Review"}
-                  </Button>
-                  <Button variant="secondary">View Company</Button>
+                  <Link href={review.tag === "ready" ? "/review-queue" : "/issues"}>
+                    <Button variant={review.tag === "ready" ? "success" : "primary"}>
+                      {review.tag === "ready" ? "Approve" : "Review"}
+                    </Button>
+                  </Link>
+                  <Link href="/companies">
+                    <Button variant="secondary">View Company</Button>
+                  </Link>
                 </div>
+
               </div>
             ))}
           </div>

@@ -1,6 +1,5 @@
-import { UserCheck } from "lucide-react";
 import StatCard from "@/components/ui/StatCard";
-import Button from "@/components/ui/Button";
+import SubmitToAuditorButton from "@/components/business/SubmitToAuditorButton";
 import FinancialsTable from "@/components/business/FinancialsTable";
 import T from "@/components/layout/T";
 import { getFinancialsSummary } from "@/lib/api/business";
@@ -21,10 +20,9 @@ export default async function FinancialsPage() {
             <T k="pages.financials.subtitle" />
           </p>
         </div>
-        <Button icon={<UserCheck className="h-4 w-4" />}>
-          Submit to Auditor
-        </Button>
+        <SubmitToAuditorButton />
       </div>
+
 
       <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard label="Revenue" value={data.revenue} />

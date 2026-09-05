@@ -12,7 +12,7 @@ export default function ChooseRolePage() {
 
       <div className="flex flex-col justify-center px-8 py-12 md:px-20">
         <Link
-          href="/"
+          href="/sign-in"
           className="mb-8 inline-flex w-fit items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
         >
           <ChevronLeft className="h-4 w-4" />

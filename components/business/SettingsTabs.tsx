@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import clsx from "clsx";
 import Card from "@/components/ui/Card";
 
@@ -175,7 +175,19 @@ function Avatar({ initials, role }: { initials: string; role: UserRow["role"] })
 // ─── Tab content components ───────────────────────────────────────────────────
 
 function UsersTab() {
-  const users = MOCK_USERS; // replace with: const [users] = useState(await getUsers())
+  const [users, setUsers] = useState<UserRow[]>(MOCK_USERS);
+
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    fetch(`${apiUrl}/settings/users`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setUsers(data);
+        }
+      })
+      .catch(() => null);
+  }, []);
 
   return (
     <div>
@@ -238,9 +250,18 @@ function SecurityTab() {
   const [settings, setSettings] = useState<SecuritySettings>(MOCK_SECURITY);
   // replace MOCK_SECURITY with: await getSecuritySettings()
 
-  function update<K extends keyof SecuritySettings>(key: K, value: boolean) {
+  async function update<K extends keyof SecuritySettings>(key: K, value: boolean) {
     setSettings((s) => ({ ...s, [key]: value }));
-    // TODO: PATCH /companies/me/settings/security
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      await fetch(`${apiUrl}/settings/security`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [key]: value }),
+      });
+    } catch {
+      // Keep optimistic update
+    }
   }
 
   const rows: { key: keyof SecuritySettings; label: string; description: string }[] = [
@@ -280,11 +301,19 @@ function SecurityTab() {
 
 function NotificationsTab() {
   const [prefs, setPrefs] = useState<NotificationPrefs>(MOCK_NOTIFICATIONS);
-  // replace MOCK_NOTIFICATIONS with: await getNotificationPrefs()
 
-  function update<K extends keyof NotificationPrefs>(key: K, value: boolean) {
+  async function update<K extends keyof NotificationPrefs>(key: K, value: boolean) {
     setPrefs((p) => ({ ...p, [key]: value }));
-    // TODO: PATCH /companies/me/settings/notifications
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      await fetch(`${apiUrl}/settings/notification-preferences`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [key]: value }),
+      });
+    } catch {
+      // Keep optimistic update
+    }
   }
 
   const rows: { key: keyof NotificationPrefs; label: string }[] = [
@@ -315,7 +344,27 @@ function NotificationsTab() {
 }
 
 function AuditLogTab() {
-  const entries = MOCK_AUDIT_LOG; // replace with: await getCompanyAuditLog()
+  const [entries, setEntries] = useState<AuditLogEntry[]>(MOCK_AUDIT_LOG);
+
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    fetch(`${apiUrl}/settings/audit-log`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.logs) && data.logs.length > 0) {
+          setEntries(
+            data.logs.map((l: any) => ({
+              id: String(l.id),
+              action: l.action,
+              actor: l.user_email || "Admin User",
+              actorRole: "Company Admin",
+              timeAgo: l.created_at ? new Date(l.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just now",
+            }))
+          );
+        }
+      })
+      .catch(() => null);
+  }, []);
 
   return (
     <div>

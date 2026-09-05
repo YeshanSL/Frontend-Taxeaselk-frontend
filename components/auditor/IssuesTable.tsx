@@ -24,11 +24,34 @@ const SEVERITY_TONE: Record<IssueSeverity, BadgeTone> = {
 export default function IssuesTable({ issues }: { issues: IssueRow[] }) {
   const [filter, setFilter] = useState<Filter>("All");
 
+  const [issueList, setIssueList] = useState<IssueRow[]>(issues);
+
   const filteredIssues = useMemo(() => {
-    if (filter === "All") return issues;
-    if (filter === "Warnings") return issues.filter((i) => i.severity === "Warning");
-    return issues.filter((i) => i.severity === filter);
-  }, [issues, filter]);
+    if (filter === "All") return issueList;
+    if (filter === "Warnings") return issueList.filter((i) => i.severity === "Warning");
+    return issueList.filter((i) => i.severity === filter);
+  }, [issueList, filter]);
+
+  async function handleResolve(id: string) {
+    setIssueList((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, status: "Resolved", severity: "Resolved" } : i))
+    );
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      await fetch(`${apiUrl}/api/auditor/issues/${id}/resolve`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ resolution_note: "Resolved by auditor via web interface." }),
+      });
+    } catch {
+      // Ignored
+    }
+  }
 
   return (
     <Card className="mt-4 overflow-hidden">
@@ -85,7 +108,11 @@ export default function IssuesTable({ issues }: { issues: IssueRow[] }) {
                     Review
                   </Button>
                   {issue.status === "Open" && (
-                    <Button variant="secondary" className="px-3 py-1.5 text-xs">
+                    <Button
+                      variant="secondary"
+                      className="px-3 py-1.5 text-xs"
+                      onClick={() => handleResolve(issue.id)}
+                    >
                       Resolve
                     </Button>
                   )}

@@ -1,17 +1,23 @@
-// Matches "Loading screen.jpeg" from the Figma export: centered TE
-// mark, gradient wordmark, animated progress bar underneath.
-//
-// This is rendered automatically by Next.js whenever a page in that
-// route segment is fetching data (see the loading.tsx files next to
-// this) — no wiring needed, App Router shows it for you during
-// navigation and on first load.
+import Image from "next/image";
+
+// Displays the official TaxEaseLK logo mark, wordmark, and animated progress bar
+// during page transitions and initial application load.
 export default function LoadingScreen() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white">
-      <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-navy to-brand-blue text-3xl font-black text-white shadow-lg">
-        TE
+      {/* Official TE Logo Mark with controlled sizing */}
+      <div className="relative h-24 w-24 md:h-28 md:w-28 drop-shadow-sm">
+        <Image
+          src="/images/logo-mark.png"
+          alt="TaxEaseLK Logo"
+          fill
+          priority
+          sizes="(min-width: 768px) 112px, 96px"
+          className="object-contain"
+        />
       </div>
-      <p className="mt-5 bg-gradient-to-r from-brand-navy to-brand-blue bg-clip-text text-3xl font-extrabold text-transparent">
+
+      <p className="mt-5 bg-gradient-to-r from-brand-navy to-brand-blue bg-clip-text text-3xl font-extrabold text-transparent tracking-tight">
         TaxEaseLK
       </p>
       <div className="mt-4 h-1.5 w-56 overflow-hidden rounded-full bg-gray-200">

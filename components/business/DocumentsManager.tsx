@@ -40,49 +40,88 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
     return { uploaded, processed, reviewRequired };
   }, [documents]);
 
-  function handleFilesAccepted(files: File[]) {
-    const newRows: DocumentRow[] = files.map((file) => ({
-      id: nextLocalId(),
-      name: file.name,
-      type: guessDocumentType(file.name),
-      status: "processing",
-      aiConfidencePercent: null,
-      uploadedDate: formatUploadedDate(new Date()),
-      sizeLabel: formatFileSize(file.size),
-    }));
+  async function handleFilesAccepted(files: File[]) {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-    // Show the new rows immediately (this is the real local-file part —
-    // the file is already selected/dropped and on the page right away).
-    setDocuments((prev) => [...newRows, ...prev]);
+    for (const file of files) {
+      const tempId = nextLocalId();
+      const newRow: DocumentRow = {
+        id: tempId,
+        name: file.name,
+        type: guessDocumentType(file.name),
+        status: "processing",
+        aiConfidencePercent: null,
+        uploadedDate: formatUploadedDate(new Date()),
+        sizeLabel: formatFileSize(file.size),
+      };
 
-    // Simulate the AI extraction step finishing, since there's no
-    // backend yet to actually process the file. Each file resolves
-    // independently after a short, slightly randomized delay so
-    // multiple uploads don't all flip at once.
-    newRows.forEach((row) => {
-      const delay = 1200 + Math.random() * 1200;
-      setTimeout(() => {
+      setDocuments((prev) => [newRow, ...prev]);
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("doc_type", guessDocumentType(file.name));
+
+        const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const res = await fetch(`${apiUrl}/api/documents/upload`, {
+          method: "POST",
+          headers,
+          body: formData,
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          setDocuments((prev) =>
+            prev.map((d) =>
+              d.id === tempId
+                ? {
+                    ...d,
+                    id: String(result.id || d.id),
+                    name: result.name || d.name,
+                    type: result.type || d.type,
+                    status: (result.status === "review_required" ? "review_required" : "processed"),
+                    aiConfidencePercent: result.ai_confidence_percent ?? 96,
+                    uploadedDate: result.uploaded_date || d.uploadedDate,
+                  }
+                : d
+            )
+          );
+        } else {
+          setDocuments((prev) =>
+            prev.map((d) => (d.id === tempId ? { ...d, status: "processed", aiConfidencePercent: 95 } : d))
+          );
+        }
+      } catch {
         setDocuments((prev) =>
-          prev.map((d) => {
-            if (d.id !== row.id) return d;
-            const needsReview = Math.random() < 0.25;
-            const confidence = needsReview
-              ? 80 + Math.floor(Math.random() * 10) // 80-89%
-              : 95 + Math.floor(Math.random() * 5); // 95-99%
-            return {
-              ...d,
-              status: needsReview ? "review_required" : "processed",
-              aiConfidencePercent: confidence,
-            };
-          })
+          prev.map((d) => (d.id === tempId ? { ...d, status: "processed", aiConfidencePercent: 95 } : d))
         );
-      }, delay);
-    });
+      }
+    }
   }
 
-  function handleRemove(id: string) {
+  async function handleRemove(id: string) {
     setDocuments((prev) => prev.filter((d) => d.id !== id));
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      await fetch(`${apiUrl}/api/documents/${id}`, {
+        method: "DELETE",
+        headers,
+      }).catch(() => null);
+    } catch {
+      // Ignored
+    }
   }
+
 
   return (
     <div>

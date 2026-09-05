@@ -11,7 +11,7 @@ cp .env.local.example .env.local   # fill in Supabase + API URL later
 npm run dev
 ```
 
-Open http://localhost:3000 — it redirects to `/role` (Choose your role).
+Open http://localhost:3000 — it redirects to `/sign-in`.
 
 ## How the code is organized
 

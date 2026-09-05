@@ -22,11 +22,46 @@ const FILTERS: ReviewQueueFilter[] = [
 // rows on the server and passes them in as a prop.
 export default function ReviewQueueTable({ rows }: { rows: ReviewQueueRow[] }) {
   const [filter, setFilter] = useState<ReviewQueueFilter>("All");
+  const [tableRows, setTableRows] = useState<ReviewQueueRow[]>(rows);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  async function handleUpdateStatus(companyId: string, newStatus: string) {
+    setUpdatingId(companyId);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${apiUrl}/api/auditor/review-queue/${companyId}/status?new_status=${encodeURIComponent(newStatus)}`, {
+        method: "PATCH",
+        headers,
+      });
+      if (res.ok) {
+        setTableRows((prev) =>
+          prev.map((r) =>
+            r.id === companyId
+              ? {
+                  ...r,
+                  status: newStatus as any,
+                  progressPercent: newStatus === "Approved" ? 100 : r.progressPercent,
+                }
+              : r
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Failed to update status:", err);
+    } finally {
+      setUpdatingId(null);
+    }
+  }
 
   const filteredRows = useMemo(() => {
-    if (filter === "All") return rows;
-    return rows.filter((r) => r.status === filter);
-  }, [rows, filter]);
+    if (filter === "All") return tableRows;
+    return tableRows.filter((r) => r.status === filter);
+  }, [tableRows, filter]);
 
   return (
     <Card className="mt-4 overflow-hidden">
@@ -89,7 +124,20 @@ export default function ReviewQueueTable({ rows }: { rows: ReviewQueueRow[] }) {
               </td>
               <td className="px-5 py-3.5 text-gray-600">{row.dueDate}</td>
               <td className="px-5 py-3.5 text-right">
-                <Button variant="secondary">Review</Button>
+                <div className="flex items-center justify-end gap-2">
+                  <a href="/issues">
+                    <Button variant="secondary">Review</Button>
+                  </a>
+                  {row.status !== "Approved" && (
+                    <Button
+                      variant="primary"
+                      disabled={updatingId === row.id}
+                      onClick={() => handleUpdateStatus(row.id, "Approved")}
+                    >
+                      {updatingId === row.id ? "Approving..." : "Approve"}
+                    </Button>
+                  )}
+                </div>
               </td>
             </tr>
           ))}
@@ -98,3 +146,4 @@ export default function ReviewQueueTable({ rows }: { rows: ReviewQueueRow[] }) {
     </Card>
   );
 }
+

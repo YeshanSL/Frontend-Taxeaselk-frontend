@@ -13,6 +13,7 @@ export default function AuditorProfileForm({
 }) {
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -40,13 +41,35 @@ export default function AuditorProfileForm({
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    // TODO (Week 2): PUT/PATCH to `${API_BASE_URL}/auditor/profile`,
-    // and upload the selected photo file to Supabase storage if changed.
-    setTimeout(() => setSaving(false), 400);
+    setSaved(false);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${apiUrl}/api/auditor/profile`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setForm((prev) => ({ ...prev, ...data }));
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      }
+    } catch (err) {
+      console.error("Failed to update auditor profile:", err);
+    } finally {
+      setSaving(false);
+    }
   }
+
 
   return (
     <form onSubmit={handleSave}>
@@ -127,8 +150,9 @@ export default function AuditorProfileForm({
 
       <div className="mt-6 flex gap-3 border-t border-gray-100 pt-5">
         <Button type="submit" disabled={saving}>
-          {saving ? "Saving..." : "Save Changes"}
+          {saved ? "Saved!" : saving ? "Saving..." : "Save Changes"}
         </Button>
+
         <Button type="button" variant="secondary">
           Cancel
         </Button>

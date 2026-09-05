@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import AuthBrandPanel from "@/components/layout/AuthBrandPanel";
 import { Field, Input } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
-import { supabase } from "@/lib/supabase";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -21,35 +20,32 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      // 1. Sign in with Supabase Auth
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const res = await fetch("http://localhost:8000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (signInError) throw signInError;
-
-      if (!data.user) throw new Error("Sign in failed. Please try again.");
-
-      // 2. Get user role from profiles table
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      // 3. Redirect based on role
-      const role = profile?.role;
-
-      if (role === "auditor") {
-        router.push("/auditor-dashboard");
-      } else {
-        // business_owner, business_admin, accountant, viewer
-        router.push("/dashboard");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Invalid email or password.");
       }
 
+      const data = await res.json();
+
+      // Save JWT token and user info in localStorage and cookie
+      localStorage.setItem("taxease_token", data.access_token);
+      localStorage.setItem("taxease_user", JSON.stringify(data.user));
+      document.cookie = `taxease_token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`;
+
+      // Redirect based on backend role
+      const role = data.user?.role;
+
+      if (role === "AUDITOR_PARTNER" || role === "AUDITOR_STAFF") {
+        router.push("/auditor-dashboard");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: any) {
       setError(err.message || "Invalid email or password.");
     } finally {
@@ -97,12 +93,14 @@ export default function SignInPage() {
             />
           </Field>
 
-          <Link
-            href="/forgot-password"
-            className="-mt-2 self-end text-sm text-brand-blue hover:underline"
-          >
-            Forgot Password?
-          </Link>
+          <div className="flex justify-end -mt-2">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-brand-blue hover:underline"
+            >
+              Forgot Password?
+            </Link>
+          </div>
 
           <Button
             type="submit"

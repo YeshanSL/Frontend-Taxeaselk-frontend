@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Send, MessagesSquare, Building2, User, CheckCircle2 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
@@ -92,6 +92,52 @@ export default function DiscussionsPage() {
   const [replyText, setReplyText] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  useEffect(() => {
+    async function loadDiscussions() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+        const res = await fetch(`${apiUrl}/api/auditor/discussions`, {
+          cache: "no-store",
+          headers,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : Array.isArray(data.threads) ? data.threads : [];
+          if (list.length > 0) {
+            const mapped = list.map((t: any) => ({
+              id: String(t.id),
+              companyName: t.company_name || t.companyName || "Assigned Company",
+              topic: t.title || t.topic || "Discussion",
+              lastMessage: t.last_message || t.lastMessage || "",
+              lastUpdated: t.last_updated || t.lastUpdated || "Recently",
+              unreadCount: t.unread_count ?? t.unreadCount ?? 0,
+              status: (t.status === "Closed" ? "Closed" : "Open") as any,
+              messages: Array.isArray(t.messages)
+                ? t.messages.map((m: any) => ({
+                    id: String(m.id),
+                    sender: m.sender_name || m.sender || "User",
+                    senderRole: (m.is_auditor || m.sender_role === "Auditor" || m.senderRole === "Auditor" ? "Auditor" : "Company") as any,
+                    text: m.message || m.text || "",
+                    timestamp: m.timestamp || "Recently",
+                  }))
+                : [],
+            }));
+            setThreads(mapped);
+            setActiveThreadId(mapped[0].id);
+          }
+        }
+      } catch {
+        // Fallback
+      }
+    }
+    loadDiscussions();
+  }, []);
+
   const activeThread = threads.find((t) => t.id === activeThreadId) || threads[0];
 
   const filteredThreads = threads.filter(
@@ -100,15 +146,16 @@ export default function DiscussionsPage() {
       t.topic.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  function handleSendReply(e: React.FormEvent) {
+  async function handleSendReply(e: React.FormEvent) {
     e.preventDefault();
     if (!replyText.trim() || !activeThread) return;
 
+    const trimmed = replyText.trim();
     const newMessage = {
       id: `m_${Date.now()}`,
       sender: "Professional Auditor",
       senderRole: "Auditor" as const,
-      text: replyText.trim(),
+      text: trimmed,
       timestamp: "Just now",
     };
 
@@ -118,15 +165,34 @@ export default function DiscussionsPage() {
           ? {
               ...t,
               messages: [...t.messages, newMessage],
-              lastMessage: `Auditor: ${replyText.trim()}`,
+              lastMessage: `Auditor: ${trimmed}`,
               lastUpdated: "Just now",
             }
           : t
       )
     );
 
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      await fetch(`${apiUrl}/api/auditor/discussions/${activeThread.id}/messages`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          message: trimmed,
+        }),
+      });
+    } catch {
+      // Ignored
+    }
+
     setReplyText("");
   }
+
 
   return (
     <div>
@@ -228,10 +294,25 @@ export default function DiscussionsPage() {
                           t.id === activeThread.id ? { ...t, status: "Closed" } : t
                         )
                       );
+                      try {
+                        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+                        const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
+                        const headers: Record<string, string> = {};
+                        if (token) {
+                          headers["Authorization"] = `Bearer ${token}`;
+                        }
+                        fetch(`${apiUrl}/api/auditor/discussions/${activeThread.id}/resolve`, {
+                          method: "POST",
+                          headers,
+                        }).catch(() => {});
+                      } catch {
+                        // Ignored
+                      }
                     }}
                   >
                     Mark as Resolved
                   </Button>
+
                 )}
               </div>
 

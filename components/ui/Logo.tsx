@@ -1,3 +1,4 @@
+import Image from "next/image";
 import clsx from "clsx";
 
 // The "TE" mark + wordmark used on auth screens and both sidebars.
@@ -9,14 +10,20 @@ export default function Logo({
   size?: "sm" | "md";
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2.5">
       <div
         className={clsx(
-          "flex items-center justify-center rounded-md bg-gradient-to-br from-brand-navy to-brand-blue font-black text-white",
-          size === "md" ? "h-9 w-9 text-lg" : "h-7 w-7 text-sm"
+          "relative flex items-center justify-center shrink-0",
+          size === "md" ? "h-9 w-9" : "h-7 w-7"
         )}
       >
-        TE
+        <Image
+          src="/images/logo-mark.png"
+          alt="TaxEaseLK Logo"
+          fill
+          sizes={size === "md" ? "36px" : "28px"}
+          className="object-contain"
+        />
       </div>
       <span
         className={clsx(

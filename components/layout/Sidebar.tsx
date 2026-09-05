@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { ReactNode } from "react";
@@ -48,9 +49,30 @@ export default function Sidebar({
 
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-gray-100 bg-white">
-      <div className="border-b border-gray-100 px-5 py-5">
-        <Logo size="sm" />
-        <p className="mt-1 pl-9 text-xs text-gray-400">{t(workspaceLabelKey)}</p>
+      <div className="border-b border-gray-100 px-5 py-4">
+        <Link
+          href={settingsHref.includes("auditor") ? "/auditor-dashboard" : "/dashboard"}
+          className="flex items-center gap-3 group"
+        >
+          <div className="relative h-10 w-10 shrink-0 transition-transform group-hover:scale-105">
+            <Image
+              src="/images/logo-mark.png"
+              alt="TaxEaseLK Logo"
+              fill
+              priority
+              sizes="40px"
+              className="object-contain"
+            />
+          </div>
+          <div className="min-w-0">
+            <span className="block text-lg font-extrabold tracking-tight text-brand-navy leading-none">
+              TaxEaseLK
+            </span>
+            <span className="block mt-1 truncate text-xs text-gray-400">
+              {t(workspaceLabelKey)}
+            </span>
+          </div>
+        </Link>
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
