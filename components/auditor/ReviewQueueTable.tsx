@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import ProgressBar from "@/components/ui/ProgressBar";
 import IssueCountPair from "@/components/auditor/IssueCountPair";
 import { ReviewQueueFilter, ReviewQueueRow } from "@/lib/types";
+import { recordAuditorActivity } from "@/lib/utils/auditorActivity";
 
 const FILTERS: ReviewQueueFilter[] = [
   "All",
@@ -38,19 +39,26 @@ export default function ReviewQueueTable({ rows }: { rows: ReviewQueueRow[] }) {
         method: "PATCH",
         headers,
       });
-      if (res.ok) {
-        setTableRows((prev) =>
-          prev.map((r) =>
-            r.id === companyId
-              ? {
-                  ...r,
-                  status: newStatus as any,
-                  progressPercent: newStatus === "Approved" ? 100 : r.progressPercent,
-                }
-              : r
-          )
-        );
+      const target = tableRows.find((r) => r.id === companyId);
+      if (target) {
+        recordAuditorActivity({
+          title: `Status updated to ${newStatus}`,
+          company: target.companyName,
+          type: newStatus === "Approved" ? "approval" : "issue",
+        });
       }
+
+      setTableRows((prev) =>
+        prev.map((r) =>
+          r.id === companyId
+            ? {
+                ...r,
+                status: newStatus as any,
+                progressPercent: newStatus === "Approved" ? 100 : r.progressPercent,
+              }
+            : r
+        )
+      );
     } catch (err) {
       console.error("Failed to update status:", err);
     } finally {
@@ -125,7 +133,7 @@ export default function ReviewQueueTable({ rows }: { rows: ReviewQueueRow[] }) {
               <td className="px-5 py-3.5 text-gray-600">{row.dueDate}</td>
               <td className="px-5 py-3.5 text-right">
                 <div className="flex items-center justify-end gap-2">
-                  <a href="/issues">
+                  <a href="/auditor-documents">
                     <Button variant="secondary">Review</Button>
                   </a>
                   {row.status !== "Approved" && (

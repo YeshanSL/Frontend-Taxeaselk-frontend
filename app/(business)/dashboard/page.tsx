@@ -5,22 +5,27 @@ import ProgressBar from "@/components/ui/ProgressBar";
 import StatCard from "@/components/ui/StatCard";
 import Button from "@/components/ui/Button";
 import T from "@/components/layout/T";
-import { getDashboardSummary } from "@/lib/api/business";
+import DashboardSubtitle from "@/components/business/DashboardSubtitle";
+import { getDashboardSummary, getCompanySettings } from "@/lib/api/business";
 
 // Server Component: fetches through the data layer (lib/api/business.ts)
 // so this page has no idea whether the data is mocked or coming from
 // the real FastAPI backend.
 export default async function DashboardPage() {
-  const data = await getDashboardSummary();
+  const [data, settings] = await Promise.all([
+    getDashboardSummary(),
+    getCompanySettings(),
+  ]);
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900">
         <T k="pages.dashboard.title" />
       </h1>
-      <p className="mt-1 text-sm text-gray-500">
-        <T k="pages.dashboard.subtitle" />
-      </p>
+      <DashboardSubtitle
+        initialCompanyName={settings.companyName}
+        initialFinancialYear={settings.financialYear}
+      />
 
       {/* Progress card */}
       <Card className="mt-6 p-6">
@@ -65,7 +70,7 @@ export default async function DashboardPage() {
       </Card>
 
       {/* Stat tiles */}
-      <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-5">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           label="Documents"
           value={`${data.documentsUploaded} / ${data.documentsTotal}`}
@@ -77,19 +82,15 @@ export default async function DashboardPage() {
           hint="From Financial Statements"
         />
         <StatCard
-          label="Taxable Income"
-          value={data.taxableIncome}
-          hint="After adjustments"
-        />
-        <StatCard
-          label="Est. CIT Liability"
-          value={data.estCitLiability}
-          hint="Rate per tax rule v2026-1"
-        />
-        <StatCard
           label="Auditor Status"
           value={data.auditorStatus}
-          hint="Pending submission"
+          hint={
+            data.auditorStatus === "Approved"
+              ? "Sign-off completed"
+              : data.auditorStatus === "Under Review"
+              ? "Auditor reviewing"
+              : "Pending submission"
+          }
         />
       </div>
 
@@ -117,7 +118,7 @@ export default async function DashboardPage() {
                 icon={<FileBarChart className="h-4 w-4" />}
                 className="w-full justify-start"
               >
-                View Reports
+                View Financials
               </Button>
             </Link>
           </div>
@@ -162,7 +163,7 @@ export default async function DashboardPage() {
                     </div>
                   </div>
                   <Link
-                    href="/financials"
+                    href={`/auditor-review?issue=${item.issueId || item.id || ""}`}
                     className="shrink-0 text-xs font-medium text-brand-blue whitespace-nowrap hover:underline"
                   >
                     Review →

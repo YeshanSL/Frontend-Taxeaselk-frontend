@@ -7,6 +7,9 @@ import {
 } from "lucide-react";
 import Sidebar, { NavItem } from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
+import BusinessTopBarBadges from "@/components/layout/BusinessTopBarBadges";
+import DemoQuickSwitcher from "@/components/ui/DemoQuickSwitcher";
+import { getCompanySettings } from "@/lib/api/business";
 
 const navItems: NavItem[] = [
   { href: "/dashboard", labelKey: "sidebar.dashboard", icon: <LayoutGrid className="h-4 w-4" /> },
@@ -17,14 +20,13 @@ const navItems: NavItem[] = [
 ];
 
 // Shared shell for every page under the Business Owner portal.
-// TODO (Week 2): replace the hard-coded user/company info below with
-// the signed-in user's session data (from Supabase) and the selected
-// company + financial year (from the FastAPI backend).
-export default function BusinessLayout({
+export default async function BusinessLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const settings = await getCompanySettings();
+
   return (
     <div className="flex h-screen bg-brand-bgblue">
       <Sidebar
@@ -42,19 +44,17 @@ export default function BusinessLayout({
           displayName="Admin User"
           email="admin@abc.lk"
           settingsHref="/settings"
+          showSearch={false}
           leftContent={
-            <>
-              <span className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-brand-blue">
-                Company ABC (Pvt) Ltd
-              </span>
-              <span className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600">
-                FY 2025/26
-              </span>
-            </>
+            <BusinessTopBarBadges
+              initialCompanyName={settings.companyName}
+              initialFinancialYear={settings.financialYear}
+            />
           }
         />
         <main className="flex-1 overflow-y-auto p-8">{children}</main>
       </div>
+      <DemoQuickSwitcher currentRole="business" />
     </div>
   );
 }

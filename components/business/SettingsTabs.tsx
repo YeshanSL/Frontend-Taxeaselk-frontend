@@ -34,11 +34,12 @@ interface NotificationPrefs {
   financialValueModified: boolean;
 }
 
-interface AuditLogEntry {
+interface RecentActivityEntry {
   id: string;
   action: string;
   actor: string;
   actorRole: string;
+  timestamp: string;
   timeAgo: string;
 }
 
@@ -88,15 +89,15 @@ const MOCK_NOTIFICATIONS: NotificationPrefs = {
   financialValueModified: true,
 };
 
-const MOCK_AUDIT_LOG: AuditLogEntry[] = [
-  { id: "al1", action: "Submitted for Auditor Review", actor: "Samantha Perera", actorRole: "Company Admin", timeAgo: "2 hours ago" },
-  { id: "al2", action: "CIT calculation generated", actor: "Samantha Perera", actorRole: "Company Admin", timeAgo: "3 hours ago" },
-  { id: "al3", action: "Tax adjustments reviewed", actor: "Samantha Perera", actorRole: "Company Admin", timeAgo: "5 hours ago" },
-  { id: "al4", action: "AI extraction completed — 109 values extracted", actor: "AI Engine", actorRole: "AI Engine", timeAgo: "6 hours ago" },
-  { id: "al5", action: "Document validation completed", actor: "Samantha Perera", actorRole: "Company Admin", timeAgo: "7 hours ago" },
-  { id: "al6", action: "Financial Statements.pdf uploaded", actor: "Samantha Perera", actorRole: "Company Admin", timeAgo: "8 hours ago" },
-  { id: "al7", action: "Previous CIT Return.pdf uploaded", actor: "Samantha Perera", actorRole: "Company Admin", timeAgo: "9 hours ago" },
-  { id: "al8", action: "Company profile updated", actor: "Samantha Perera", actorRole: "Company Admin", timeAgo: "1 day ago" },
+const MOCK_RECENT_ACTIVITIES: RecentActivityEntry[] = [
+  { id: "al1", action: "Submitted for Auditor Review", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-05 18:30:15", timeAgo: "2 hours ago" },
+  { id: "al2", action: "CIT calculation generated", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-05 17:15:20", timeAgo: "3 hours ago" },
+  { id: "al3", action: "Tax adjustments reviewed", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-05 15:45:00", timeAgo: "5 hours ago" },
+  { id: "al4", action: "AI extraction completed — 109 values extracted", actor: "AI Engine", actorRole: "AI Engine", timestamp: "2026-09-05 14:30:10", timeAgo: "6 hours ago" },
+  { id: "al5", action: "Document validation completed", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-05 13:20:44", timeAgo: "7 hours ago" },
+  { id: "al6", action: "Financial Statements.pdf uploaded", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-05 12:10:05", timeAgo: "8 hours ago" },
+  { id: "al7", action: "Previous CIT Return.pdf uploaded", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-05 11:00:30", timeAgo: "9 hours ago" },
+  { id: "al8", action: "Company profile updated", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-04 16:40:18", timeAgo: "1 day ago" },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -343,8 +344,8 @@ function NotificationsTab() {
   );
 }
 
-function AuditLogTab() {
-  const [entries, setEntries] = useState<AuditLogEntry[]>(MOCK_AUDIT_LOG);
+function RecentActivitiesTab() {
+  const [entries, setEntries] = useState<RecentActivityEntry[]>(MOCK_RECENT_ACTIVITIES);
 
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -358,7 +359,12 @@ function AuditLogTab() {
               action: l.action,
               actor: l.user_email || "Admin User",
               actorRole: "Company Admin",
-              timeAgo: l.created_at ? new Date(l.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just now",
+              timestamp: l.created_at
+                ? new Date(l.created_at).toISOString().replace("T", " ").slice(0, 19)
+                : "2026-09-05 18:30:15",
+              timeAgo: l.created_at
+                ? new Date(l.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                : "Just now",
             }))
           );
         }
@@ -368,29 +374,55 @@ function AuditLogTab() {
 
   return (
     <div>
-      <p className="mb-4 font-semibold text-gray-800">Audit Log</p>
-      <ul className="flex flex-col gap-1">
-        {entries.map((e) => (
-          <li key={e.id} className="flex items-start gap-3 rounded-lg px-3 py-2.5 hover:bg-gray-50">
-            <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-brand-blue" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-800">{e.action}</p>
-              <p className="text-xs text-gray-400">
-                {e.actorRole === "AI Engine" ? "AI Engine" : `User: ${e.actor}`}
-                {" · "}
-                {e.timeAgo}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="font-semibold text-gray-800">Recent Activities</p>
+          <p className="text-xs text-gray-500">Track actions, document submissions, and audit events with precise timestamps</p>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-gray-100">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-gray-100 bg-gray-50 text-xs font-medium uppercase tracking-wide text-gray-500">
+              <th className="px-4 py-3">Timestamp</th>
+              <th className="px-4 py-3">Action</th>
+              <th className="px-4 py-3">Performed By</th>
+              <th className="px-4 py-3 text-right">Time Ago</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50 bg-white">
+            {entries.map((e) => (
+              <tr key={e.id} className="hover:bg-gray-50/60 transition-colors">
+                <td className="px-4 py-3 font-mono text-xs text-gray-500 whitespace-nowrap">
+                  {e.timestamp}
+                </td>
+                <td className="px-4 py-3 font-medium text-gray-800">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-brand-blue" />
+                    <span>{e.action}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-xs text-gray-600">
+                  <span className={e.actorRole === "AI Engine" ? "inline-flex items-center rounded bg-blue-50 px-2 py-0.5 font-medium text-brand-blue" : "font-medium"}>
+                    {e.actorRole === "AI Engine" ? "AI Engine" : e.actor}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right text-xs text-gray-400 whitespace-nowrap">
+                  {e.timeAgo}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
 
 // ─── Main SettingsTabs ────────────────────────────────────────────────────────
 
-const TABS = ["Company", "Users", "Security", "Notifications", "Audit Log"] as const;
+const TABS = ["Company", "Users", "Security", "Notifications", "Recent Activities"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function SettingsTabs({ companyTabContent }: { companyTabContent: React.ReactNode }) {
@@ -415,14 +447,12 @@ export default function SettingsTabs({ companyTabContent }: { companyTabContent:
         ))}
       </div>
 
-
-
       <Card className="p-6">
         {activeTab === "Company" && companyTabContent}
         {activeTab === "Users" && <UsersTab />}
         {activeTab === "Security" && <SecurityTab />}
         {activeTab === "Notifications" && <NotificationsTab />}
-        {activeTab === "Audit Log" && <AuditLogTab />}
+        {activeTab === "Recent Activities" && <RecentActivitiesTab />}
       </Card>
     </div>
   );

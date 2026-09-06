@@ -16,6 +16,7 @@ interface TopBarProps {
   displayName: string;
   email: string;
   settingsHref: string;
+  showSearch?: boolean;
 }
 
 export default function TopBar({
@@ -25,6 +26,7 @@ export default function TopBar({
   displayName,
   email,
   settingsHref,
+  showSearch = true,
 }: TopBarProps) {
   const { t } = useLanguage();
 
@@ -36,20 +38,29 @@ export default function TopBar({
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="relative hidden md:block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="search"
-            placeholder={t("common.search")}
-            className="w-56 rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-blue"
-          />
-        </div>
+        {showSearch && (
+          <div className="relative hidden md:block">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="search"
+              placeholder={t("common.search")}
+              className="w-56 rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-blue"
+            />
+          </div>
+        )}
 
         <NotificationBell />
 
-        <button aria-label={t("common.help")} className="text-gray-400 hover:text-gray-600">
+        <a
+          href="https://taxeaselk-marketing.vercel.app/#contact"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t("common.help")}
+          title="TaxEaseLK Help & Contact"
+          className="text-gray-400 hover:text-gray-600 transition-colors"
+        >
           <HelpCircle className="h-5 w-5" />
-        </button>
+        </a>
 
         <ProfileMenu
           displayName={displayName}

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Field, Input } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import { CompanySettings } from "@/lib/types";
 
 // The "Company Information" form from the Figma Settings screen.
 // Takes the initially-fetched settings as a prop and manages edits
-// locally until Save Changes is wired up to the backend.
+// locally, syncing changes live with the Top Bar and backend.
 export default function CompanySettingsForm({
   initial,
 }: {
@@ -17,6 +17,51 @@ export default function CompanySettingsForm({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    function syncSettings() {
+      try {
+        const savedSettings = localStorage.getItem("taxease_company_settings");
+        if (savedSettings) {
+          const parsed = JSON.parse(savedSettings);
+          setForm((prev) => ({
+            ...prev,
+            companyName: parsed.companyName || prev.companyName,
+            registrationNumber: parsed.registrationNumber || prev.registrationNumber,
+            tinNumber: parsed.tinNumber || prev.tinNumber,
+            financialYear: parsed.financialYear || prev.financialYear,
+            contactEmail: parsed.contactEmail || prev.contactEmail,
+            contactPhone: parsed.contactPhone || prev.contactPhone,
+          }));
+          return;
+        }
+
+        const savedUser = localStorage.getItem("taxease_user");
+        if (savedUser) {
+          const u = JSON.parse(savedUser);
+          const name = u.company_name || u.display_name || u.companyName;
+          const email = u.email;
+          if (name || email) {
+            setForm((prev) => ({
+              ...prev,
+              companyName: name || prev.companyName,
+              contactEmail: email || prev.contactEmail,
+            }));
+          }
+        }
+      } catch {
+        // Ignored
+      }
+    }
+
+    syncSettings();
+    window.addEventListener("taxease_company_updated", syncSettings);
+    window.addEventListener("storage", syncSettings);
+    return () => {
+      window.removeEventListener("taxease_company_updated", syncSettings);
+      window.removeEventListener("storage", syncSettings);
+    };
+  }, []);
+
   function update<K extends keyof CompanySettings>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
   }
@@ -25,6 +70,19 @@ export default function CompanySettingsForm({
     e.preventDefault();
     setSaving(true);
     setSaved(false);
+
+    const updatedSettings = {
+      ...form,
+      companyName: form.companyName.trim() || "ABC (Pvt) Ltd",
+      financialYear: form.financialYear.trim() || "2025/26",
+    };
+
+    // Immediately persist and notify top nav bar
+    if (typeof window !== "undefined") {
+      localStorage.setItem("taxease_company_settings", JSON.stringify(updatedSettings));
+      window.dispatchEvent(new Event("taxease_company_updated"));
+    }
+
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
@@ -35,25 +93,31 @@ export default function CompanySettingsForm({
       const res = await fetch(`${apiUrl}/api/settings`, {
         method: "PUT",
         headers,
-        body: JSON.stringify(form),
+        body: JSON.stringify(updatedSettings),
       });
       if (res.ok) {
         const data = await res.json();
         const comp = data.company || data;
-        setForm((prev) => ({
-          ...prev,
-          companyName: comp.companyName || comp.name || prev.companyName,
-          registrationNumber: comp.registrationNumber || comp.registration_number || prev.registrationNumber,
-          tinNumber: comp.tinNumber || comp.tin_number || prev.tinNumber,
-          financialYear: comp.financialYear || comp.current_fiscal_year || prev.financialYear,
-          contactEmail: comp.contactEmail || comp.contact_email || prev.contactEmail,
-          contactPhone: comp.contactPhone || comp.contact_phone || prev.contactPhone,
-        }));
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2500);
+        const finalForm = {
+          ...form,
+          companyName: comp.companyName || comp.name || updatedSettings.companyName,
+          registrationNumber: comp.registrationNumber || comp.registration_number || updatedSettings.registrationNumber,
+          tinNumber: comp.tinNumber || comp.tin_number || updatedSettings.tinNumber,
+          financialYear: comp.financialYear || comp.current_fiscal_year || updatedSettings.financialYear,
+          contactEmail: comp.contactEmail || comp.contact_email || updatedSettings.contactEmail,
+          contactPhone: comp.contactPhone || comp.contact_phone || updatedSettings.contactPhone,
+        };
+        setForm(finalForm);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("taxease_company_settings", JSON.stringify(finalForm));
+          window.dispatchEvent(new Event("taxease_company_updated"));
+        }
       }
-    } catch (err) {
-      console.error("Failed to save company settings:", err);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
     } finally {
       setSaving(false);
     }

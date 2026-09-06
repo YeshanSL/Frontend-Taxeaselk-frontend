@@ -202,6 +202,7 @@ export async function getAuditorDashboardSummary(): Promise<AuditorDashboardSumm
 
       return {
         companiesAssigned: summary.companies_assigned ?? 12,
+        underReview: summary.under_review ?? (summary.pending_reviews ?? 4),
         pendingReviews: summary.pending_reviews ?? 4,
         criticalIssues: summary.critical_issues ?? 2,
         completedThisPeriod: summary.completed_reviews ?? 8,
@@ -222,6 +223,7 @@ export async function getAuditorDashboardSummary(): Promise<AuditorDashboardSumm
 
   return {
     companiesAssigned: 12,
+    underReview: 4,
     pendingReviews: 4,
     criticalIssues: 2,
     completedThisPeriod: 8,

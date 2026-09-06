@@ -3,6 +3,7 @@ import {
   DocumentsSummary,
   FinancialsSummary,
   AuditorReviewSummary,
+  AuditorReviewIssue,
   CompanySettings,
 } from "@/lib/types";
 
@@ -55,6 +56,86 @@ function formatLKR(val: any, fallback: string): string {
 }
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
+  // Sync document metrics with the Documents tab (uploaded / uploaded + missing)
+  let docsUploaded = 7;
+  let docsMissing = 2;
+  try {
+    const docs = await getDocumentsSummary();
+    if (docs) {
+      docsUploaded = docs.uploadedCount;
+      docsMissing = docs.missingCount;
+    }
+  } catch {
+    // Keep fallback defaults
+  }
+  const docsTotal = docsUploaded + docsMissing;
+
+  // Sync financial metrics with the Financials tab (Revenue - Expenses = Accounting Profit)
+  let accountingProfit = "Rs. 4.6M";
+  try {
+    const fin = await getFinancialsSummary();
+    if (fin?.accountingProfit) {
+      accountingProfit = fin.accountingProfit;
+    }
+  } catch {
+    // Keep fallback default
+  }
+
+  // Sync progress percentage & attention items with Auditor Review tab (Review Summary)
+  // Only Approved items count towards completed progress (Warnings & Critical are unapproved issues)
+  let calculatedProgressPercent = 75;
+  let auditorIssues: AuditorReviewIssue[] = [];
+  try {
+    const auditorReview = await getAuditorReviewSummary();
+    if (auditorReview) {
+      const { approvedCount, warningsCount, criticalCount, pendingCount } = auditorReview;
+      const totalItems = approvedCount + warningsCount + criticalCount + pendingCount;
+
+      if (totalItems > 0) {
+        // Only approved items count towards progress!
+        calculatedProgressPercent = Math.round((approvedCount / totalItems) * 100);
+      }
+
+      if (auditorReview.issues && auditorReview.issues.length > 0) {
+        auditorIssues = auditorReview.issues;
+      }
+    }
+  } catch {
+    // Fallback
+  }
+
+  const defaultAttentionItems = auditorIssues.length > 0
+    ? auditorIssues.map((issue) => ({
+        id: issue.id,
+        issueId: issue.id,
+        severity: (issue.status === "action_required" ? "critical" : "warning") as "critical" | "warning",
+        title: `${issue.status === "action_required" ? "Action Required" : "Pending Clarification"}: ${issue.title}`,
+        description: issue.comment,
+      }))
+    : [
+        {
+          id: "issue_1",
+          issueId: "issue_1",
+          severity: "critical" as const,
+          title: "Action Required: Entertainment Expense Documentation",
+          description: "Please provide supporting documentation for the entertainment expense. Invoices and business purpose required.",
+        },
+        {
+          id: "issue_2",
+          issueId: "issue_2",
+          severity: "warning" as const,
+          title: "Pending Clarification: Fixed Asset Depreciation Method",
+          description: "Confirm the depreciation method applied is consistent with previous year and company accounting policy.",
+        },
+        {
+          id: "issue_3",
+          issueId: "issue_3",
+          severity: "warning" as const,
+          title: "Pending Clarification: General Ledger November 2025",
+          description: "Minor discrepancy detected in November 2025. Please reconcile and confirm.",
+        },
+      ];
+
   try {
     const authHeaders = await getAuthHeaders();
     const dashRes = await fetch(`${API_URL}/api/dashboard`, {
@@ -62,13 +143,14 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       headers: authHeaders,
     });
 
-
     if (dashRes.ok) {
       const backendData = await dashRes.json();
 
-      let attentionItems: { severity: "critical" | "warning"; title: string; description: string }[] = [];
-      if (Array.isArray(backendData.attention_items)) {
+      let attentionItems: { id?: string; issueId?: string; severity: "critical" | "warning"; title: string; description: string }[] = [];
+      if (Array.isArray(backendData.attention_items) && backendData.attention_items.length > 0) {
         attentionItems = backendData.attention_items.map((i: any) => ({
+          id: i.id ? String(i.id) : undefined,
+          issueId: i.issue_id || i.issueId || (i.id ? String(i.id) : undefined),
           severity: (i.type === "critical" || i.severity === "critical") ? "critical" : "warning",
           title: i.title,
           description: i.message || i.description || "",
@@ -104,38 +186,34 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
         },
       ];
 
-      const docRatio = backendData.metrics?.documents_ratio || "7 / 10";
-      const docParts = String(docRatio).split("/").map((s) => parseInt(s.trim(), 10));
-      const documentsUploaded = !isNaN(docParts[0]) ? docParts[0] : 7;
-      const documentsTotal = !isNaN(docParts[1]) ? docParts[1] : 10;
+      let documentsUploaded = docsUploaded;
+      let documentsTotal = docsTotal;
+
+      if (backendData.metrics?.documents_uploaded !== undefined) {
+        documentsUploaded = Number(backendData.metrics.documents_uploaded);
+        const missing = backendData.metrics?.documents_missing !== undefined
+          ? Number(backendData.metrics.documents_missing)
+          : docsMissing;
+        documentsTotal = documentsUploaded + missing;
+      } else if (backendData.metrics?.documents_ratio) {
+        const docParts = String(backendData.metrics.documents_ratio).split("/").map((s) => parseInt(s.trim(), 10));
+        if (!isNaN(docParts[0]) && !isNaN(docParts[1])) {
+          documentsUploaded = docParts[0];
+          documentsTotal = docParts[1];
+        }
+      }
 
       return {
-        progressPercent: backendData.progress_percent ?? 82,
+        progressPercent: backendData.progress_percent ?? calculatedProgressPercent,
         progressUpdatedAt: backendData.updated_at || "Just now",
         steps,
         documentsUploaded,
         documentsTotal,
-        accountingProfit: formatLKR(backendData.metrics?.accounting_profit, "Rs. 25.4M"),
+        accountingProfit: formatLKR(backendData.metrics?.accounting_profit, accountingProfit),
         taxableIncome: formatLKR(backendData.metrics?.taxable_income, "Rs. 26.1M"),
         estCitLiability: formatLKR(backendData.metrics?.estimated_cit_liability, "Rs. 7.83M"),
         auditorStatus,
-        attentionItems: attentionItems.length > 0 ? attentionItems : [
-          {
-            severity: "critical",
-            title: "Critical: Taxable income mismatch",
-            description: "Calculated taxable income does not reconcile with underlying financial data.",
-          },
-          {
-            severity: "warning",
-            title: "Warning: Fixed Asset Schedule requires confirmation",
-            description: "AI confidence 87% — manual review recommended before proceeding.",
-          },
-          {
-            severity: "warning",
-            title: "Warning: Entertainment expense documentation missing",
-            description: "Supporting documents required for Rs. 300,000 entertainment expense claim.",
-          },
-        ],
+        attentionItems: attentionItems.length > 0 ? attentionItems : defaultAttentionItems,
       };
     }
   } catch {
@@ -143,7 +221,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   }
 
   return {
-    progressPercent: 87,
+    progressPercent: calculatedProgressPercent,
     progressUpdatedAt: "16 Aug 2026 at 11:05",
     steps: [
       { label: "Financial Data", state: "done" },
@@ -152,32 +230,13 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       { label: "Validation", state: "warning" },
       { label: "Auditor Review", state: "pending" },
     ],
-    documentsUploaded: 7,
-    documentsTotal: 10,
-    accountingProfit: "Rs. 25.4M",
+    documentsUploaded: docsUploaded,
+    documentsTotal: docsTotal,
+    accountingProfit: accountingProfit,
     taxableIncome: "Rs. 26.1M",
     estCitLiability: "Rs. 7.83M",
     auditorStatus: "Waiting",
-    attentionItems: [
-      {
-        severity: "critical",
-        title: "Critical: Taxable income mismatch",
-        description:
-          "Calculated taxable income does not reconcile with underlying financial data.",
-      },
-      {
-        severity: "warning",
-        title: "Warning: Fixed Asset Schedule requires confirmation",
-        description:
-          "AI confidence 87% — manual review recommended before proceeding.",
-      },
-      {
-        severity: "warning",
-        title: "Warning: Entertainment expense documentation missing",
-        description:
-          "Supporting documents required for Rs. 300,000 entertainment expense claim.",
-      },
-    ],
+    attentionItems: defaultAttentionItems,
   };
 }
 
@@ -384,7 +443,7 @@ export async function getAuditorReviewSummary(): Promise<AuditorReviewSummary> {
         reviewStatus: auditor?.status || "Waiting for Review",
         submittedDate: auditor?.submitted_date || "16 Aug 2026",
         expectedByDate: auditor?.expected_date || "20 Aug 2026",
-        reviewedPercent: auditor?.progress_percent ?? 80,
+        reviewedPercent: auditor?.progress_percent ?? 75,
         approvedCount: summary?.approved ?? summary?.approved_count ?? 12,
         warningsCount: summary?.warnings ?? summary?.warnings_count ?? 3,
         criticalCount: summary?.critical ?? summary?.critical_count ?? 1,
@@ -410,7 +469,7 @@ export async function getAuditorReviewSummary(): Promise<AuditorReviewSummary> {
     reviewStatus: "Waiting for Review",
     submittedDate: "16 Aug 2026",
     expectedByDate: "20 Aug 2026",
-    reviewedPercent: 80,
+    reviewedPercent: 75,
     approvedCount: 12,
     warningsCount: 3,
     criticalCount: 1,

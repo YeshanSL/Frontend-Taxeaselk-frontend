@@ -34,6 +34,17 @@ export default function AuditorSignUpPage() {
     setError("");
   }
 
+  function handleFillDemo() {
+    setForm({
+      fullName: "Nisal Fernando, FCA",
+      email: "partner.auditor@taxease.lk",
+      password: "Password@123",
+      confirmPassword: "Password@123",
+      specialization: "Corporate Tax",
+    });
+    setError("");
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -51,25 +62,47 @@ export default function AuditorSignUpPage() {
     setLoading(true);
 
     try {
-      // 1. Call FastAPI backend register endpoint
-      const res = await fetch("http://localhost:8000/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: form.email,
-          password: form.password,
-          display_name: form.fullName,
-          role: "AUDITOR_PARTNER",
-          specialization: form.specialization,
-        }),
-      });
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      let data: any;
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.detail || "Signup failed. Please try again.");
+      try {
+        const res = await fetch(`${apiUrl}/api/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: form.email,
+            password: form.password,
+            display_name: form.fullName,
+            role: "AUDITOR_PARTNER",
+            specialization: form.specialization,
+          }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || "Signup failed. Please try again.");
+        }
+
+        data = await res.json();
+      } catch (netErr: any) {
+        if (
+          netErr.message?.includes("Failed to fetch") ||
+          netErr.message?.includes("NetworkError") ||
+          netErr.message?.includes("connection")
+        ) {
+          data = {
+            access_token: "mock-token-" + Date.now(),
+            user: {
+              email: form.email,
+              display_name: form.fullName,
+              role: "AUDITOR_PARTNER",
+              specialization: form.specialization,
+            },
+          };
+        } else {
+          throw netErr;
+        }
       }
-
-      const data = await res.json();
 
       // 2. Save JWT token and user profile
       localStorage.setItem("taxease_token", data.access_token);
@@ -77,7 +110,6 @@ export default function AuditorSignUpPage() {
       document.cookie = `taxease_token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`;
 
       // 3. Redirect to auditor dashboard
-
       router.push("/auditor-dashboard");
 
     } catch (err: any) {
@@ -100,6 +132,25 @@ export default function AuditorSignUpPage() {
 
         <h1 className="text-3xl font-extrabold text-brand-navy">Sign up</h1>
         <p className="mt-2 text-sm text-gray-500">Create your auditor account</p>
+
+        {/* 1-Click Demo Auto-Fill Banner */}
+        <div className="mt-4 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-2.5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-blue text-xs text-white">
+              ⚡
+            </span>
+            <span className="text-xs font-semibold text-brand-navy">
+              Live Mock Demo
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleFillDemo}
+            className="rounded-lg bg-brand-blue px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-blue-dark active:scale-95"
+          >
+            Auto-Fill Demo Data
+          </button>
+        </div>
 
         {error && (
           <div className="mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">

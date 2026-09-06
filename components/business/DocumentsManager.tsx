@@ -85,7 +85,11 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
                     name: result.name || d.name,
                     type: result.type || d.type,
                     status: (result.status === "review_required" ? "review_required" : "processed"),
-                    aiConfidencePercent: result.ai_confidence_percent ?? 96,
+                    aiConfidencePercent:
+                      result.ai_confidence_percent ??
+                      result.confidence_percent ??
+                      result.confidence ??
+                      (result.status === "review_required" ? 85 : 98),
                     uploadedDate: result.uploaded_date || d.uploadedDate,
                   }
                 : d

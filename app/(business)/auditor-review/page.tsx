@@ -1,9 +1,11 @@
-import { User, AlertTriangle } from "lucide-react";
+import { Suspense } from "react";
+import { User } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import ProgressBar from "@/components/ui/ProgressBar";
 import SummaryCountRow from "@/components/business/SummaryCountRow";
 import InviteAuditorButton from "@/components/business/InviteAuditorButton";
+import AuditorIssuesManager from "@/components/business/AuditorIssuesManager";
 import T from "@/components/layout/T";
 import { getAuditorReviewSummary } from "@/lib/api/business";
 
@@ -25,7 +27,6 @@ export default async function AuditorReviewPage() {
         </div>
         <InviteAuditorButton />
       </div>
-
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <Card className="p-6">
@@ -80,53 +81,9 @@ export default async function AuditorReviewPage() {
         </Card>
       </div>
 
-      <Card className="mt-6 p-6">
-        <p className="mb-4 font-semibold text-gray-800">
-          Auditor Comments &amp; Issues
-        </p>
-        <div className="divide-y divide-gray-50">
-          {data.issues.map((issue) => (
-            <div key={issue.id} className="flex gap-3 py-5 first:pt-0 last:pb-0">
-              <div
-                className={
-                  issue.status === "action_required"
-                    ? "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-50"
-                    : "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-50"
-                }
-              >
-                <AlertTriangle
-                  className={
-                    issue.status === "action_required"
-                      ? "h-4 w-4 text-status-critical"
-                      : "h-4 w-4 text-status-warning"
-                  }
-                />
-              </div>
-              <div className="flex-1">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Badge tone={issue.status === "action_required" ? "critical" : "warning"}>
-                      {issue.status === "action_required"
-                        ? "Action Required"
-                        : "Pending Clarification"}
-                    </Badge>
-                    <p className="font-semibold text-gray-900">{issue.title}</p>
-                  </div>
-                  <a href="/financials" className="text-sm font-medium text-brand-blue hover:underline">
-                    View Issue →
-                  </a>
-                </div>
-                <p className="mt-2 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
-                  &ldquo;{issue.comment}&rdquo;
-                </p>
-                <p className="mt-2 text-xs text-gray-400">
-                  Source: {issue.source}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+      <Suspense fallback={<div className="mt-6 h-48 animate-pulse rounded-lg bg-gray-50" />}>
+        <AuditorIssuesManager initialIssues={data.issues} />
+      </Suspense>
     </div>
   );
 }

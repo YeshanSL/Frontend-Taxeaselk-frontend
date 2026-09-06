@@ -15,6 +15,8 @@ export interface DashboardSummary {
   estCitLiability: string;
   auditorStatus: string;
   attentionItems: {
+    id?: string;
+    issueId?: string;
     severity: "critical" | "warning";
     title: string;
     description: string;
@@ -77,6 +79,11 @@ export interface AuditorReviewIssue {
   title: string;
   comment: string;
   source: string;
+  response?: string;
+  correctionNote?: string;
+  resolved?: boolean;
+  attachedFileName?: string;
+  attachedFileSize?: string;
 }
 
 export interface AuditorReviewSummary {
@@ -130,6 +137,7 @@ export interface CompanyRow {
 
 export interface AuditorDashboardSummary {
   companiesAssigned: number;
+  underReview?: number;
   pendingReviews: number;
   criticalIssues: number;
   completedThisPeriod: number;
