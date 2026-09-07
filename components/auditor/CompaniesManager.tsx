@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import {
   Search,
   Plus,
-  MoreVertical,
   X,
   Check,
   Mail,
@@ -298,14 +297,12 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
               <th className="px-5 py-3">CIT Status</th>
               <th className="px-5 py-3">Issues</th>
               <th className="px-5 py-3">Progress</th>
-              <th className="px-5 py-3">Due Date</th>
-              <th className="px-5 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredCompanies.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-5 py-10 text-center text-sm text-gray-400">
+                <td colSpan={6} className="px-5 py-10 text-center text-sm text-gray-400">
                   No companies found matching your search.
                 </td>
               </tr>
@@ -336,12 +333,6 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
                       {c.progressPercent}%
                     </span>
                   </div>
-                </td>
-                <td className="px-5 py-3.5 text-gray-600">{c.dueDate}</td>
-                <td className="px-5 py-3.5 text-right">
-                  <a href="/review-queue" className="text-gray-400 hover:text-gray-600">
-                    <MoreVertical className="ml-auto h-4 w-4" />
-                  </a>
                 </td>
               </tr>
             ))}
