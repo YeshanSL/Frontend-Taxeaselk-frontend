@@ -10,7 +10,6 @@ import {
 import Sidebar, { NavItem } from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
 import T from "@/components/layout/T";
-import DemoQuickSwitcher from "@/components/ui/DemoQuickSwitcher";
 
 const navItems: NavItem[] = [
   { href: "/auditor-dashboard", labelKey: "sidebar.dashboard", icon: <LayoutGrid className="h-4 w-4" /> },
@@ -61,7 +60,6 @@ export default function AuditorLayout({
         />
         <main className="flex-1 overflow-y-auto p-8">{children}</main>
       </div>
-      <DemoQuickSwitcher currentRole="auditor" />
     </div>
   );
 }

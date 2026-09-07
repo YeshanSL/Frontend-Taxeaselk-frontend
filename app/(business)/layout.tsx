@@ -8,7 +8,6 @@ import {
 import Sidebar, { NavItem } from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
 import BusinessTopBarBadges from "@/components/layout/BusinessTopBarBadges";
-import DemoQuickSwitcher from "@/components/ui/DemoQuickSwitcher";
 import { getCompanySettings } from "@/lib/api/business";
 
 const navItems: NavItem[] = [
@@ -54,7 +53,6 @@ export default async function BusinessLayout({
         />
         <main className="flex-1 overflow-y-auto p-8">{children}</main>
       </div>
-      <DemoQuickSwitcher currentRole="business" />
     </div>
   );
 }

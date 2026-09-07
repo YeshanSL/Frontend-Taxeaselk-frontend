@@ -34,17 +34,6 @@ export default function BusinessSignUpPage() {
     setError("");
   }
 
-  function handleFillDemo() {
-    setForm({
-      companyName: "Apex Holdings (Pvt) Ltd",
-      email: "finance@apexholdings.lk",
-      password: "Password@123",
-      confirmPassword: "Password@123",
-      category: "Manufacturing",
-    });
-    setError("");
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -150,25 +139,6 @@ export default function BusinessSignUpPage() {
 
         <h1 className="text-3xl font-extrabold text-brand-navy">Sign up</h1>
         <p className="mt-2 text-sm text-gray-500">Create your business account</p>
-
-        {/* 1-Click Demo Auto-Fill Banner */}
-        <div className="mt-4 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-2.5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-blue text-xs text-white">
-              ⚡
-            </span>
-            <span className="text-xs font-semibold text-brand-navy">
-              Live Mock Demo
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={handleFillDemo}
-            className="rounded-lg bg-brand-blue px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-blue-dark active:scale-95"
-          >
-            Auto-Fill Demo Data
-          </button>
-        </div>
 
         {error && (
           <div className="mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
