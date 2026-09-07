@@ -25,24 +25,19 @@ export interface NavItem {
 interface SidebarProps {
   workspaceLabelKey: TranslationKey; // e.g. "sidebar.companyUser"
   navItems: NavItem[];
-  userName: string;
-  userEmail: string;
-  userInitials: string;
-  settingsHref: string; // where the "Profile" button should send you
+  userName?: string;
+  userEmail?: string;
+  userInitials?: string;
+  settingsHref?: string; // used to link the logo back to the active dashboard
 }
 
 // One Sidebar component drives both the Business and Auditor portals —
 // only the nav items and labels passed in differ. Keeps the two
-// sidebars visually identical without duplicating markup. Labels are
-// translation keys (not literal strings) so the sidebar updates
-// instantly when the language toggle in the top bar is changed.
+// sidebars visually identical without duplicating markup.
 export default function Sidebar({
   workspaceLabelKey,
   navItems,
-  userName,
-  userEmail,
-  userInitials,
-  settingsHref,
+  settingsHref = "/dashboard",
 }: SidebarProps) {
   const pathname = usePathname();
   const { t } = useLanguage();
@@ -112,34 +107,6 @@ export default function Sidebar({
           );
         })}
       </nav>
-
-      <div className="border-t border-gray-100 p-4">
-        <div className="mb-3 flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-blue text-xs font-semibold text-white">
-            {userInitials}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-gray-800">
-              {userName}
-            </p>
-            <p className="truncate text-xs text-gray-400">{userEmail}</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Link
-            href={settingsHref}
-            className="flex-1 rounded-lg border border-gray-200 py-1.5 text-center text-xs font-medium text-gray-600 hover:bg-gray-50"
-          >
-            {t("common.profile")}
-          </Link>
-          <Link
-            href="/sign-in"
-            className="flex-1 rounded-lg border border-gray-200 py-1.5 text-center text-xs font-medium text-gray-600 hover:bg-gray-50"
-          >
-            {t("common.logout")}
-          </Link>
-        </div>
-      </div>
     </aside>
   );
 }
