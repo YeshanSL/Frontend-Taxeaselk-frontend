@@ -14,6 +14,8 @@ import {
   FolderOpen,
   Check,
   Sparkles,
+  MoreVertical,
+  Eye,
 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import StatCard from "@/components/ui/StatCard";
@@ -36,6 +38,7 @@ export default function AuditorDocumentsManager({
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "REVIEW_REQUIRED" | "VERIFIED">("ALL");
   const [toastMessage, setToastMessage] = useState("");
+  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
 
   // Group documents by company
   const companyPacks = useMemo(() => {
@@ -449,7 +452,7 @@ export default function AuditorDocumentsManager({
                   <th className="px-5 py-3">Status</th>
                   <th className="px-5 py-3">AI Confidence</th>
                   <th className="px-5 py-3">Uploaded Date</th>
-                  <th className="px-5 py-3 text-right">Review Action</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -495,31 +498,88 @@ export default function AuditorDocumentsManager({
                         <MiniConfidenceBar percent={doc.aiConfidencePercent} />
                       </td>
                       <td className="px-5 py-4 text-gray-500">{doc.uploadedDate}</td>
-                      <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {doc.status === "review_required" ? (
-                            <Button
-                              variant="secondary"
-                              className="text-xs py-1 px-2.5 border-amber-200 text-amber-800 hover:bg-amber-50"
-                              icon={<CheckCircle2 className="h-3.5 w-3.5 text-amber-600" />}
-                              onClick={() => handleVerifyDoc(doc.id, doc.documentName)}
-                            >
-                              Verify Doc
-                            </Button>
-                          ) : (
-                            <span className="text-xs font-semibold text-emerald-600 inline-flex items-center gap-1">
-                              <Check className="h-3.5 w-3.5" />
-                              Approved
-                            </span>
-                          )}
-
-                          <Button
-                            variant="secondary"
-                            className="text-xs py-1 px-2.5 text-gray-600 hover:text-gray-900"
-                            icon={<Download className="h-3.5 w-3.5" />}
+                      <td className="px-5 py-4 text-right relative">
+                        <div className="flex items-center justify-end">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setOpenActionMenuId(openActionMenuId === doc.id ? null : doc.id)
+                            }
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                            title="Document actions"
                           >
-                            Download
-                          </Button>
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+
+                          {openActionMenuId === doc.id && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setOpenActionMenuId(null)}
+                              />
+                              <div className="absolute right-5 top-12 z-20 w-44 rounded-xl border border-gray-100 bg-white p-1.5 shadow-lg text-left text-xs animate-in fade-in zoom-in-95 duration-100">
+                                {doc.status === "review_required" ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleVerifyDoc(doc.id, doc.documentName);
+                                      setOpenActionMenuId(null);
+                                    }}
+                                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-emerald-700 hover:bg-emerald-50 transition-colors"
+                                  >
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                                    <span>Verify Document</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setDocuments((prev) =>
+                                        prev.map((d) =>
+                                          d.id === doc.id
+                                            ? { ...d, status: "review_required" as const }
+                                            : d
+                                        )
+                                      );
+                                      setOpenActionMenuId(null);
+                                      setToastMessage(`"${doc.documentName}" marked as review required.`);
+                                      setTimeout(() => setToastMessage(""), 3500);
+                                    }}
+                                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-amber-700 hover:bg-amber-50 transition-colors"
+                                  >
+                                    <AlertCircle className="h-4 w-4 text-amber-600" />
+                                    <span>Mark for Review</span>
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenActionMenuId(null);
+                                    setToastMessage(`Downloading ${doc.documentName}...`);
+                                    setTimeout(() => setToastMessage(""), 3000);
+                                  }}
+                                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                  <Download className="h-4 w-4 text-gray-400" />
+                                  <span>Download</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenActionMenuId(null);
+                                    setToastMessage(`Opening ${doc.documentName}...`);
+                                    setTimeout(() => setToastMessage(""), 3000);
+                                  }}
+                                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                  <Eye className="h-4 w-4 text-gray-400" />
+                                  <span>View Preview</span>
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
