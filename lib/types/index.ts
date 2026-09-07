@@ -295,12 +295,22 @@ export interface DiscussionMessage {
 export interface DiscussionThread {
   id: string;
   companyName: string;
+  auditorName?: string;
   topic: string;
+  category?: string;
   lastMessage: string;
   lastUpdated: string;
   unreadCount: number;
   status: "Open" | "Closed";
   messages: DiscussionMessage[];
+}
+
+export interface BusinessDiscussionSummary {
+  assignedAuditor: {
+    name: string;
+    firm: string;
+  };
+  threads: DiscussionThread[];
 }
 
 export interface AuditorDiscussionsSummary {

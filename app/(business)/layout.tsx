@@ -3,6 +3,7 @@ import {
   FileText,
   DollarSign,
   UserCheck,
+  MessagesSquare,
   Settings as SettingsIcon,
 } from "lucide-react";
 import Sidebar, { NavItem } from "@/components/layout/Sidebar";
@@ -15,6 +16,7 @@ const navItems: NavItem[] = [
   { href: "/documents", labelKey: "sidebar.documents", icon: <FileText className="h-4 w-4" /> },
   { href: "/financials", labelKey: "sidebar.financials", icon: <DollarSign className="h-4 w-4" /> },
   { href: "/auditor-review", labelKey: "sidebar.auditorReview", icon: <UserCheck className="h-4 w-4" /> },
+  { href: "/discussions", labelKey: "sidebar.discussions", icon: <MessagesSquare className="h-4 w-4" /> },
   { href: "/settings", labelKey: "sidebar.settings", icon: <SettingsIcon className="h-4 w-4" /> },
 ];
 

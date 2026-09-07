@@ -17,7 +17,7 @@ const navItems: NavItem[] = [
   { href: "/auditor-documents", labelKey: "sidebar.documents", icon: <FileText className="h-4 w-4" /> },
   { href: "/review-queue", labelKey: "sidebar.reviewQueue", icon: <ClipboardList className="h-4 w-4" />, badge: 4 },
   { href: "/requests", labelKey: "sidebar.requests", icon: <Inbox className="h-4 w-4" />, badge: 3 },
-  { href: "/discussions", labelKey: "sidebar.discussions", icon: <MessagesSquare className="h-4 w-4" />, badge: 1 },
+  { href: "/auditor-discussions", labelKey: "sidebar.discussions", icon: <MessagesSquare className="h-4 w-4" />, badge: 1 },
   { href: "/auditor-settings", labelKey: "sidebar.settings", icon: <SettingsIcon className="h-4 w-4" /> },
 ];
 
