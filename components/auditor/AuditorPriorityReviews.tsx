@@ -67,10 +67,10 @@ export default function AuditorPriorityReviews({ initialReviews }: Props) {
           </p>
         </div>
         <Link
-          href="/review-queue"
+          href="/responses"
           className="text-sm font-medium text-brand-blue hover:underline"
         >
-          View All Reviews →
+          View Responses →
         </Link>
       </div>
 
@@ -118,7 +118,7 @@ export default function AuditorPriorityReviews({ initialReviews }: Props) {
                     </Button>
                   )
                 ) : (
-                  <Link href="/review-queue">
+                  <Link href="/auditor-documents">
                     <Button variant="primary">Review</Button>
                   </Link>
                 )}

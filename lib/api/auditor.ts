@@ -8,6 +8,9 @@ import {
   AuditorDocumentsSummary,
   AuditorRequestsSummary,
   AuditorDiscussionsSummary,
+  AuditorResponsesSummary,
+  ClientResponseItem,
+  AttachedResponseFile,
   CitStatus,
 } from "@/lib/types";
 
@@ -953,29 +956,22 @@ export async function getAuditorDiscussionsSummary(): Promise<AuditorDiscussions
       {
         id: "disc_1",
         companyName: "ABC Holdings (Pvt) Ltd",
-        topic: "Reconciliation of Taxable Income & GL Variance",
+        topic: "Input VAT Reconciliation Discrepancy (Nov 2025)",
         lastMessage: "We have attached the updated breakdown for the November discrepancy.",
         lastUpdated: "10 mins ago",
-        unreadCount: 2,
+        unreadCount: 1,
         status: "Open",
         messages: [
           {
             id: "m_1",
             sender: "Professional Auditor",
             senderRole: "Auditor",
-            text: "Hello ABC team, we noticed a minor variance in November 2025 General Ledger reconciliation. Could you clarify the entries on line 42?",
-            timestamp: "Yesterday, 14:30",
+            text: "Hello team, we noticed a Rs. 145,000 variance between RAMIS return and General Ledger for Nov 2025.",
+            timestamp: "Yesterday, 3:45 PM",
           },
           {
             id: "m_2",
-            sender: "Admin User (ABC Holdings)",
-            senderRole: "Company",
-            text: "Hello! Our finance team reviewed the ledger. It was a timing difference in supplier invoice recognition.",
-            timestamp: "Today, 09:15",
-          },
-          {
-            id: "m_3",
-            sender: "Admin User (ABC Holdings)",
+            sender: "ABC Accountant",
             senderRole: "Company",
             text: "We have attached the updated breakdown for the November discrepancy.",
             timestamp: "10 mins ago",
@@ -1029,3 +1025,196 @@ export async function getAuditorDiscussionsSummary(): Promise<AuditorDiscussions
   };
 }
 
+// In-memory mock response state for interactive demo
+let MOCK_RESPONSES: ClientResponseItem[] = [
+  {
+    id: "resp_1",
+    requestId: "REQ-2026-001",
+    requestTitle: "Supporting invoices for Rs. 300,000 entertainment expenses",
+    companyName: "ABC Holdings (Pvt) Ltd",
+    category: "Entertainment Expenses",
+    clientResponseNote:
+      "Attached please find the 4 itemized tax invoices along with executive justification memos for client business meetings during Q2 & Q3.",
+    submittedBy: "Nimal Perera (Financial Controller)",
+    submittedAt: "Today, 10:30 AM",
+    status: "unreviewed",
+    attachedFiles: [
+      {
+        id: "f_1",
+        name: "Entertainment_Invoices_Q2_Q3.pdf",
+        size: "3.4 MB",
+        type: "PDF",
+        uploadedAt: "Today, 10:28 AM",
+      },
+      {
+        id: "f_2",
+        name: "Client_Meeting_Justifications.xlsx",
+        size: "420 KB",
+        type: "Spreadsheet",
+        uploadedAt: "Today, 10:29 AM",
+      },
+    ],
+  },
+  {
+    id: "resp_2",
+    requestId: "REQ-2026-002",
+    requestTitle: "Fixed Asset depreciation schedule clarification",
+    companyName: "Lanka Trading (Pvt) Ltd",
+    category: "Fixed Assets",
+    clientResponseNote:
+      "We have reconciled the depreciation rates for plant and machinery with last year's rate (12.5% straight line). Please see the updated schedule.",
+    submittedBy: "Kasun Wijesinghe (Chief Accountant)",
+    submittedAt: "Yesterday, 4:15 PM",
+    status: "unreviewed",
+    attachedFiles: [
+      {
+        id: "f_3",
+        name: "Reconciled_Depreciation_Schedule_2025_26.xlsx",
+        size: "1.8 MB",
+        type: "Spreadsheet",
+        uploadedAt: "Yesterday, 4:10 PM",
+      },
+    ],
+  },
+  {
+    id: "resp_3",
+    requestId: "REQ-2026-005",
+    requestTitle: "Withholding tax deduction receipts for export services",
+    companyName: "Green Valley Exports (Pvt) Ltd",
+    category: "Withholding Tax",
+    clientResponseNote:
+      "Attached bank-certified WHT deduction certificates (Form T-10) for overseas remittance credits claimed against CIT.",
+    submittedBy: "Sunil Jayawardena (Tax Manager)",
+    submittedAt: "15 Aug 2026, 2:50 PM",
+    status: "unreviewed",
+    attachedFiles: [
+      {
+        id: "f_4",
+        name: "Form_T10_WHT_Certificates_Compiled.pdf",
+        size: "4.2 MB",
+        type: "PDF",
+        uploadedAt: "15 Aug 2026, 2:45 PM",
+      },
+    ],
+  },
+  {
+    id: "resp_4",
+    requestId: "REQ-2026-004",
+    requestTitle: "Inventory valuation methodology sign-off",
+    companyName: "Ocean Foods (Pvt) Ltd",
+    category: "Inventory",
+    clientResponseNote:
+      "Stock take certification and valuation summary letter signed by our CFO and external valuation expert.",
+    submittedBy: "Dilshan Fernando (CFO)",
+    submittedAt: "14 Aug 2026, 11:20 AM",
+    status: "resolved",
+    attachedFiles: [
+      {
+        id: "f_5",
+        name: "CFO_Signed_Stock_Take_Certificate.pdf",
+        size: "2.1 MB",
+        type: "PDF",
+        uploadedAt: "14 Aug 2026, 11:18 AM",
+      },
+      {
+        id: "f_6",
+        name: "Physical_Inventory_Valuation_Model.xlsx",
+        size: "5.6 MB",
+        type: "Spreadsheet",
+        uploadedAt: "14 Aug 2026, 11:19 AM",
+      },
+    ],
+  },
+  {
+    id: "resp_5",
+    requestId: "REQ-2026-003",
+    requestTitle: "Bank confirmation letter for primary commercial account",
+    companyName: "Tech Solutions (Pvt) Ltd",
+    category: "Bank Confirmation",
+    clientResponseNote:
+      "Direct standard bank confirmation certificate issued by Commercial Bank PLC for USD & LKR accounts as of 31st March 2026.",
+    submittedBy: "Aravinda Silva (Finance Director)",
+    submittedAt: "13 Aug 2026, 09:15 AM",
+    status: "resolved",
+    attachedFiles: [
+      {
+        id: "f_7",
+        name: "Commercial_Bank_Confirmation_Letter_FY26.pdf",
+        size: "1.2 MB",
+        type: "PDF",
+        uploadedAt: "13 Aug 2026, 09:10 AM",
+      },
+    ],
+  },
+];
+
+export async function getAuditorResponsesSummary(): Promise<AuditorResponsesSummary> {
+  try {
+    const authHeaders = await getAuthHeaders();
+    const res = await fetch(`${API_URL}/api/auditor/responses`, {
+      headers: authHeaders,
+      cache: "no-store",
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.responses)) {
+        return data;
+      }
+    }
+  } catch {
+    // Fallback to local mock data
+  }
+
+  const unreviewedCount = MOCK_RESPONSES.filter((r) => r.status === "unreviewed").length;
+  const resolvedCount = MOCK_RESPONSES.filter((r) => r.status === "resolved").length;
+  const revisionCount = MOCK_RESPONSES.filter((r) => r.status === "revision_requested").length;
+
+  return {
+    totalResponses: MOCK_RESPONSES.length,
+    unreviewedCount,
+    resolvedCount,
+    revisionCount,
+    responses: [...MOCK_RESPONSES],
+  };
+}
+
+export async function resolveAuditorResponse(responseId: string): Promise<{ success: boolean }> {
+  try {
+    const authHeaders = await getAuthHeaders();
+    await fetch(`${API_URL}/api/auditor/responses/${responseId}/resolve`, {
+      method: "POST",
+      headers: authHeaders,
+    });
+  } catch {
+    // fallback
+  }
+
+  MOCK_RESPONSES = MOCK_RESPONSES.map((r) =>
+    r.id === responseId ? { ...r, status: "resolved" } : r
+  );
+  return { success: true };
+}
+
+export async function requestAuditorRevision(
+  responseId: string,
+  revisionNote: string
+): Promise<{ success: boolean }> {
+  try {
+    const authHeaders = await getAuthHeaders();
+    await fetch(`${API_URL}/api/auditor/responses/${responseId}/revision`, {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({ note: revisionNote }),
+    });
+  } catch {
+    // fallback
+  }
+
+  MOCK_RESPONSES = MOCK_RESPONSES.map((r) =>
+    r.id === responseId
+      ? { ...r, status: "revision_requested", revisionNote }
+      : r
+  );
+  return { success: true };
+}

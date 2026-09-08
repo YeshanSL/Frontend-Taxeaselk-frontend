@@ -282,6 +282,39 @@ export interface AuditorRequestsSummary {
   requests: AuditorRequestRow[];
 }
 
+// --- Auditor Responses page ---
+
+export interface AttachedResponseFile {
+  id: string;
+  name: string;
+  size: string;
+  type: string;
+  uploadedAt: string;
+  downloadUrl?: string;
+}
+
+export interface ClientResponseItem {
+  id: string;
+  requestId: string;
+  requestTitle: string;
+  companyName: string;
+  category: string;
+  clientResponseNote: string;
+  submittedBy: string;
+  submittedAt: string;
+  status: "unreviewed" | "resolved" | "revision_requested";
+  attachedFiles: AttachedResponseFile[];
+  revisionNote?: string;
+}
+
+export interface AuditorResponsesSummary {
+  totalResponses: number;
+  unreviewedCount: number;
+  resolvedCount: number;
+  revisionCount: number;
+  responses: ClientResponseItem[];
+}
+
 // --- Auditor Discussions page ---
 
 export interface DiscussionMessage {
