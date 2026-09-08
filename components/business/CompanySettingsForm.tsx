@@ -5,7 +5,7 @@ import { Field, Input, Select } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import { CompanySettings } from "@/lib/types";
 import { updateCompanyTaxProfile } from "@/lib/api/business";
-import { Building2, FileText, CheckCircle2, Info } from "lucide-react";
+import { Building2, FileText, CheckCircle2 } from "lucide-react";
 
 export default function CompanySettingsForm({
   initial,
@@ -114,7 +114,7 @@ export default function CompanySettingsForm({
             Corporate Entity &amp; Inland Revenue Registration
           </h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            Configure official company identity, IRD tax numbers, and applicable Sri Lankan CIT rate schedule.
+            Configure official company identity and IRD tax registrations.
           </p>
         </div>
 
@@ -174,7 +174,7 @@ export default function CompanySettingsForm({
       <div className="border-t border-gray-100 pt-6">
         <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 flex items-center gap-1.5">
           <FileText className="h-3.5 w-3.5 text-gray-400" />
-          2. Sri Lanka IRD Tax Registrations &amp; Classification
+          2. Sri Lanka IRD Tax Registrations
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -203,65 +203,6 @@ export default function CompanySettingsForm({
               placeholder="e.g. 134578291-7000"
             />
           </Field>
-
-          <Field label="CIT Tax Rate Schedule" required>
-            <Select
-              value={form.citTaxRateCategory || "standard_30"}
-              onChange={(e) =>
-                update(
-                  "citTaxRateCategory",
-                  e.target.value as CompanySettings["citTaxRateCategory"]
-                )
-              }
-            >
-              <option value="standard_30">Standard Corporate Tax Rate (30%)</option>
-              <option value="sme_export_14">SME / Exporting / Manufacturing (14%)</option>
-              <option value="concessionary_15">Concessionary / BOI Approved Rate (15%)</option>
-              <option value="other">Other Qualifying / Exempt Status</option>
-            </Select>
-          </Field>
-        </div>
-
-        {/* SVAT Registered Card */}
-        <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50/70 p-4">
-          <div className="flex items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <input
-                id="svat-checkbox"
-                type="checkbox"
-                checked={form.isSvatRegistered ?? false}
-                onChange={(e) => update("isSvatRegistered", e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue cursor-pointer mt-0.5 sm:mt-0"
-              />
-              <label htmlFor="svat-checkbox" className="cursor-pointer">
-                <span className="text-sm font-medium text-gray-800">
-                  Registered under Simplified VAT (SVAT) Scheme
-                </span>
-                <p className="text-xs text-gray-500">
-                  Enables auto-generation of SVAT Credit Vouchers (Form 04) and Registered Identified Purchaser (RIP) schedules.
-                </p>
-              </label>
-            </div>
-          </div>
-
-          {form.isSvatRegistered && (
-            <div className="mt-3 pt-3 border-t border-gray-200/60 max-w-sm">
-              <Field label="SVAT Registration Number (RIP / RIS)">
-                <Input
-                  value={form.svatNumber || ""}
-                  onChange={(e) => update("svatNumber", e.target.value)}
-                  placeholder="e.g. SVAT004921"
-                />
-              </Field>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 flex items-start gap-2 rounded-lg bg-blue-50/70 p-3 text-xs text-blue-700 border border-blue-100">
-          <Info className="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
-          <p>
-            Under the Inland Revenue Act No. 24 of 2017 (as amended), corporate taxable income is assessed at 30% standard rate, or 14% for eligible Small and Medium Enterprises with gross turnover not exceeding LKR 500Mn.
-          </p>
         </div>
       </div>
 
