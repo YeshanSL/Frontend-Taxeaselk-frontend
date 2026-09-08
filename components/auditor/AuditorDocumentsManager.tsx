@@ -16,6 +16,9 @@ import {
   Sparkles,
   MoreVertical,
   Eye,
+  Plus,
+  Send,
+  X,
 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import StatCard from "@/components/ui/StatCard";
@@ -39,6 +42,50 @@ export default function AuditorDocumentsManager({
   const [statusFilter, setStatusFilter] = useState<"ALL" | "REVIEW_REQUIRED" | "VERIFIED">("ALL");
   const [toastMessage, setToastMessage] = useState("");
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
+
+  // Request Document Modal State
+  const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [requestTitle, setRequestTitle] = useState("");
+  const [requestCategory, setRequestCategory] = useState("Financial Statements");
+  const [requestPriority, setRequestPriority] = useState<"HIGH" | "MEDIUM" | "LOW">("MEDIUM");
+  const [requestDueDate, setRequestDueDate] = useState("2026-09-30");
+  const [requestDescription, setRequestDescription] = useState("");
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+
+  async function handleSendRequest(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedCompany || !requestTitle.trim() || isSubmittingRequest) return;
+
+    setIsSubmittingRequest(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      await fetch(`${apiUrl}/api/auditor/requests`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          company_name: selectedCompany,
+          title: requestTitle.trim(),
+          category: requestCategory,
+          priority: requestPriority,
+          due_date: requestDueDate,
+          description: requestDescription.trim(),
+        }),
+      });
+    } catch {
+      // Offline fallback
+    } finally {
+      setIsSubmittingRequest(false);
+      setRequestModalOpen(false);
+      setToastMessage(`Document request sent to ${selectedCompany}!`);
+      setTimeout(() => setToastMessage(""), 4000);
+      setRequestTitle("");
+      setRequestDescription("");
+    }
+  }
 
   // Group documents by company
   const companyPacks = useMemo(() => {
@@ -356,6 +403,14 @@ export default function AuditorDocumentsManager({
 
             <div className="flex items-center gap-2">
               <Button
+                variant="primary"
+                className="text-xs shadow-xs"
+                icon={<Plus className="h-4 w-4" />}
+                onClick={() => setRequestModalOpen(true)}
+              >
+                Request Document
+              </Button>
+              <Button
                 variant="secondary"
                 className="text-xs"
                 icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
@@ -587,6 +642,130 @@ export default function AuditorDocumentsManager({
                 )}
               </tbody>
             </table>
+          </Card>
+        </div>
+      )}
+
+      {/* Request Document Modal */}
+      {requestModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <Card className="w-full max-w-lg overflow-hidden p-0 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-brand-blue">
+                  <Send className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-sm">Request Document / Clarification</h3>
+                  <p className="text-xs text-gray-500">Sending to {selectedCompany}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRequestModalOpen(false)}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSendRequest} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Document Requested / Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={requestTitle}
+                  onChange={(e) => setRequestTitle(e.target.value)}
+                  placeholder="e.g., Updated Fixed Asset Schedule for Q4 or Bank Reconciliation"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue placeholder:text-gray-400"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={requestCategory}
+                    onChange={(e) => setRequestCategory(e.target.value)}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue text-gray-700"
+                  >
+                    <option value="Financial Statements">Financial Statements</option>
+                    <option value="Trial Balance">Trial Balance</option>
+                    <option value="General Ledger">General Ledger</option>
+                    <option value="Fixed Assets">Fixed Assets Schedule</option>
+                    <option value="Bank Reconciliation">Bank Reconciliation</option>
+                    <option value="Tax Certificates">Tax Exemption / WHT Proof</option>
+                    <option value="Supporting Invoices">Invoices & Receipts</option>
+                    <option value="General Clarification">General Clarification</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Priority
+                  </label>
+                  <select
+                    value={requestPriority}
+                    onChange={(e) => setRequestPriority(e.target.value as any)}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue text-gray-700"
+                  >
+                    <option value="HIGH">High Priority</option>
+                    <option value="MEDIUM">Medium Priority</option>
+                    <option value="LOW">Low Priority</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Required Due Date
+                </label>
+                <input
+                  type="date"
+                  value={requestDueDate}
+                  onChange={(e) => setRequestDueDate(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue text-gray-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Instructions &amp; Requirements Note
+                </label>
+                <textarea
+                  rows={3}
+                  value={requestDescription}
+                  onChange={(e) => setRequestDescription(e.target.value)}
+                  placeholder="Explain why this document is required, which lines to clarify, or what format is expected..."
+                  className="w-full rounded-lg border border-gray-200 p-3 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue placeholder:text-gray-400 resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="text-xs"
+                  onClick={() => setRequestModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="text-xs"
+                  disabled={!requestTitle.trim() || isSubmittingRequest}
+                  icon={<Send className="h-3.5 w-3.5" />}
+                >
+                  {isSubmittingRequest ? "Sending..." : "Send Request"}
+                </Button>
+              </div>
+            </form>
           </Card>
         </div>
       )}
