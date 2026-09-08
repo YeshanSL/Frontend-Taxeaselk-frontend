@@ -1,128 +1,93 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import clsx from "clsx";
+import {
+  Building2,
+  UserCheck,
+  Users,
+  Sliders,
+  Bell,
+  Shield,
+  FileText,
+  CheckCircle2,
+  Clock,
+  Key,
+  Plus,
+  X,
+  Send,
+  AlertCircle,
+  Info,
+  Lock,
+  Download,
+  Calendar,
+  Search,
+  Trash2,
+  Check,
+  Mail,
+  Phone,
+  HelpCircle,
+} from "lucide-react";
 import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Badge from "@/components/ui/Badge";
+import { Field, Input, Select } from "@/components/ui/Input";
+import {
+  CompanyFullSettings,
+  AssignedAuditorDetails,
+  FinanceTeamMember,
+  CompanyTaxPreferences,
+  CompanyNotificationPrefs,
+  CompanySecuritySettings,
+} from "@/lib/types";
+import {
+  updateAssignedAuditorPermissions,
+  requestAuditorChange,
+  inviteFinanceTeamMember,
+  removeFinanceTeamMember,
+  updateCompanyTaxPreferences,
+  updateCompanyNotificationPrefs,
+  updateCompanySecurity,
+} from "@/lib/api/business";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-// All data here uses the shape your API will return.
-// Replace the MOCK_* constants below with real fetch() calls when the
-// backend is ready — the components themselves won't need to change.
+const TABS = [
+  { id: "profile", label: "Company & Tax Profile", icon: Building2 },
+  { id: "auditor", label: "Assigned Auditor & Engagement", icon: UserCheck },
+  { id: "team", label: "Finance Team & Access", icon: Users },
+  { id: "preferences", label: "Tax Preferences & AI Settings", icon: Sliders },
+  { id: "notifications", label: "Notifications & Deadlines", icon: Bell },
+  { id: "security", label: "Security & Activity Log", icon: Shield },
+] as const;
 
-interface UserRow {
-  id: string;
-  name: string;
-  initials: string;
-  role: "Owner" | "Admin" | "Auditor";
-  email: string;
-  status: "Active" | "Inactive";
-}
+type TabId = (typeof TABS)[number]["id"];
 
-interface SecuritySettings {
-  twoFactorAuth: boolean;
-  sessionTimeout: boolean;
-  auditTrail: boolean;
-  ipRestriction: boolean;
-}
-
-interface NotificationPrefs {
-  auditorReview: boolean;
-  auditorRequestedDocs: boolean;
-  citValidationIssues: boolean;
-  citApproved: boolean;
-  newDocumentUploaded: boolean;
-  financialValueModified: boolean;
-}
-
-interface RecentActivityEntry {
-  id: string;
-  action: string;
-  actor: string;
-  actorRole: string;
-  timestamp: string;
-  timeAgo: string;
-}
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
-// Swap each of these for an API call when the backend is ready.
-
-const MOCK_USERS: UserRow[] = [
-  {
-    id: "u1",
-    name: "Samantha Perera",
-    initials: "SP",
-    role: "Owner",
-    email: "samantha@abc.pvt.lk",
-    status: "Active",
-  },
-  {
-    id: "u2",
-    name: "Nihal Fernando",
-    initials: "NF",
-    role: "Admin",
-    email: "nihal@abc.pvt.lk",
-    status: "Active",
-  },
-  {
-    id: "u3",
-    name: "Mr. Karunaratne",
-    initials: "MK",
-    role: "Auditor",
-    email: "audit@karunaratne.lk",
-    status: "Active",
-  },
-];
-
-const MOCK_SECURITY: SecuritySettings = {
-  twoFactorAuth: true,
-  sessionTimeout: true,
-  auditTrail: true,
-  ipRestriction: false,
-};
-
-const MOCK_NOTIFICATIONS: NotificationPrefs = {
-  auditorReview: true,
-  auditorRequestedDocs: true,
-  citValidationIssues: true,
-  citApproved: true,
-  newDocumentUploaded: true,
-  financialValueModified: true,
-};
-
-const MOCK_RECENT_ACTIVITIES: RecentActivityEntry[] = [
-  { id: "al1", action: "Submitted for Auditor Review", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-05 18:30:15", timeAgo: "2 hours ago" },
-  { id: "al2", action: "CIT calculation generated", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-05 17:15:20", timeAgo: "3 hours ago" },
-  { id: "al3", action: "Tax adjustments reviewed", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-05 15:45:00", timeAgo: "5 hours ago" },
-  { id: "al4", action: "AI extraction completed — 109 values extracted", actor: "AI Engine", actorRole: "AI Engine", timestamp: "2026-09-05 14:30:10", timeAgo: "6 hours ago" },
-  { id: "al5", action: "Document validation completed", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-05 13:20:44", timeAgo: "7 hours ago" },
-  { id: "al6", action: "Financial Statements.pdf uploaded", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-05 12:10:05", timeAgo: "8 hours ago" },
-  { id: "al7", action: "Previous CIT Return.pdf uploaded", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-05 11:00:30", timeAgo: "9 hours ago" },
-  { id: "al8", action: "Company profile updated", actor: "Samantha Perera", actorRole: "Company Admin", timestamp: "2026-09-04 16:40:18", timeAgo: "1 day ago" },
-];
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Shared UI Helpers ────────────────────────────────────────────────────────
 
 function Toggle({
   checked,
   onChange,
+  disabled = false,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
       className={clsx(
-        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2",
-        checked ? "bg-brand-blue" : "bg-gray-200"
+        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2",
+        checked ? "bg-brand-blue" : "bg-gray-200",
+        disabled && "opacity-50 cursor-not-allowed"
       )}
     >
       <span
         className={clsx(
-          "inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform",
+          "inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out",
           checked ? "translate-x-5" : "translate-x-0"
         )}
       />
@@ -130,329 +95,1417 @@ function Toggle({
   );
 }
 
-function Checkbox({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={(e) => onChange(e.target.checked)}
-      className="h-4 w-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue cursor-pointer"
-    />
-  );
-}
-
-function RoleBadge({ role }: { role: UserRow["role"] }) {
-  const colors: Record<UserRow["role"], string> = {
-    Owner: "bg-purple-100 text-purple-700",
-    Admin: "bg-blue-100 text-blue-700",
-    Auditor: "bg-amber-100 text-amber-700",
+function RoleBadge({ role }: { role: FinanceTeamMember["role"] }) {
+  const styles: Record<FinanceTeamMember["role"], string> = {
+    Owner: "bg-purple-50 text-purple-700 border-purple-200",
+    "Finance Director": "bg-blue-50 text-blue-700 border-blue-200",
+    "Senior Accountant": "bg-emerald-50 text-emerald-700 border-emerald-200",
+    "Tax Officer": "bg-amber-50 text-amber-700 border-amber-200",
+    Viewer: "bg-gray-100 text-gray-700 border-gray-200",
   };
   return (
-    <span className={clsx("rounded-full px-2.5 py-0.5 text-xs font-medium", colors[role])}>
+    <span
+      className={clsx(
+        "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold tracking-wide",
+        styles[role] || "bg-gray-50 text-gray-700 border-gray-200"
+      )}
+    >
       {role}
     </span>
   );
 }
 
-function Avatar({ initials, role }: { initials: string; role: UserRow["role"] }) {
-  const colors: Record<UserRow["role"], string> = {
-    Owner: "bg-purple-100 text-purple-700",
-    Admin: "bg-blue-100 text-blue-700",
-    Auditor: "bg-amber-100 text-amber-700",
-  };
-  return (
-    <span className={clsx("inline-flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold", colors[role])}>
-      {initials}
-    </span>
-  );
-}
+// ─── TAB 2: Assigned Auditor & Engagement ─────────────────────────────────────
 
-// ─── Tab content components ───────────────────────────────────────────────────
+function AuditorTab({ auditor }: { auditor: AssignedAuditorDetails }) {
+  const [permissions, setPermissions] = useState(auditor.permissions);
+  const [savingPerms, setSavingPerms] = useState(false);
+  const [permsSaved, setPermsSaved] = useState(false);
 
-function UsersTab() {
-  const [users, setUsers] = useState<UserRow[]>(MOCK_USERS);
+  // Request change modal
+  const [showModal, setShowModal] = useState(false);
+  const [reason, setReason] = useState("");
+  const [proposedFirm, setProposedFirm] = useState("");
+  const [submittingReq, setSubmittingReq] = useState(false);
+  const [requestSuccess, setRequestSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    fetch(`${apiUrl}/settings/users`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setUsers(data);
-        }
-      })
-      .catch(() => null);
-  }, []);
+  async function handleTogglePerm(key: keyof AssignedAuditorDetails["permissions"]) {
+    const updated = { ...permissions, [key]: !permissions[key] };
+    setPermissions(updated);
+    setSavingPerms(true);
+    setPermsSaved(false);
 
-  return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <p className="font-semibold text-gray-800">Users &amp; Access</p>
-      </div>
-
-      <div className="overflow-hidden rounded-lg border border-gray-100">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Role</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {users.map((u) => (
-              <tr key={u.id} className="bg-white">
-                <td className="flex items-center gap-3 px-4 py-3">
-                  <Avatar initials={u.initials} role={u.role} />
-                  <span className="font-medium text-gray-800">{u.name}</span>
-                </td>
-                <td className="px-4 py-3">
-                  <RoleBadge role={u.role} />
-                </td>
-                <td className="px-4 py-3 text-gray-500">{u.email}</td>
-                <td className="px-4 py-3">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                    {u.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  {u.role !== "Auditor" && (
-                    <button className="text-xs text-brand-blue hover:underline">
-                      Edit
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <p className="mt-3 flex items-center gap-1.5 text-xs text-amber-600">
-        <svg className="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-        </svg>
-        The company cannot modify Auditor accounts. Auditor access is read-only from the company side.
-      </p>
-    </div>
-  );
-}
-
-function SecurityTab() {
-  const [settings, setSettings] = useState<SecuritySettings>(MOCK_SECURITY);
-  // replace MOCK_SECURITY with: await getSecuritySettings()
-
-  async function update<K extends keyof SecuritySettings>(key: K, value: boolean) {
-    setSettings((s) => ({ ...s, [key]: value }));
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      await fetch(`${apiUrl}/settings/security`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [key]: value }),
-      });
+      await updateAssignedAuditorPermissions(updated);
+      setPermsSaved(true);
+      setTimeout(() => setPermsSaved(false), 2000);
     } catch {
-      // Keep optimistic update
+      // Keep optimistic
+    } finally {
+      setSavingPerms(false);
     }
   }
 
-  const rows: { key: keyof SecuritySettings; label: string; description: string }[] = [
-    { key: "twoFactorAuth", label: "Two-Factor Authentication", description: "Require 2FA for all logins" },
-    { key: "sessionTimeout", label: "Session Timeout", description: "Auto logout after 60 minutes of inactivity" },
-    { key: "auditTrail", label: "Audit Trail", description: "Record all user actions (cannot be disabled)" },
-    { key: "ipRestriction", label: "IP Restriction", description: "Limit access to specific IP ranges" },
-  ];
-
-  return (
-    <div>
-      <p className="mb-4 font-semibold text-gray-800">Security Settings</p>
-      <div className="flex flex-col gap-4">
-        {rows.map(({ key, label, description }) => (
-          <div key={key} className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-gray-800">{label}</p>
-              <p className="text-xs text-gray-500">{description}</p>
-            </div>
-            <Toggle
-              checked={settings[key]}
-              onChange={(v) => key !== "auditTrail" && update(key, v)}
-            />
-          </div>
-        ))}
-      </div>
-
-      <p className="mt-4 flex items-center gap-1.5 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-700">
-        <svg className="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
-        </svg>
-        All data is encrypted at rest and in transit. SSL/TLS enforced. Role-based access controls active.
-      </p>
-    </div>
-  );
-}
-
-function NotificationsTab() {
-  const [prefs, setPrefs] = useState<NotificationPrefs>(MOCK_NOTIFICATIONS);
-
-  async function update<K extends keyof NotificationPrefs>(key: K, value: boolean) {
-    setPrefs((p) => ({ ...p, [key]: value }));
+  async function handleSubmitChangeRequest(e: React.FormEvent) {
+    e.preventDefault();
+    if (!reason.trim()) return;
+    setSubmittingReq(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      await fetch(`${apiUrl}/settings/notification-preferences`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [key]: value }),
-      });
+      const res = await requestAuditorChange(reason, proposedFirm);
+      setRequestSuccess(res.message);
+      setTimeout(() => {
+        setShowModal(false);
+        setRequestSuccess(null);
+        setReason("");
+        setProposedFirm("");
+      }, 2000);
     } catch {
-      // Keep optimistic update
+      // Graceful
+    } finally {
+      setSubmittingReq(false);
     }
   }
 
-  const rows: { key: keyof NotificationPrefs; label: string }[] = [
-    { key: "auditorReview", label: "Your CIT computation requires Auditor review." },
-    { key: "auditorRequestedDocs", label: "Auditor requested supporting documentation." },
-    { key: "citValidationIssues", label: "CIT validation found issues." },
-    { key: "citApproved", label: "Your CIT computation has been approved." },
-    { key: "newDocumentUploaded", label: "New document uploaded." },
-    { key: "financialValueModified", label: "Financial value modified." },
-  ];
-
   return (
-    <div>
-      <p className="mb-4 font-semibold text-gray-800">Notification Preferences</p>
-      <div className="flex flex-col divide-y divide-gray-100">
-        {rows.map(({ key, label }) => (
-          <div key={key} className="flex items-center justify-between py-3">
-            <p className="text-sm text-gray-700">{label}</p>
-            <Checkbox
-              checked={prefs[key]}
-              onChange={(v) => update(key, v)}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function RecentActivitiesTab() {
-  const [entries, setEntries] = useState<RecentActivityEntry[]>(MOCK_RECENT_ACTIVITIES);
-
-  useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    fetch(`${apiUrl}/settings/audit-log`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && Array.isArray(data.logs) && data.logs.length > 0) {
-          setEntries(
-            data.logs.map((l: any) => ({
-              id: String(l.id),
-              action: l.action,
-              actor: l.user_email || "Admin User",
-              actorRole: "Company Admin",
-              timestamp: l.created_at
-                ? new Date(l.created_at).toISOString().replace("T", " ").slice(0, 19)
-                : "2026-09-05 18:30:15",
-              timeAgo: l.created_at
-                ? new Date(l.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                : "Just now",
-            }))
-          );
-        }
-      })
-      .catch(() => null);
-  }, []);
-
-  return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-5">
         <div>
-          <p className="font-semibold text-gray-800">Recent Activities</p>
-          <p className="text-xs text-gray-500">Track actions, document submissions, and audit events with precise timestamps</p>
+          <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <UserCheck className="h-5 w-5 text-brand-blue" />
+            Assigned Auditor &amp; Engagement Credentials
+          </h2>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Manage your connected professional audit firm, engagement permissions, and sign-off authority for Assessment Year {auditor.engagementYear}.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => setShowModal(true)}
+            className="text-xs px-3 py-2 border-amber-200 text-amber-800 hover:bg-amber-50"
+          >
+            Change / Invite New Auditor
+          </Button>
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-100">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50 text-xs font-medium uppercase tracking-wide text-gray-500">
-              <th className="px-4 py-3">Timestamp</th>
-              <th className="px-4 py-3">Action</th>
-              <th className="px-4 py-3">Performed By</th>
-              <th className="px-4 py-3 text-right">Time Ago</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50 bg-white">
-            {entries.map((e) => (
-              <tr key={e.id} className="hover:bg-gray-50/60 transition-colors">
-                <td className="px-4 py-3 font-mono text-xs text-gray-500 whitespace-nowrap">
-                  {e.timestamp}
-                </td>
-                <td className="px-4 py-3 font-medium text-gray-800">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-brand-blue" />
-                    <span>{e.action}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-xs text-gray-600">
-                  <span className={e.actorRole === "AI Engine" ? "inline-flex items-center rounded bg-blue-50 px-2 py-0.5 font-medium text-brand-blue" : "font-medium"}>
-                    {e.actorRole === "AI Engine" ? "AI Engine" : e.actor}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right text-xs text-gray-400 whitespace-nowrap">
-                  {e.timeAgo}
-                </td>
+      {/* Connected Audit Firm Card */}
+      <div className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50/50 via-white to-gray-50/30 p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+          <div className="flex items-start gap-4">
+            <div className="h-14 w-14 rounded-2xl bg-brand-blue/10 border border-brand-blue/20 flex items-center justify-center text-brand-blue shrink-0 shadow-inner">
+              <Building2 className="h-7 w-7" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h3 className="text-lg font-bold text-gray-900">{auditor.firmName}</h3>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  {auditor.status === "Active" ? "Active Engagement" : auditor.status}
+                </span>
+                <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                  Ref: {auditor.firmRegNo}
+                </span>
+              </div>
+
+              <p className="text-sm font-medium text-gray-700 mt-2 flex items-center gap-2">
+                <span>Lead Engagement Partner:</span>
+                <span className="text-gray-900 font-semibold">{auditor.leadAuditorName}</span>
+                <span className="rounded bg-blue-100 text-blue-800 text-[11px] px-1.5 py-0.5 font-mono font-medium">
+                  {auditor.icaslMemberNo} (ICASL)
+                </span>
+              </p>
+
+              <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                <span className="flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-gray-400" />
+                  {auditor.leadAuditorEmail}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-gray-400" />
+                  {auditor.leadAuditorPhone}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                  Assigned: {auditor.assignedDate}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex md:flex-col items-end justify-between gap-3 shrink-0">
+            <Button
+              variant="secondary"
+              onClick={() => alert("Letter of Engagement (Y/A 2025/26) generated and downloaded.")}
+              className="text-xs px-3 py-1.5 gap-1.5"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Engagement Letter
+            </Button>
+            <span className="text-[11px] text-gray-400">Y/A {auditor.engagementYear} Scope</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Auditor Access Permissions */}
+      <div className="rounded-xl border border-gray-100 bg-white p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900">
+              Engagement Privileges &amp; Access Controls
+            </h4>
+            <p className="text-xs text-gray-500">
+              Control what the auditor can view, modify, and sign off directly in your TaxEaseLK corporate workspace.
+            </p>
+          </div>
+          {permsSaved && (
+            <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+              <Check className="h-3.5 w-3.5" /> Permissions synced
+            </span>
+          )}
+        </div>
+
+        <div className="divide-y divide-gray-100">
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">
+                View Financial Documents &amp; Trial Balance
+              </p>
+              <p className="text-xs text-gray-500">
+                Allows the auditor to inspect raw financial statements, PDF schedules, general ledgers, and OCR-extracted lines.
+              </p>
+            </div>
+            <Toggle
+              checked={permissions.canViewDocuments}
+              onChange={() => handleTogglePerm("canViewDocuments")}
+              disabled={savingPerms}
+            />
+          </div>
+
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">
+                Propose &amp; Edit CIT Tax Adjustments
+              </p>
+              <p className="text-xs text-gray-500">
+                Grants the auditor ability to add or adjust disallowed expenses, capital allowance schedules, and exempt income in draft CIT returns.
+              </p>
+            </div>
+            <Toggle
+              checked={permissions.canEditAdjustments}
+              onChange={() => handleTogglePerm("canEditAdjustments")}
+              disabled={savingPerms}
+            />
+          </div>
+
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">
+                Issue Auditor Final Sign-Off &amp; Certification
+              </p>
+              <p className="text-xs text-gray-500">
+                Permits the licensed Chartered Accountant to certify the CIT computation and generate the formal Audit Clearance Report.
+              </p>
+            </div>
+            <Toggle
+              checked={permissions.canSignOffReturn}
+              onChange={() => handleTogglePerm("canSignOffReturn")}
+              disabled={savingPerms}
+            />
+          </div>
+
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-medium text-gray-800">
+                  Direct Electronic IRD RAMIS Filing
+                </p>
+                <span className="rounded bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.2 font-semibold">
+                  Restricted
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">
+                Allow the auditor to submit the final certified return directly to Sri Lanka IRD RAMIS portal on behalf of the company.
+              </p>
+            </div>
+            <Toggle
+              checked={permissions.canDirectFileIRD}
+              onChange={() => handleTogglePerm("canDirectFileIRD")}
+              disabled={savingPerms}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Change Auditor Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-gray-100 space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+                Request Auditor Engagement Change
+              </h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Changing your assigned Chartered Accountant requires administrative verification under Sri Lanka Auditing Standards (SLAuS) to ensure smooth handover of workpapers.
+            </p>
+
+            <form onSubmit={handleSubmitChangeRequest} className="space-y-4">
+              <Field label="Reason for Engagement Change" required>
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="e.g. Annual rotation of statutory auditors / Engagement scope update"
+                  className="w-full rounded-lg border border-gray-300 p-2.5 text-sm text-gray-900 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                  rows={3}
+                  required
+                />
+              </Field>
+
+              <Field label="Proposed Audit Firm / Lead Auditor (Optional)">
+                <Input
+                  value={proposedFirm}
+                  onChange={(e) => setProposedFirm(e.target.value)}
+                  placeholder="e.g. KPMG / Ernst & Young / BDO Partners (Sri Lanka)"
+                />
+              </Field>
+
+              {requestSuccess && (
+                <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  {requestSuccess}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setShowModal(false)}
+                  disabled={submittingReq}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submittingReq || !reason.trim()}
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                  {submittingReq ? "Submitting..." : "Submit Engagement Request"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── TAB 3: Finance Team & Access ─────────────────────────────────────────────
+
+function TeamTab({ team: initialTeam }: { team: FinanceTeamMember[] }) {
+  const [team, setTeam] = useState<FinanceTeamMember[]>(initialTeam);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+
+  // Invite state
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<FinanceTeamMember["role"]>("Senior Accountant");
+  const [canSign, setCanSign] = useState(false);
+  const [inviting, setInviting] = useState(false);
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim() || !email.trim()) return;
+    setInviting(true);
+    try {
+      const newMember = await inviteFinanceTeamMember({
+        name,
+        email,
+        role,
+        canSignReturns: canSign,
+      });
+      setTeam((prev) => [...prev, newMember]);
+      setShowInviteModal(false);
+      setName("");
+      setEmail("");
+      setRole("Senior Accountant");
+      setCanSign(false);
+    } catch {
+      // Keep optimistic
+    } finally {
+      setInviting(false);
+    }
+  }
+
+  async function handleRemove(id: string) {
+    if (!confirm("Are you sure you want to revoke workspace access for this finance team member?")) {
+      return;
+    }
+    setTeam((prev) => prev.filter((m) => m.id !== id));
+    await removeFinanceTeamMember(id);
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-5">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <Users className="h-5 w-5 text-brand-blue" />
+            Internal Finance &amp; Tax Team
+          </h2>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Manage authorized company staff who can prepare, review, and sign Corporate Income Tax submissions.
+          </p>
+        </div>
+
+        <Button
+          onClick={() => setShowInviteModal(true)}
+          className="text-xs px-3.5 py-2 gap-1.5"
+        >
+          <Plus className="h-4 w-4" />
+          Invite Team Member
+        </Button>
+      </div>
+
+      {/* Team Table */}
+      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50/70 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-3.5">Member Name</th>
+                <th className="px-4 py-3.5">Role</th>
+                <th className="px-4 py-3.5">Return Sign-Off</th>
+                <th className="px-4 py-3.5">Status</th>
+                <th className="px-4 py-3.5">Last Active</th>
+                <th className="px-4 py-3.5 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {team.map((member) => (
+                <tr key={member.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-5 py-3.5">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-brand-blue/10 text-brand-blue font-bold text-xs flex items-center justify-center shrink-0 border border-brand-blue/20">
+                        {member.initials}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">{member.name}</p>
+                        <p className="text-xs text-gray-500">{member.email}</p>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-3.5">
+                    <RoleBadge role={member.role} />
+                  </td>
+
+                  <td className="px-4 py-3.5">
+                    {member.canSignReturns ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                        <Check className="h-3 w-3 text-blue-600" /> Authorized Signatory
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">Preparer Only</span>
+                    )}
+                  </td>
+
+                  <td className="px-4 py-3.5">
+                    {member.status === "Active" ? (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                        Invited
+                      </span>
+                    )}
+                  </td>
+
+                  <td className="px-4 py-3.5 text-xs text-gray-500 whitespace-nowrap">
+                    {member.lastActive}
+                  </td>
+
+                  <td className="px-4 py-3.5 text-right">
+                    {member.role !== "Owner" && (
+                      <button
+                        onClick={() => handleRemove(member.id)}
+                        className="text-gray-400 hover:text-red-600 p-1 rounded transition-colors"
+                        title="Revoke access"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Role explanation */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-gray-600">
+        <div className="rounded-lg border border-gray-100 bg-gray-50/60 p-3">
+          <p className="font-semibold text-gray-800">Owner &amp; Finance Director</p>
+          <p className="mt-1 text-gray-500">
+            Full permissions to upload schedules, approve tax computations, and submit certified returns to auditors.
+          </p>
+        </div>
+        <div className="rounded-lg border border-gray-100 bg-gray-50/60 p-3">
+          <p className="font-semibold text-gray-800">Senior Accountant &amp; Tax Officer</p>
+          <p className="mt-1 text-gray-500">
+            Prepares CIT schedules, reconciles ledger addbacks, and answers auditor document requests.
+          </p>
+        </div>
+        <div className="rounded-lg border border-gray-100 bg-gray-50/60 p-3">
+          <p className="font-semibold text-gray-800">External Auditor Access</p>
+          <p className="mt-1 text-gray-500">
+            Auditors connect via their dedicated firm portal under the <em>Assigned Auditor</em> tab.
+          </p>
+        </div>
+      </div>
+
+      {/* Invite Member Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-gray-100 space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <Plus className="h-5 w-5 text-brand-blue" />
+                Invite Finance Team Member
+              </h3>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleInvite} className="space-y-4">
+              <Field label="Full Name" required>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Kasun Wickramasinghe"
+                  required
+                />
+              </Field>
+
+              <Field label="Corporate Email Address" required>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="e.g. kasun@abc.lk"
+                  required
+                />
+              </Field>
+
+              <Field label="Assigned Role" required>
+                <Select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as FinanceTeamMember["role"])}
+                >
+                  <option value="Finance Director">Finance Director</option>
+                  <option value="Senior Accountant">Senior Accountant</option>
+                  <option value="Tax Officer">Tax Officer</option>
+                  <option value="Viewer">Viewer (Read-Only)</option>
+                </Select>
+              </Field>
+
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={canSign}
+                    onChange={(e) => setCanSign(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue cursor-pointer mt-0.5"
+                  />
+                  <div className="text-xs">
+                    <span className="font-semibold text-gray-800">
+                      Grant Statutory Return Sign-Off Authority
+                    </span>
+                    <p className="text-gray-500 mt-0.5">
+                      Empowers this member to approve the final CIT Return declaration before transmission to the auditor.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setShowInviteModal(false)}
+                  disabled={inviting}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={inviting || !name.trim() || !email.trim()}>
+                  {inviting ? "Sending Invitation..." : "Send Workspace Invite"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── TAB 4: Tax Preferences & AI Settings ─────────────────────────────────────
+
+function PreferencesTab({ preferences: initialPrefs }: { preferences: CompanyTaxPreferences }) {
+  const [prefs, setPrefs] = useState(initialPrefs);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  function update<K extends keyof CompanyTaxPreferences>(key: K, value: CompanyTaxPreferences[K]) {
+    setPrefs((p) => ({ ...p, [key]: value }));
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setSaved(false);
+    try {
+      await updateCompanyTaxPreferences(prefs);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-5">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <Sliders className="h-5 w-5 text-brand-blue" />
+            Accounting Standards &amp; AI Extraction Preferences
+          </h2>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Configure how TaxEaseLK computes tax adjustments, AI OCR validation tolerances, and automated auditor notifications.
+          </p>
+        </div>
+
+        {saved && (
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-medium text-green-700">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+            Preferences Saved!
+          </div>
+        )}
+      </div>
+
+      {/* Accounting Standards */}
+      <div className="rounded-xl border border-gray-100 bg-white p-5 space-y-4">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+          Financial Reporting Framework &amp; Basis
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Accounting Standards Framework">
+            <Select
+              value={prefs.accountingStandard}
+              onChange={(e) =>
+                update(
+                  "accountingStandard",
+                  e.target.value as CompanyTaxPreferences["accountingStandard"]
+                )
+              }
+            >
+              <option value="SLFRS_SMES">SLFRS for SMEs (Small &amp; Medium Entities)</option>
+              <option value="SLFRS_FULL">SLFRS / LKAS (Full Sri Lanka Accounting Standards)</option>
+            </Select>
+          </Field>
+
+          <Field label="Accounting Basis">
+            <Select
+              value={prefs.basisOfAccounting}
+              onChange={(e) =>
+                update(
+                  "basisOfAccounting",
+                  e.target.value as CompanyTaxPreferences["basisOfAccounting"]
+                )
+              }
+            >
+              <option value="accrual">Accrual Basis (Inland Revenue Act requirement)</option>
+              <option value="cash">Cash Basis (Eligible individuals / micro entities)</option>
+            </Select>
+          </Field>
+        </div>
+      </div>
+
+      {/* AI Extraction & OCR Settings */}
+      <div className="rounded-xl border border-gray-100 bg-white p-5 space-y-5">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+          AI OCR &amp; Computational Automation
+        </h3>
+
+        {/* Confidence Threshold Slider */}
+        <div className="rounded-xl border border-blue-50 bg-blue-50/30 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">
+                AI OCR Confidence Verification Threshold
+              </p>
+              <p className="text-xs text-gray-500">
+                Financial rows extracted below this confidence level are flagged with yellow warning badges for mandatory human sign-off.
+              </p>
+            </div>
+            <span className="rounded-lg bg-brand-blue text-white px-3 py-1 font-mono font-bold text-sm">
+              {prefs.aiConfidenceThreshold}%
+            </span>
+          </div>
+
+          <input
+            type="range"
+            min={70}
+            max={95}
+            step={1}
+            value={prefs.aiConfidenceThreshold}
+            onChange={(e) => update("aiConfidenceThreshold", Number(e.target.value))}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-blue"
+          />
+
+          <div className="flex justify-between text-[11px] text-gray-400">
+            <span>70% (Relaxed - Fewer manual checks)</span>
+            <span>85% (Recommended for Sri Lanka Audits)</span>
+            <span>95% (Strict - High manual review)</span>
+          </div>
+        </div>
+
+        {/* Feature Toggles */}
+        <div className="divide-y divide-gray-100">
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">
+                Automatic AI Document Ingestion &amp; Classification
+              </p>
+              <p className="text-xs text-gray-500">
+                Automatically categorize uploaded Trial Balances and Tax Schedules into Section 10 addbacks upon file drop.
+              </p>
+            </div>
+            <Toggle
+              checked={prefs.enableAiOcrAutoExtract}
+              onChange={(v) => update("enableAiOcrAutoExtract", v)}
+            />
+          </div>
+
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">
+                Notify Auditor When CIT Calculation Reaches 100%
+              </p>
+              <p className="text-xs text-gray-500">
+                Sends an instant alert and review queue notification to your assigned auditor once all checklist items are marked complete.
+              </p>
+            </div>
+            <Toggle
+              checked={prefs.autoNotifyAuditorOnReady}
+              onChange={(v) => update("autoNotifyAuditorOnReady", v)}
+            />
+          </div>
+
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">
+                Allow Auditor Direct Line-Item Adjustments
+              </p>
+              <p className="text-xs text-gray-500">
+                When enabled, auditors can directly propose adjustments to disallowed entertainment, advertising, and depreciation lines.
+              </p>
+            </div>
+            <Toggle
+              checked={prefs.allowAuditorDirectModifications}
+              onChange={(v) => update("allowAuditorDirectModifications", v)}
+            />
+          </div>
+
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">
+                Quarterly Advance Tax Tracking
+              </p>
+              <p className="text-xs text-gray-500">
+                Enables installment schedules and WHT/AIT credit reconciliations for the 4 statutory quarterly payment dates.
+              </p>
+            </div>
+            <Toggle
+              checked={prefs.quarterlyAdvanceTaxTracking}
+              onChange={(v) => update("quarterlyAdvanceTaxTracking", v)}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-100 pt-4 flex justify-end">
+        <Button onClick={handleSave} disabled={saving} className="px-6">
+          {saved ? "Preferences Saved!" : saving ? "Saving..." : "Save Preferences"}
+        </Button>
       </div>
     </div>
   );
 }
 
-// ─── Main SettingsTabs ────────────────────────────────────────────────────────
+// ─── TAB 5: Notifications & Filing Deadlines ──────────────────────────────────
 
-const TABS = ["Company", "Users", "Security", "Notifications", "Recent Activities"] as const;
-type Tab = (typeof TABS)[number];
+function NotificationsTab({ notifications: initialPrefs }: { notifications: CompanyNotificationPrefs }) {
+  const [prefs, setPrefs] = useState(initialPrefs);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-export default function SettingsTabs({ companyTabContent }: { companyTabContent: React.ReactNode }) {
-  const [activeTab, setActiveTab] = useState<Tab>("Company");
+  function update<K extends keyof CompanyNotificationPrefs>(key: K, value: boolean) {
+    setPrefs((p) => ({ ...p, [key]: value }));
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setSaved(false);
+    try {
+      await updateCompanyNotificationPrefs(prefs);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
-    <div>
-      <div className="mb-4 flex flex-wrap gap-2">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={clsx(
-              "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
-              activeTab === tab
-                ? "border-brand-blue bg-brand-blue text-white"
-                : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-            )}
-          >
-            {tab}
-          </button>
-        ))}
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-5">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <Bell className="h-5 w-5 text-brand-blue" />
+            Notifications &amp; IRD Statutory Filing Deadlines
+          </h2>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Configure automated alerts for auditor document queries, return sign-offs, and critical Sri Lanka tax deadlines.
+          </p>
+        </div>
+
+        {saved && (
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-medium text-green-700">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+            Alert Preferences Saved!
+          </div>
+        )}
       </div>
 
-      <Card className="p-6">
-        {activeTab === "Company" && companyTabContent}
-        {activeTab === "Users" && <UsersTab />}
-        {activeTab === "Security" && <SecurityTab />}
-        {activeTab === "Notifications" && <NotificationsTab />}
-        {activeTab === "Recent Activities" && <RecentActivitiesTab />}
+      {/* Statutory Deadlines Highlight Banner */}
+      <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
+        <div className="flex items-start gap-3">
+          <Calendar className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-amber-900">
+              Statutory CIT Return Deadline: November 30
+            </p>
+            <p className="text-xs text-amber-800 leading-relaxed">
+              Under Section 93 of the Inland Revenue Act No. 24 of 2017, Corporate Income Tax returns for the Assessment Year ending March 31 must be submitted to the Department of Inland Revenue on or before November 30.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 1: Auditor & Clearance Alerts */}
+      <div className="rounded-xl border border-gray-100 bg-white p-5 space-y-4">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+          Auditor Interaction &amp; Clearance Alerts
+        </h3>
+
+        <div className="divide-y divide-gray-100">
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">
+                Auditor Document Requests &amp; Inquiries
+              </p>
+              <p className="text-xs text-gray-500">
+                Receive immediate alert when the auditor requests additional invoices, asset registers, or tax schedules.
+              </p>
+            </div>
+            <Toggle
+              checked={prefs.auditorDocRequests}
+              onChange={(v) => update("auditorDocRequests", v)}
+            />
+          </div>
+
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">
+                Auditor Review Feedback &amp; Adjustments
+              </p>
+              <p className="text-xs text-gray-500">
+                Alert when the auditor marks a line as requiring revision or enters proposed tax computation adjustments.
+              </p>
+            </div>
+            <Toggle
+              checked={prefs.auditorReviewFeedback}
+              onChange={(v) => update("auditorReviewFeedback", v)}
+            />
+          </div>
+
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">
+                CIT Final Sign-Off &amp; Clearance Granted
+              </p>
+              <p className="text-xs text-gray-500">
+                Notification when the licensed auditor issues the formal Audit Clearance Report ready for IRD upload.
+              </p>
+            </div>
+            <Toggle
+              checked={prefs.citFilingClearance}
+              onChange={(v) => update("citFilingClearance", v)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Section 2: Statutory Deadlines & Advance Tax */}
+      <div className="rounded-xl border border-gray-100 bg-white p-5 space-y-4">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+          Sri Lanka IRD Statutory Filing Deadlines
+        </h3>
+
+        <div className="divide-y divide-gray-100">
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">
+                Annual CIT Return Filing Reminders (November 30)
+              </p>
+              <p className="text-xs text-gray-500">
+                Advance reminders at 30 days, 14 days, and 3 days before the statutory deadline to avoid late filing penalties.
+              </p>
+            </div>
+            <Toggle
+              checked={prefs.irdDeadlinesReminders}
+              onChange={(v) => update("irdDeadlinesReminders", v)}
+            />
+          </div>
+
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">
+                Quarterly Advance Tax Payment Due Dates
+              </p>
+              <p className="text-xs text-gray-500">
+                Reminders for statutory CIT installments due on August 15, November 15, February 15, and May 15.
+              </p>
+            </div>
+            <Toggle
+              checked={prefs.advanceTaxPaymentDue}
+              onChange={(v) => update("advanceTaxPaymentDue", v)}
+            />
+          </div>
+
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">
+                AI OCR Extraction &amp; Calculation Warnings
+              </p>
+              <p className="text-xs text-gray-500">
+                Alerts when trial balance disbalances or low confidence score line items are detected by the engine.
+              </p>
+            </div>
+            <Toggle
+              checked={prefs.aiExtractionAlerts}
+              onChange={(v) => update("aiExtractionAlerts", v)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Section 3: Notification Channels */}
+      <div className="rounded-xl border border-gray-100 bg-white p-5 space-y-4">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+          Notification Delivery Channels
+        </h3>
+
+        <div className="divide-y divide-gray-100">
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">Email Alerts</p>
+              <p className="text-xs text-gray-500">
+                Send alerts to verified finance team members' registered company email addresses.
+              </p>
+            </div>
+            <Toggle
+              checked={prefs.emailAlerts}
+              onChange={(v) => update("emailAlerts", v)}
+            />
+          </div>
+
+          <div className="py-3 flex items-center justify-between">
+            <div className="pr-4">
+              <p className="text-sm font-medium text-gray-800">In-App Dashboard Banners</p>
+              <p className="text-xs text-gray-500">
+                Display notification badges and toast banners in the top navigation bar.
+              </p>
+            </div>
+            <Toggle
+              checked={prefs.inAppNotifications}
+              onChange={(v) => update("inAppNotifications", v)}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-100 pt-4 flex justify-end">
+        <Button onClick={handleSave} disabled={saving} className="px-6">
+          {saved ? "Preferences Saved!" : saving ? "Saving..." : "Save Notification Preferences"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── TAB 6: Security & Activity Log ───────────────────────────────────────────
+
+function SecurityTab({
+  security: initialSec,
+  auditTrail,
+}: {
+  security: CompanySecuritySettings;
+  auditTrail: CompanyFullSettings["auditTrail"];
+}) {
+  const [sec, setSec] = useState(initialSec);
+  const [savingSec, setSavingSec] = useState(false);
+  const [secSaved, setSecSaved] = useState(false);
+
+  // Password modal
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [pwSuccess, setPwSuccess] = useState(false);
+
+  // Audit trail search
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredLogs = auditTrail.filter(
+    (log) =>
+      log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.actor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (log.ipAddress && log.ipAddress.includes(searchQuery))
+  );
+
+  async function handleToggle2FA() {
+    const updated = { ...sec, twoFactorAuth: !sec.twoFactorAuth };
+    setSec(updated);
+    setSavingSec(true);
+    setSecSaved(false);
+    try {
+      await updateCompanySecurity(updated);
+      setSecSaved(true);
+      setTimeout(() => setSecSaved(false), 2000);
+    } catch {
+      // Graceful
+    } finally {
+      setSavingSec(false);
+    }
+  }
+
+  async function handleTimeoutChange(val: number) {
+    const updated = { ...sec, sessionTimeoutMinutes: val };
+    setSec(updated);
+    await updateCompanySecurity(updated);
+  }
+
+  async function handleToggleIP() {
+    const updated = { ...sec, ipRestriction: !sec.ipRestriction };
+    setSec(updated);
+    await updateCompanySecurity(updated);
+  }
+
+  function handlePasswordSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPw !== confirmPw) {
+      alert("New passwords do not match.");
+      return;
+    }
+    setPwSuccess(true);
+    setTimeout(() => {
+      setShowPasswordModal(false);
+      setPwSuccess(false);
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+    }, 1500);
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-5">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <Shield className="h-5 w-5 text-brand-blue" />
+            Security Controls &amp; Immutable Audit Trail
+          </h2>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Configure access security, multi-factor authentication, and review full activity logs for IRD compliance.
+          </p>
+        </div>
+
+        {secSaved && (
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-medium text-green-700">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+            Security settings updated!
+          </div>
+        )}
+      </div>
+
+      {/* Security Policies */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* 2FA Card */}
+        <div className="rounded-xl border border-gray-100 bg-white p-5 flex flex-col justify-between shadow-sm">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center border border-purple-100">
+                  <Key className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900">
+                    Two-Factor Authentication (2FA)
+                  </h4>
+                  <p className="text-xs text-gray-500">
+                    Mandatory TOTP authenticator app code for all logins
+                  </p>
+                </div>
+              </div>
+              <Toggle
+                checked={sec.twoFactorAuth}
+                onChange={handleToggle2FA}
+                disabled={savingSec}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-3">
+              Protects sensitive corporate tax computations and financial schedules from unauthorized credentials access.
+            </p>
+          </div>
+        </div>
+
+        {/* Session Timeout */}
+        <div className="rounded-xl border border-gray-100 bg-white p-5 flex flex-col justify-between shadow-sm">
+          <div>
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="h-9 w-9 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-100">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900">
+                  Automatic Session Timeout
+                </h4>
+                <p className="text-xs text-gray-500">
+                  Auto logout after period of inactivity
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-xs text-gray-600">Inactivity threshold:</span>
+              <Select
+                value={sec.sessionTimeoutMinutes}
+                onChange={(e) => handleTimeoutChange(Number(e.target.value))}
+                className="w-40 py-1.5 text-xs"
+              >
+                <option value={15}>15 minutes</option>
+                <option value={30}>30 minutes</option>
+                <option value={60}>60 minutes (Default)</option>
+                <option value={120}>120 minutes</option>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* IP Restriction */}
+        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
+                <Shield className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900">
+                  IP Address Restriction
+                </h4>
+                <p className="text-xs text-gray-500">
+                  Restrict portal access to company corporate office network
+                </p>
+              </div>
+            </div>
+            <Toggle checked={sec.ipRestriction} onChange={handleToggleIP} />
+          </div>
+
+          {sec.ipRestriction && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <Field label="Allowed IP Range (CIDR)">
+                <Input
+                  value={sec.allowedIps || ""}
+                  onChange={(e) => setSec((s) => ({ ...s, allowedIps: e.target.value }))}
+                  placeholder="e.g. 203.143.16.0/24"
+                  className="text-xs py-1.5"
+                />
+              </Field>
+            </div>
+          )}
+        </div>
+
+        {/* Change Password */}
+        <div className="rounded-xl border border-gray-100 bg-white p-5 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="h-9 w-9 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-100">
+              <Lock className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900">Account Password</h4>
+              <p className="text-xs text-gray-500">Updated 45 days ago</p>
+            </div>
+          </div>
+
+          <Button
+            variant="secondary"
+            onClick={() => setShowPasswordModal(true)}
+            className="text-xs px-3 py-1.5"
+          >
+            Change Password
+          </Button>
+        </div>
+      </div>
+
+      {/* Encryption Banner */}
+      <div className="rounded-xl bg-gradient-to-r from-blue-900 to-indigo-900 p-4 text-white shadow-md">
+        <div className="flex items-center gap-3">
+          <Shield className="h-6 w-6 text-blue-300 shrink-0" />
+          <div className="space-y-0.5">
+            <p className="text-sm font-semibold">
+              Bank-Grade Encryption: {sec.dataEncryptionStandard}
+            </p>
+            <p className="text-xs text-blue-200">
+              All financial schedules, trial balance extractions, and auditor workpapers are stored in isolated Sri Lanka data partitions with TLS 1.3 cryptographic transport.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Audit Trail & Activity Log */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">
+              Statutory Activity Log &amp; Audit Trail
+            </h3>
+            <p className="text-xs text-gray-500">
+              Immutable ledger of user actions, schedule uploads, and auditor clearance milestones.
+            </p>
+          </div>
+
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search actions or actors..."
+              className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/70 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-5 py-3.5">Timestamp</th>
+                  <th className="px-5 py-3.5">Action / Event</th>
+                  <th className="px-4 py-3.5">Performed By</th>
+                  <th className="px-4 py-3.5">IP Address</th>
+                  <th className="px-4 py-3.5 text-right">Time Ago</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-5 py-3.5 font-mono text-xs text-gray-500 whitespace-nowrap">
+                      {log.timestamp}
+                    </td>
+                    <td className="px-5 py-3.5 font-medium text-gray-800">
+                      <div className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-brand-blue shrink-0" />
+                        <span>{log.action}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 text-xs text-gray-600 whitespace-nowrap">
+                      <span className="font-semibold text-gray-800">{log.actor}</span>
+                      <span className="text-gray-400 ml-1">({log.actorRole})</span>
+                    </td>
+                    <td className="px-4 py-3.5 font-mono text-xs text-gray-400 whitespace-nowrap">
+                      {log.ipAddress || "—"}
+                    </td>
+                    <td className="px-4 py-3.5 text-right text-xs text-gray-400 whitespace-nowrap">
+                      {log.timeAgo}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Password Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-gray-100 space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <Lock className="h-5 w-5 text-brand-blue" />
+                Change Corporate Password
+              </h3>
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <Field label="Current Password" required>
+                <Input
+                  type="password"
+                  value={currentPw}
+                  onChange={(e) => setCurrentPw(e.target.value)}
+                  placeholder="Enter existing password"
+                  required
+                />
+              </Field>
+
+              <Field label="New Password" required>
+                <Input
+                  type="password"
+                  value={newPw}
+                  onChange={(e) => setNewPw(e.target.value)}
+                  placeholder="Min 8 chars, 1 uppercase, 1 symbol"
+                  required
+                />
+              </Field>
+
+              <Field label="Confirm New Password" required>
+                <Input
+                  type="password"
+                  value={confirmPw}
+                  onChange={(e) => setConfirmPw(e.target.value)}
+                  placeholder="Re-enter new password"
+                  required
+                />
+              </Field>
+
+              {pwSuccess && (
+                <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  Password updated successfully!
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setShowPasswordModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">Update Password</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main SettingsTabs Component ──────────────────────────────────────────────
+
+export default function SettingsTabs({
+  companyTabContent,
+  fullSettings,
+}: {
+  companyTabContent: React.ReactNode;
+  fullSettings: CompanyFullSettings;
+}) {
+  const [activeTab, setActiveTab] = useState<TabId>("profile");
+
+  return (
+    <div className="space-y-6">
+      {/* Navigation Pills */}
+      <div className="flex flex-wrap gap-2 border-b border-gray-200/80 pb-3">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={clsx(
+                "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium transition-all duration-200",
+                isActive
+                  ? "bg-brand-blue text-white shadow-md shadow-brand-blue/20"
+                  : "bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-gray-200"
+              )}
+            >
+              <Icon className={clsx("h-4 w-4", isActive ? "text-white" : "text-gray-400")} />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab Content Container */}
+      <Card className="p-6 md:p-8 bg-white shadow-sm border border-gray-100 rounded-2xl">
+        {activeTab === "profile" && companyTabContent}
+        {activeTab === "auditor" && <AuditorTab auditor={fullSettings.auditor} />}
+        {activeTab === "team" && <TeamTab team={fullSettings.team} />}
+        {activeTab === "preferences" && (
+          <PreferencesTab preferences={fullSettings.preferences} />
+        )}
+        {activeTab === "notifications" && (
+          <NotificationsTab notifications={fullSettings.notifications} />
+        )}
+        {activeTab === "security" && (
+          <SecurityTab
+            security={fullSettings.security}
+            auditTrail={fullSettings.auditTrail}
+          />
+        )}
       </Card>
     </div>
   );

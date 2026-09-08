@@ -5,6 +5,11 @@ import {
   IssuesSummary,
   AuditLogSummary,
   AuditorProfileSettings,
+  AuditorFullSettings,
+  AuditorTeamMember,
+  AuditPreferences,
+  AuditorSecuritySettings,
+  AuditorNotificationPrefs,
   AuditorDocumentsSummary,
   AuditorRequestsSummary,
   AuditorDiscussionsSummary,
@@ -578,36 +583,228 @@ export async function getAuditLogSummary(): Promise<AuditLogSummary> {
   };
 }
 
+let MOCK_AUDITOR_FULL_SETTINGS: AuditorFullSettings = {
+  profile: {
+    fullName: "K. P. Karunaratne",
+    email: "audit@karunaratne.lk",
+    phone: "+94 11 234 5678",
+    licenseNumber: "FCA-14892",
+    organization: "Karunaratne & Associates (Chartered Accountants)",
+    designation: "Senior Audit Partner",
+    caSriLankaNo: "FCA 14892",
+    irdPractitionerNo: "TP-2024-8841",
+    firmRegNo: "PV-98214 / CA-AF-552",
+    firmAddress: "Level 7, West Tower, World Trade Center, Echelon Square, Colombo 01",
+    signatureStampUrl: "",
+  },
+  team: [
+    {
+      id: "tm_1",
+      name: "K. P. Karunaratne",
+      initials: "KK",
+      email: "audit@karunaratne.lk",
+      role: "Audit Partner",
+      assignedCompaniesCount: 6,
+      status: "Active",
+    },
+    {
+      id: "tm_2",
+      name: "Nirosha Jayawardena",
+      initials: "NJ",
+      email: "nirosha.j@karunaratne.lk",
+      role: "Senior Auditor",
+      assignedCompaniesCount: 4,
+      status: "Active",
+    },
+    {
+      id: "tm_3",
+      name: "Dhanushka Perera",
+      initials: "DP",
+      email: "dhanushka.p@karunaratne.lk",
+      role: "Audit Assistant",
+      assignedCompaniesCount: 2,
+      status: "Active",
+    },
+    {
+      id: "tm_4",
+      name: "Shalini Weerasinghe",
+      initials: "SW",
+      email: "shalini.w@karunaratne.lk",
+      role: "Tax Specialist",
+      assignedCompaniesCount: 5,
+      status: "Invited",
+    },
+  ],
+  preferences: {
+    defaultTaxYear: "2025/26 (Apr 1 - Mar 31)",
+    accountingStandard: "SLFRS / LKAS for SMEs",
+    materialityThresholdPercent: 5.0,
+    autoRemindDaysBeforeDeadline: [14, 7, 3],
+    autoRequestStandardPackOnConnect: true,
+    strictVatReconciliation: true,
+  },
+  notifications: {
+    clientDocumentUploaded: true,
+    clientResponseReceived: true,
+    discussionMessageReceived: true,
+    deadlineApproaching: true,
+    clientInvitationReceived: true,
+    digestFrequency: "instant",
+  },
+  security: {
+    twoFactorEnabled: true,
+    sessionTimeoutMinutes: 60,
+    ipWhitelistEnabled: false,
+    immutableAuditTrail: true,
+    activeSessions: [
+      {
+        id: "sess_1",
+        device: "Windows PC (Workstation)",
+        browser: "Chrome 128.0",
+        ipAddress: "123.231.104.52 (Colombo, Sri Lanka)",
+        lastActive: "Active Now",
+        isCurrent: true,
+      },
+      {
+        id: "sess_2",
+        device: "MacBook Pro 16",
+        browser: "Safari 17.5",
+        ipAddress: "112.134.88.19 (Kandy, Sri Lanka)",
+        lastActive: "Yesterday at 6:45 PM",
+        isCurrent: false,
+      },
+    ],
+  },
+};
+
 export async function getAuditorProfileSettings(): Promise<AuditorProfileSettings> {
+  return MOCK_AUDITOR_FULL_SETTINGS.profile;
+}
+
+export async function getAuditorFullSettings(): Promise<AuditorFullSettings> {
   try {
     const authHeaders = await getAuthHeaders();
-    const res = await fetch(`${API_URL}/api/auth/me`, {
+    const res = await fetch(`${API_URL}/api/auditor/settings`, {
       headers: authHeaders,
       cache: "no-store",
     });
     if (res.ok) {
       const data = await res.json();
-      return {
-        fullName: data.display_name || data.fullName || "Professional Auditor",
-        email: data.email || "auditor@example.com",
-        phone: data.phone || "+94 77 000 0000",
-        licenseNumber: data.license_number || data.licenseNumber || "CA-XXXX-XXXX",
-        organization: data.company_name || data.organization || "Audit Firm Name",
-        designation: data.role === "AUDITOR_PARTNER" ? "Partner / Senior Auditor" : (data.designation || "Senior Auditor"),
-      };
+      if (data && data.profile) {
+        return data;
+      }
     }
+  } catch {
+    // Fallback to local mock data
+  }
+
+  return { ...MOCK_AUDITOR_FULL_SETTINGS };
+}
+
+export async function updateAuditorProfile(
+  profile: Partial<AuditorProfileSettings>
+): Promise<AuditorProfileSettings> {
+  try {
+    const authHeaders = await getAuthHeaders();
+    await fetch(`${API_URL}/api/auditor/profile`, {
+      method: "PUT",
+      headers: authHeaders,
+      body: JSON.stringify(profile),
+    });
   } catch {
     // Fallback
   }
 
-  return {
-    fullName: "Professional Auditor",
-    email: "auditor@example.com",
-    phone: "+94 77 000 0000",
-    licenseNumber: "CA-XXXX-XXXX",
-    organization: "Audit Firm Name",
-    designation: "Senior Auditor",
+  MOCK_AUDITOR_FULL_SETTINGS.profile = {
+    ...MOCK_AUDITOR_FULL_SETTINGS.profile,
+    ...profile,
   };
+  return MOCK_AUDITOR_FULL_SETTINGS.profile;
+}
+
+export async function updateAuditPreferences(
+  prefs: Partial<AuditPreferences>
+): Promise<AuditPreferences> {
+  try {
+    const authHeaders = await getAuthHeaders();
+    await fetch(`${API_URL}/api/auditor/preferences`, {
+      method: "PATCH",
+      headers: authHeaders,
+      body: JSON.stringify(prefs),
+    });
+  } catch {
+    // Fallback
+  }
+
+  MOCK_AUDITOR_FULL_SETTINGS.preferences = {
+    ...MOCK_AUDITOR_FULL_SETTINGS.preferences,
+    ...prefs,
+  };
+  return MOCK_AUDITOR_FULL_SETTINGS.preferences;
+}
+
+export async function updateAuditorSecurity(
+  sec: Partial<AuditorSecuritySettings>
+): Promise<AuditorSecuritySettings> {
+  try {
+    const authHeaders = await getAuthHeaders();
+    await fetch(`${API_URL}/api/auditor/security`, {
+      method: "PATCH",
+      headers: authHeaders,
+      body: JSON.stringify(sec),
+    });
+  } catch {
+    // Fallback
+  }
+
+  MOCK_AUDITOR_FULL_SETTINGS.security = {
+    ...MOCK_AUDITOR_FULL_SETTINGS.security,
+    ...sec,
+  };
+  return MOCK_AUDITOR_FULL_SETTINGS.security;
+}
+
+export async function updateAuditorNotifications(
+  notifs: Partial<AuditorNotificationPrefs>
+): Promise<AuditorNotificationPrefs> {
+  try {
+    const authHeaders = await getAuthHeaders();
+    await fetch(`${API_URL}/api/auditor/notifications`, {
+      method: "PATCH",
+      headers: authHeaders,
+      body: JSON.stringify(notifs),
+    });
+  } catch {
+    // Fallback
+  }
+
+  MOCK_AUDITOR_FULL_SETTINGS.notifications = {
+    ...MOCK_AUDITOR_FULL_SETTINGS.notifications,
+    ...notifs,
+  };
+  return MOCK_AUDITOR_FULL_SETTINGS.notifications;
+}
+
+export async function inviteAuditorTeamMember(
+  member: { name: string; email: string; role: AuditorTeamMember["role"] }
+): Promise<AuditorTeamMember> {
+  const newMember: AuditorTeamMember = {
+    id: `tm_${Date.now()}`,
+    name: member.name,
+    initials: member.name
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase(),
+    email: member.email,
+    role: member.role,
+    assignedCompaniesCount: 0,
+    status: "Invited",
+  };
+
+  MOCK_AUDITOR_FULL_SETTINGS.team.push(newMember);
+  return newMember;
 }
 
 export async function getAuditorDocumentsSummary(): Promise<AuditorDocumentsSummary> {

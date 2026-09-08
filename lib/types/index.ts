@@ -104,11 +104,97 @@ export interface AuditorReviewSummary {
 
 export interface CompanySettings {
   companyName: string;
+  tradingName?: string;
   registrationNumber: string;
   tinNumber: string;
+  vatNumber?: string;
+  isSvatRegistered?: boolean;
+  svatNumber?: string;
+  citTaxRateCategory?: "standard_30" | "sme_export_14" | "concessionary_15" | "other";
   financialYear: string;
   contactEmail: string;
   contactPhone: string;
+  registeredAddress?: string;
+  industrySector?: string;
+}
+
+export interface AssignedAuditorDetails {
+  firmName: string;
+  firmRegNo: string;
+  leadAuditorName: string;
+  leadAuditorEmail: string;
+  leadAuditorPhone: string;
+  icaslMemberNo: string;
+  engagementYear: string;
+  status: "Active" | "Pending_Engagement" | "Terminated";
+  permissions: {
+    canViewDocuments: boolean;
+    canEditAdjustments: boolean;
+    canSignOffReturn: boolean;
+    canDirectFileIRD: boolean;
+  };
+  assignedDate: string;
+}
+
+export interface FinanceTeamMember {
+  id: string;
+  name: string;
+  initials: string;
+  email: string;
+  role: "Owner" | "Finance Director" | "Senior Accountant" | "Tax Officer" | "Viewer";
+  status: "Active" | "Invited" | "Inactive";
+  lastActive: string;
+  canSignReturns: boolean;
+}
+
+export interface CompanyTaxPreferences {
+  accountingStandard: "SLFRS_FULL" | "SLFRS_SMES";
+  currency: "LKR";
+  basisOfAccounting: "accrual" | "cash";
+  aiConfidenceThreshold: number; // e.g. 85 (%)
+  autoNotifyAuditorOnReady: boolean;
+  allowAuditorDirectModifications: boolean;
+  enableAiOcrAutoExtract: boolean;
+  quarterlyAdvanceTaxTracking: boolean;
+}
+
+export interface CompanyNotificationPrefs {
+  auditorDocRequests: boolean;
+  auditorReviewFeedback: boolean;
+  citFilingClearance: boolean;
+  irdDeadlinesReminders: boolean;
+  advanceTaxPaymentDue: boolean;
+  aiExtractionAlerts: boolean;
+  emailAlerts: boolean;
+  inAppNotifications: boolean;
+}
+
+export interface CompanySecuritySettings {
+  twoFactorAuth: boolean;
+  sessionTimeoutMinutes: number;
+  ipRestriction: boolean;
+  allowedIps?: string;
+  dataEncryptionStandard: string;
+}
+
+export interface CompanyActivityLogEntry {
+  id: string;
+  action: string;
+  actor: string;
+  actorRole: string;
+  timestamp: string;
+  timeAgo: string;
+  ipAddress?: string;
+}
+
+export interface CompanyFullSettings {
+  profile: CompanySettings;
+  auditor: AssignedAuditorDetails;
+  team: FinanceTeamMember[];
+  preferences: CompanyTaxPreferences;
+  notifications: CompanyNotificationPrefs;
+  security: CompanySecuritySettings;
+  auditTrail: CompanyActivityLogEntry[];
 }
 
 // --- Auditor portal: shared ---
@@ -237,6 +323,62 @@ export interface AuditorProfileSettings {
   licenseNumber: string;
   organization: string;
   designation: string;
+  caSriLankaNo?: string;
+  irdPractitionerNo?: string;
+  firmRegNo?: string;
+  firmAddress?: string;
+  signatureStampUrl?: string;
+}
+
+export interface AuditorTeamMember {
+  id: string;
+  name: string;
+  initials: string;
+  email: string;
+  role: "Audit Partner" | "Senior Auditor" | "Audit Assistant" | "Tax Specialist";
+  assignedCompaniesCount: number;
+  status: "Active" | "Invited";
+}
+
+export interface AuditPreferences {
+  defaultTaxYear: string;
+  accountingStandard: "SLFRS / LKAS for SMEs" | "Full SLFRS" | "Tax Basis of Accounting";
+  materialityThresholdPercent: number;
+  autoRemindDaysBeforeDeadline: number[];
+  autoRequestStandardPackOnConnect: boolean;
+  strictVatReconciliation: boolean;
+}
+
+export interface AuditorNotificationPrefs {
+  clientDocumentUploaded: boolean;
+  clientResponseReceived: boolean;
+  discussionMessageReceived: boolean;
+  deadlineApproaching: boolean;
+  clientInvitationReceived: boolean;
+  digestFrequency: "instant" | "daily_digest" | "weekly";
+}
+
+export interface AuditorSecuritySettings {
+  twoFactorEnabled: boolean;
+  sessionTimeoutMinutes: number;
+  ipWhitelistEnabled: boolean;
+  immutableAuditTrail: boolean;
+  activeSessions: {
+    id: string;
+    device: string;
+    browser: string;
+    ipAddress: string;
+    lastActive: string;
+    isCurrent: boolean;
+  }[];
+}
+
+export interface AuditorFullSettings {
+  profile: AuditorProfileSettings;
+  team: AuditorTeamMember[];
+  preferences: AuditPreferences;
+  notifications: AuditorNotificationPrefs;
+  security: AuditorSecuritySettings;
 }
 
 // --- Auditor Documents page ---
