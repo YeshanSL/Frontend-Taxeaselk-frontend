@@ -548,10 +548,13 @@ export async function getCompanySettings(): Promise<CompanySettings> {
 
 // --- Business Discussions API --------------------------------------------
 
-export async function getBusinessDiscussions(): Promise<BusinessDiscussionSummary> {
+export async function getBusinessDiscussions(companyName?: string): Promise<BusinessDiscussionSummary> {
   try {
     const authHeaders = await getAuthHeaders();
-    const res = await fetch(`${API_URL}/api/business/discussions`, {
+    const url = companyName
+      ? `${API_URL}/api/business/discussions?company_name=${encodeURIComponent(companyName)}`
+      : `${API_URL}/api/business/discussions`;
+    const res = await fetch(url, {
       headers: authHeaders,
       cache: "no-store",
     });
@@ -563,29 +566,27 @@ export async function getBusinessDiscussions(): Promise<BusinessDiscussionSummar
         firm: "Chartered Accountants",
       };
       const rawList = Array.isArray(data) ? data : Array.isArray(data.threads) ? data.threads : [];
-      if (rawList.length > 0) {
-        const threads: DiscussionThread[] = rawList.map((t: any) => ({
-          id: String(t.id),
-          companyName: t.company_name || "ABC (Pvt) Ltd",
-          auditorName: t.auditor_name || auditor.name,
-          topic: t.topic || t.title || "Audit Discussion",
-          category: t.category || "General",
-          lastMessage: t.last_message || "",
-          lastUpdated: t.last_updated || "Recently",
-          unreadCount: t.unread_count ?? 0,
-          status: (t.status === "Closed" ? "Closed" : "Open") as "Open" | "Closed",
-          messages: Array.isArray(t.messages)
-            ? t.messages.map((m: any) => ({
-                id: String(m.id),
-                sender: m.sender_name || (m.sender_role === "Auditor" || m.is_auditor ? "Mr. Karunaratne (Auditor)" : "You (Admin User)"),
-                senderRole: (m.is_auditor || m.sender_role === "Auditor" ? "Auditor" : "Company") as "Auditor" | "Company",
-                text: m.message || m.text || "",
-                timestamp: m.timestamp || "Recently",
-              }))
-            : [],
-        }));
-        return { assignedAuditor: auditor, threads };
-      }
+      const threads: DiscussionThread[] = rawList.map((t: any) => ({
+        id: String(t.id),
+        companyName: t.companyName || t.company_name || companyName || "ABC (Pvt) Ltd",
+        auditorName: t.auditorName || t.auditor_name || auditor.name,
+        topic: t.topic || t.title || "Audit Discussion",
+        category: t.category || "General",
+        lastMessage: t.lastMessage || t.last_message || "",
+        lastUpdated: t.lastUpdated || t.last_updated || "Recently",
+        unreadCount: t.unreadCount ?? t.unread_count ?? 0,
+        status: (t.status === "Closed" ? "Closed" : "Open") as "Open" | "Closed",
+        messages: Array.isArray(t.messages)
+          ? t.messages.map((m: any) => ({
+              id: String(m.id),
+              sender: m.sender || m.sender_name || (m.sender_role === "Auditor" || m.senderRole === "Auditor" || m.is_auditor ? "Mr. Karunaratne (Auditor)" : "You (Admin User)"),
+              senderRole: (m.is_auditor || m.sender_role === "Auditor" || m.senderRole === "Auditor" ? "Auditor" : "Company") as "Auditor" | "Company",
+              text: m.text || m.message || "",
+              timestamp: m.timestamp || "Recently",
+            }))
+          : [],
+      }));
+      return { assignedAuditor: auditor, threads };
     }
   } catch {
     // Fallback
@@ -713,7 +714,8 @@ export async function sendBusinessDiscussionMessage(
 export async function createBusinessDiscussion(
   topic: string,
   category: string,
-  initialMessage: string
+  initialMessage: string,
+  companyName?: string
 ): Promise<{ success: boolean; threadId: string }> {
   try {
     const authHeaders = await getAuthHeaders();
@@ -724,6 +726,7 @@ export async function createBusinessDiscussion(
         topic,
         category,
         message: initialMessage,
+        company_name: companyName,
       }),
     });
     if (res.ok) {

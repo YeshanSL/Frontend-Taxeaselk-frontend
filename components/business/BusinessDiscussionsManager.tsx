@@ -12,12 +12,14 @@ import {
   ShieldCheck,
   RotateCcw,
   Sparkles,
+  Building2,
 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { DiscussionThread, DiscussionMessage, BusinessDiscussionSummary } from "@/lib/types";
 import {
+  getBusinessDiscussions,
   sendBusinessDiscussionMessage,
   createBusinessDiscussion,
   resolveBusinessDiscussion,
@@ -42,6 +44,10 @@ export default function BusinessDiscussionsManager({
   const [activeThreadId, setActiveThreadId] = useState<string>(
     initialData.threads[0]?.id || ""
   );
+  const [currentCompany, setCurrentCompany] = useState<string>("ABC Holdings (Pvt) Ltd");
+  const [isCustomCompany, setIsCustomCompany] = useState(false);
+  const [customCompanyName, setCustomCompanyName] = useState("");
+  const [isLoadingThreads, setIsLoadingThreads] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"ALL" | "OPEN" | "CLOSED">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [replyText, setReplyText] = useState("");
@@ -62,6 +68,95 @@ export default function BusinessDiscussionsManager({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeThread?.messages?.length, activeThreadId]);
+
+  // Sync company from localStorage (taxease_company_settings / taxease_user)
+  useEffect(() => {
+    function syncCompany() {
+      try {
+        const saved = localStorage.getItem("taxease_company_settings");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.companyName) {
+            setCurrentCompany(parsed.companyName);
+            return;
+          }
+        }
+        const user = localStorage.getItem("taxease_user");
+        if (user) {
+          const parsed = JSON.parse(user);
+          const name = parsed.company_name || parsed.display_name || parsed.companyName;
+          if (name) {
+            setCurrentCompany(name);
+          }
+        }
+      } catch {
+        // Ignored
+      }
+    }
+    syncCompany();
+    window.addEventListener("taxease_company_updated", syncCompany);
+    window.addEventListener("storage", syncCompany);
+    return () => {
+      window.removeEventListener("taxease_company_updated", syncCompany);
+      window.removeEventListener("storage", syncCompany);
+    };
+  }, []);
+
+  // Fetch discussion threads dynamically when active company changes
+  useEffect(() => {
+    let isCancelled = false;
+    async function loadThreadsForCompany() {
+      setIsLoadingThreads(true);
+      try {
+        const res = await getBusinessDiscussions(currentCompany);
+        if (!isCancelled && res && Array.isArray(res.threads)) {
+          setThreads(res.threads);
+          if (res.threads.length > 0) {
+            setActiveThreadId(res.threads[0].id);
+          }
+        }
+      } catch {
+        // Graceful
+      } finally {
+        if (!isCancelled) setIsLoadingThreads(false);
+      }
+    }
+    loadThreadsForCompany();
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentCompany]);
+
+  function handleCompanyChange(newCompany: string) {
+    if (newCompany === "custom") {
+      setIsCustomCompany(true);
+      return;
+    }
+    setIsCustomCompany(false);
+    setCurrentCompany(newCompany);
+    try {
+      const saved = localStorage.getItem("taxease_company_settings");
+      const parsed = saved ? JSON.parse(saved) : {};
+      parsed.companyName = newCompany;
+      localStorage.setItem("taxease_company_settings", JSON.stringify(parsed));
+      window.dispatchEvent(new Event("taxease_company_updated"));
+    } catch {}
+  }
+
+  function handleSaveCustomCompany() {
+    if (!customCompanyName.trim()) return;
+    const name = customCompanyName.trim();
+    setCurrentCompany(name);
+    setIsCustomCompany(false);
+    setCustomCompanyName("");
+    try {
+      const saved = localStorage.getItem("taxease_company_settings");
+      const parsed = saved ? JSON.parse(saved) : {};
+      parsed.companyName = name;
+      localStorage.setItem("taxease_company_settings", JSON.stringify(parsed));
+      window.dispatchEvent(new Event("taxease_company_updated"));
+    } catch {}
+  }
 
   const filteredThreads = threads.filter((t) => {
     const matchesSearch =
@@ -150,7 +245,7 @@ export default function BusinessDiscussionsManager({
 
     const newThread: DiscussionThread = {
       id: newId,
-      companyName: "ABC (Pvt) Ltd",
+      companyName: currentCompany,
       auditorName: initialData.assignedAuditor?.name || "Mr. Karunaratne & Associates",
       topic: newTopic.trim(),
       category: newCategory,
@@ -168,7 +263,8 @@ export default function BusinessDiscussionsManager({
       await createBusinessDiscussion(
         newTopic.trim(),
         newCategory,
-        newInitialMessage.trim()
+        newInitialMessage.trim(),
+        currentCompany
       );
     } catch {
       // Handled
@@ -182,7 +278,85 @@ export default function BusinessDiscussionsManager({
   }
 
   return (
-    <div className="mt-6">
+    <div className="mt-6 space-y-4">
+      {/* Active Company Selector Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-brand-blue">
+            <Building2 className="h-4 w-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Active Company</span>
+              <span className="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                Connected
+              </span>
+              {isLoadingThreads && (
+                <span className="inline-flex items-center text-[10px] text-gray-400 animate-pulse">
+                  Syncing discussions...
+                </span>
+              )}
+            </div>
+            <p className="text-sm font-bold text-gray-900">{currentCompany}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {!isCustomCompany ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-gray-500 font-medium hidden sm:inline">Switch Company:</span>
+              <select
+                value={
+                  ["ABC Holdings (Pvt) Ltd", "Lanka Trading (Pvt) Ltd", "Ocean Foods (Pvt) Ltd", "Tech Solutions (Pvt) Ltd", "Ceylon BioTech (Pvt) Ltd"].includes(currentCompany)
+                    ? currentCompany
+                    : "custom"
+                }
+                onChange={(e) => handleCompanyChange(e.target.value)}
+                className="rounded-lg border border-blue-200 bg-white py-1.5 pl-3 pr-8 text-xs font-semibold text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue cursor-pointer"
+              >
+                <option value="ABC Holdings (Pvt) Ltd">ABC Holdings (Pvt) Ltd</option>
+                <option value="Lanka Trading (Pvt) Ltd">Lanka Trading (Pvt) Ltd</option>
+                <option value="Ocean Foods (Pvt) Ltd">Ocean Foods (Pvt) Ltd</option>
+                <option value="Tech Solutions (Pvt) Ltd">Tech Solutions (Pvt) Ltd</option>
+                <option value="Ceylon BioTech (Pvt) Ltd">Ceylon BioTech (Pvt) Ltd</option>
+                <option value="custom">+ Type New Company Name...</option>
+              </select>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={customCompanyName}
+                onChange={(e) => setCustomCompanyName(e.target.value)}
+                placeholder="Enter Company Name..."
+                className="rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSaveCustomCompany();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleSaveCustomCompany}
+                className="rounded-lg bg-brand-blue px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
+              >
+                Set
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsCustomCompany(false)}
+                className="text-xs text-gray-500 hover:text-gray-700 underline"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_1fr]">
         {/* Left Column: Threads list */}
         <Card className="flex h-[700px] flex-col overflow-hidden p-0 border border-gray-100 shadow-sm">
@@ -351,11 +525,11 @@ export default function BusinessDiscussionsManager({
                         <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
                         <span>Assigned Auditor:</span>
                         <span className="text-gray-900 font-semibold">
-                          {initialData.assignedAuditor.name}
+                          {initialData.assignedAuditor?.name || "Mr. Karunaratne & Associates"}
                         </span>
                       </div>
                       <span className="text-gray-300">•</span>
-                      <span>{initialData.assignedAuditor.firm}</span>
+                      <span>{initialData.assignedAuditor?.firm || "Chartered Accountants"}</span>
                     </div>
                   </div>
 
@@ -498,7 +672,7 @@ export default function BusinessDiscussionsManager({
                     Start New Auditor Discussion
                   </h3>
                   <p className="text-xs text-gray-500">
-                    With {initialData.assignedAuditor.name}
+                    With {initialData.assignedAuditor?.name || "Mr. Karunaratne & Associates"} &bull; For {currentCompany}
                   </p>
                 </div>
               </div>
