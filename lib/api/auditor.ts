@@ -817,16 +817,17 @@ export async function getAuditorDocumentsSummary(): Promise<AuditorDocumentsSumm
 
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const documents = data.map((d: any) => ({
+      const rawDocs = Array.isArray(data) ? data : Array.isArray(data.documents) ? data.documents : [];
+      if (rawDocs.length > 0) {
+        const documents = rawDocs.map((d: any) => ({
           id: String(d.id),
-          companyName: "ABC Holdings (Pvt) Ltd",
-          documentName: d.name,
-          documentType: d.category || d.type || "Financial Statements",
-          status: (d.status === "VERIFIED" ? "verified" : d.status === "PENDING" ? "review_required" : "processed") as any,
-          aiConfidencePercent: 95,
-          uploadedDate: d.uploaded_at || "16 Aug 2026",
-          sizeLabel: d.size || "2.1 MB",
+          companyName: d.company_name || d.companyName || "ABC Holdings (Pvt) Ltd",
+          documentName: d.name || d.documentName || "Document.pdf",
+          documentType: d.type || d.doc_type || d.category || "Financial Statements",
+          status: (d.status === "review_required" || d.status === "PENDING" ? "review_required" : "verified") as any,
+          aiConfidencePercent: d.ai_confidence_percent ?? 95,
+          uploadedDate: d.uploaded_date || d.uploaded_at || "16 Aug 2026",
+          sizeLabel: d.size_label || d.size || "1.5 MB",
         }));
         return {
           totalDocuments: documents.length,

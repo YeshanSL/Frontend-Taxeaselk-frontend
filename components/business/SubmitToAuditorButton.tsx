@@ -20,6 +20,74 @@ export default function SubmitToAuditorButton() {
   const [modalOpen, setModalOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [submitted, setSubmitted] = useState(false);
+  const [currentCompany, setCurrentCompany] = useState("ABC Holdings (Pvt) Ltd");
+  const [auditorOption, setAuditorOption] = useState("audit@karunaratne.lk");
+  const [customAuditorEmail, setCustomAuditorEmail] = useState("");
+  const [submittedAuditor, setSubmittedAuditor] = useState("");
+  const [assignedAuditorInfo, setAssignedAuditorInfo] = useState<{
+    email: string;
+    firmName: string;
+    auditorName: string;
+    status: string;
+  } | null>(null);
+
+  const AUDITOR_OPTIONS = [
+    { email: "audit@karunaratne.lk", name: "Karunaratne & Associates", label: "Karunaratne & Associates (audit@karunaratne.lk)" },
+    { email: "tax@bdo.lk", name: "BDO Sri Lanka", label: "BDO Sri Lanka (tax@bdo.lk)" },
+    { email: "cit@kpmg.lk", name: "KPMG Sri Lanka", label: "KPMG Sri Lanka (cit@kpmg.lk)" },
+    { email: "cit.audit@ey.lk", name: "Ernst & Young", label: "Ernst & Young (cit.audit@ey.lk)" },
+    { email: "custom", name: "Custom Auditor", label: "Custom Auditor (Enter Email)" },
+  ];
+
+  // Sync active company from localStorage and check assigned auditor
+  useEffect(() => {
+    let company = "ABC Holdings (Pvt) Ltd";
+    try {
+      const saved = localStorage.getItem("taxease_company_settings");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.companyName) {
+          company = parsed.companyName;
+          setCurrentCompany(company);
+        }
+      }
+    } catch {}
+
+    // Check local assigned auditor for this company
+    try {
+      const local = localStorage.getItem(`taxease_assigned_auditor_${company}`) || localStorage.getItem("taxease_last_assigned_auditor");
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (parsed.auditor_email) {
+          setAssignedAuditorInfo({
+            email: parsed.auditor_email,
+            firmName: parsed.firm_name || parsed.auditor_name || "Assigned Auditor",
+            auditorName: parsed.auditor_name || parsed.firm_name || "Tax Auditor",
+            status: parsed.status || "Invited",
+          });
+          setAuditorOption(parsed.auditor_email);
+          return;
+        }
+      }
+    } catch {}
+
+    // Fetch from backend
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    fetch(`${apiUrl}/api/auditor-review/assigned-auditor?company_name=${encodeURIComponent(company)}`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data && data.has_assigned_auditor && data.auditor) {
+          setAssignedAuditorInfo({
+            email: data.auditor.auditor_email,
+            firmName: data.auditor.firm_name,
+            auditorName: data.auditor.auditor_name,
+            status: data.auditor.status,
+          });
+          setAuditorOption(data.auditor.auditor_email);
+        }
+      })
+      .catch(() => {});
+  }, [modalOpen, currentCompany]);
 
   // Trigger organizing loading sequence when modal opens
   useEffect(() => {
@@ -27,7 +95,7 @@ export default function SubmitToAuditorButton() {
     if (modalOpen && stage === "organizing") {
       timer = setTimeout(() => {
         setStage("ready");
-      }, 2000);
+      }, 1800);
     }
     return () => clearTimeout(timer);
   }, [modalOpen, stage]);
@@ -47,6 +115,14 @@ export default function SubmitToAuditorButton() {
 
   async function handleSendFilePack() {
     setStage("submitting");
+    const targetAuditorEmail = auditorOption === "custom" ? customAuditorEmail.trim() : auditorOption;
+    const matchedAuditor = AUDITOR_OPTIONS.find((a) => a.email === auditorOption);
+    const auditorDisplayName = matchedAuditor && matchedAuditor.email !== "custom" 
+      ? matchedAuditor.name 
+      : targetAuditorEmail || "Auditor";
+
+    setSubmittedAuditor(`${auditorDisplayName} (${targetAuditorEmail || "audit@karunaratne.lk"})`);
+
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
@@ -58,6 +134,10 @@ export default function SubmitToAuditorButton() {
       await fetch(`${apiUrl}/api/financials/submit-to-auditor`, {
         method: "POST",
         headers,
+        body: JSON.stringify({
+          company_name: currentCompany,
+          auditor_email: targetAuditorEmail || "audit@karunaratne.lk",
+        }),
       }).catch(() => null);
 
       setStage("success");
@@ -104,7 +184,7 @@ export default function SubmitToAuditorButton() {
                   Organizing Your Documents
                 </h3>
                 <p className="mt-2 text-sm text-gray-500 max-w-xs mx-auto">
-                  Your documents will organize and bundle into a complete tax file pack for your auditor...
+                  Your documents for <span className="font-semibold text-gray-700">{currentCompany}</span> will organize and bundle into a complete tax file pack for your auditor...
                 </p>
 
                 {/* Progress animation bar */}
@@ -131,7 +211,7 @@ export default function SubmitToAuditorButton() {
                       File Pack Ready for Submission
                     </h3>
                     <p className="text-xs text-gray-400">
-                      All uploaded documents have been organized
+                      All uploaded documents for {currentCompany} have been organized
                     </p>
                   </div>
                 </div>
@@ -141,17 +221,80 @@ export default function SubmitToAuditorButton() {
                     <FileCheck2 className="h-5 w-5 text-brand-blue shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-brand-blue">
-                        CIT Audit File Pack — Ready
+                        CIT Audit File Pack — {currentCompany}
                       </p>
                       <p className="mt-1 text-xs text-gray-600">
                         Bundled Financial Statements, Trial Balance, Schedules, and Supporting Invoices.
                       </p>
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center gap-1.5 text-xs text-gray-500 border-t border-blue-100/60 pt-2.5">
-                    <span className="h-2 w-2 rounded-full bg-status-success inline-block" />
-                    Indexed &amp; verified for Auditor Karunaratne &amp; Associates
+                </div>
+
+                {/* Company & Auditor Selection */}
+                <div className="mt-4 space-y-3">
+                  {/* Assigned Auditor Status Card */}
+                  {assignedAuditorInfo ? (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 p-3 text-xs">
+                      <div className="flex items-center gap-1.5 font-semibold text-emerald-800">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span>Assigned Auditor: {assignedAuditorInfo.firmName}</span>
+                      </div>
+                      <p className="mt-1 text-gray-600">
+                        Invited Email: <span className="font-mono font-medium text-gray-900">{assignedAuditorInfo.email}</span> • Status: <span className="font-semibold text-emerald-700">{assignedAuditorInfo.status}</span>
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-3 text-xs text-gray-600">
+                      <p className="font-semibold text-brand-blue">No Auditor Invited Yet</p>
+                      <p className="mt-0.5 text-gray-500">
+                        You can invite an auditor from the Auditor Review tab or select one below:
+                      </p>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      Target Company:
+                    </label>
+                    <input
+                      type="text"
+                      value={currentCompany}
+                      onChange={(e) => setCurrentCompany(e.target.value)}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                    />
                   </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      Assigned Auditor:
+                    </label>
+                    <select
+                      value={auditorOption}
+                      onChange={(e) => setAuditorOption(e.target.value)}
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-brand-blue cursor-pointer"
+                    >
+                      {AUDITOR_OPTIONS.map((opt) => (
+                        <option key={opt.email} value={opt.email}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {auditorOption === "custom" && (
+                    <div className="animate-in fade-in duration-150">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Auditor Email Address:
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="auditor@firm.lk"
+                        value={customAuditorEmail}
+                        onChange={(e) => setCustomAuditorEmail(e.target.value)}
+                        className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-6 flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
@@ -192,9 +335,9 @@ export default function SubmitToAuditorButton() {
                 <p className="mt-2 text-sm text-gray-600 max-w-sm mx-auto">
                   Your document file pack has been successfully organized and sent to your auditor.
                 </p>
-                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-status-success">
+                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-medium text-status-success">
                   <Check className="h-3.5 w-3.5" />
-                  Sent to Mr. Karunaratne &amp; Associates
+                  Sent to {submittedAuditor}
                 </div>
 
                 <div className="mt-6 border-t border-gray-100 pt-4">

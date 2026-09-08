@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   UserPlus,
   X,
@@ -89,6 +89,41 @@ export default function InviteAuditorButton() {
   const [firmName, setFirmName] = useState("");
   const [loading, setLoading] = useState(false);
   const [invitedAuditor, setInvitedAuditor] = useState<string | null>(null);
+  const [currentCompany, setCurrentCompany] = useState<string>("ABC Holdings (Pvt) Ltd");
+  const [assignedAuditor, setAssignedAuditor] = useState<{ firm: string; email: string } | null>(null);
+
+  useEffect(() => {
+    function syncCompanyAndAuditor() {
+      try {
+        let company = "ABC Holdings (Pvt) Ltd";
+        const savedSettings = localStorage.getItem("taxease_company_settings");
+        if (savedSettings) {
+          const parsed = JSON.parse(savedSettings);
+          if (parsed.companyName) company = parsed.companyName;
+        }
+        setCurrentCompany(company);
+
+        const savedAuditor = localStorage.getItem(`taxease_assigned_auditor_${company}`) || localStorage.getItem("taxease_last_assigned_auditor");
+        if (savedAuditor) {
+          const parsedAuditor = JSON.parse(savedAuditor);
+          if (parsedAuditor.auditor_email) {
+            setAssignedAuditor({
+              firm: parsedAuditor.firm_name || parsedAuditor.auditor_name || "Assigned Auditor",
+              email: parsedAuditor.auditor_email,
+            });
+          }
+        }
+      } catch {}
+    }
+
+    syncCompanyAndAuditor();
+    window.addEventListener("taxease_company_updated", syncCompanyAndAuditor);
+    window.addEventListener("taxease_auditor_assigned", syncCompanyAndAuditor);
+    return () => {
+      window.removeEventListener("taxease_company_updated", syncCompanyAndAuditor);
+      window.removeEventListener("taxease_auditor_assigned", syncCompanyAndAuditor);
+    };
+  }, []);
 
   async function sendInvitation(targetEmail: string, targetFirm: string, auditorName?: string) {
     setLoading(true);
@@ -103,11 +138,28 @@ export default function InviteAuditorButton() {
       await fetch(`${apiUrl}/api/auditor-review/invite`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ email: targetEmail, firmName: targetFirm, auditorName }),
+        body: JSON.stringify({
+          email: targetEmail,
+          firmName: targetFirm,
+          auditorName,
+          company_name: currentCompany,
+        }),
       }).catch(() => {
         // Fallback gracefully for local testing
       });
 
+      const assignedRecord = {
+        company_name: currentCompany,
+        auditor_email: targetEmail,
+        firm_name: targetFirm,
+        auditor_name: auditorName || targetFirm,
+        status: "Invited",
+      };
+      localStorage.setItem(`taxease_assigned_auditor_${currentCompany}`, JSON.stringify(assignedRecord));
+      localStorage.setItem("taxease_last_assigned_auditor", JSON.stringify(assignedRecord));
+      window.dispatchEvent(new CustomEvent("taxease_auditor_assigned", { detail: assignedRecord }));
+
+      setAssignedAuditor({ firm: targetFirm, email: targetEmail });
       setInvitedAuditor(auditorName || targetFirm || targetEmail);
       setTimeout(() => {
         setOpen(false);
@@ -142,12 +194,12 @@ export default function InviteAuditorButton() {
   return (
     <>
       <Button
-        variant="primary"
+        variant={assignedAuditor ? "secondary" : "primary"}
         icon={<UserPlus className="h-4 w-4" />}
         className="shrink-0"
         onClick={() => setOpen(true)}
       >
-        Invite Auditor
+        {assignedAuditor ? `Auditor: ${assignedAuditor.firm}` : "Invite Auditor"}
       </Button>
 
       {open && (
@@ -162,7 +214,7 @@ export default function InviteAuditorButton() {
                 <div>
                   <p className="font-bold text-gray-900">Invite Tax Auditor</p>
                   <p className="text-xs text-gray-500">
-                    Connect with high-rated certified partners or invite your firm
+                    Connect an accredited audit partner or firm for <span className="font-semibold text-gray-800">{currentCompany}</span>
                   </p>
                 </div>
               </div>

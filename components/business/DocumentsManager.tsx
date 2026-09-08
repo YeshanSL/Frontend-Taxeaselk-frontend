@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { FileText, Trash2 } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { FileText, Trash2, Building2, CheckCircle2, ChevronDown } from "lucide-react";
 import Card from "@/components/ui/Card";
 import StatCard from "@/components/ui/StatCard";
 import MiniConfidenceBar from "@/components/ui/MiniConfidenceBar";
@@ -16,22 +16,76 @@ function nextLocalId() {
   return `local_${Date.now()}_${localIdCounter}`;
 }
 
-// Owns the live document list in React state, seeded from the server-
-// fetched mock/API data. Files picked via DocumentUploadZone are added
-// here immediately (real local file access — no backend needed for
-// this to work), run through a short "Processing" simulation, then
-// settle into Processed or Review Required, mirroring what the real
-// AI extraction pipeline will eventually do.
-//
-// TODO (Week 2): once the FastAPI backend exists, replace the
-// simulateProcessing() call below with a real upload:
-//   const formData = new FormData();
-//   formData.append("file", file);
-//   const res = await fetch(`${API_BASE_URL}/documents/upload`, { method: "POST", body: formData });
-//   const result = await res.json(); // { status, aiConfidencePercent, ... }
 export default function DocumentsManager({ initial }: { initial: DocumentsSummary }) {
   const [documents, setDocuments] = useState<DocumentRow[]>(initial.documents);
   const [missingCount] = useState(initial.missingCount);
+  const [currentCompany, setCurrentCompany] = useState<string>("ABC Holdings (Pvt) Ltd");
+  const [isCustomCompany, setIsCustomCompany] = useState(false);
+  const [customCompanyName, setCustomCompanyName] = useState("");
+  const [toastMessage, setToastMessage] = useState<string>("");
+
+  useEffect(() => {
+    function syncCompany() {
+      try {
+        const saved = localStorage.getItem("taxease_company_settings");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.companyName) {
+            setCurrentCompany(parsed.companyName);
+            return;
+          }
+        }
+        const user = localStorage.getItem("taxease_user");
+        if (user) {
+          const parsed = JSON.parse(user);
+          const name = parsed.company_name || parsed.display_name || parsed.companyName;
+          if (name) {
+            setCurrentCompany(name);
+          }
+        }
+      } catch {
+        // Ignored
+      }
+    }
+    syncCompany();
+    window.addEventListener("taxease_company_updated", syncCompany);
+    window.addEventListener("storage", syncCompany);
+    return () => {
+      window.removeEventListener("taxease_company_updated", syncCompany);
+      window.removeEventListener("storage", syncCompany);
+    };
+  }, []);
+
+  function handleCompanyChange(newCompany: string) {
+    if (newCompany === "custom") {
+      setIsCustomCompany(true);
+      return;
+    }
+    setIsCustomCompany(false);
+    setCurrentCompany(newCompany);
+    try {
+      const saved = localStorage.getItem("taxease_company_settings");
+      const parsed = saved ? JSON.parse(saved) : {};
+      parsed.companyName = newCompany;
+      localStorage.setItem("taxease_company_settings", JSON.stringify(parsed));
+      window.dispatchEvent(new Event("taxease_company_updated"));
+    } catch {}
+  }
+
+  function handleSaveCustomCompany() {
+    if (!customCompanyName.trim()) return;
+    const name = customCompanyName.trim();
+    setCurrentCompany(name);
+    setIsCustomCompany(false);
+    setCustomCompanyName("");
+    try {
+      const saved = localStorage.getItem("taxease_company_settings");
+      const parsed = saved ? JSON.parse(saved) : {};
+      parsed.companyName = name;
+      localStorage.setItem("taxease_company_settings", JSON.stringify(parsed));
+      window.dispatchEvent(new Event("taxease_company_updated"));
+    } catch {}
+  }
 
   const stats = useMemo(() => {
     const uploaded = documents.length;
@@ -61,6 +115,7 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
         const formData = new FormData();
         formData.append("file", file);
         formData.append("doc_type", guessDocumentType(file.name));
+        formData.append("company_name", currentCompany);
 
         const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
         const headers: Record<string, string> = {};
@@ -95,6 +150,8 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
                 : d
             )
           );
+          setToastMessage(`"${file.name}" uploaded successfully for ${currentCompany}`);
+          setTimeout(() => setToastMessage(""), 4000);
         } else {
           setDocuments((prev) =>
             prev.map((d) => (d.id === tempId ? { ...d, status: "processed", aiConfidencePercent: 95 } : d))
@@ -126,9 +183,89 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
     }
   }
 
-
   return (
     <div>
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Active Company Selector Bar */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-brand-blue">
+            <Building2 className="h-4 w-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Active Company</span>
+              <span className="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                Connected
+              </span>
+            </div>
+            <p className="text-sm font-bold text-gray-900">{currentCompany}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {!isCustomCompany ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-gray-500 font-medium hidden sm:inline">Switch Company:</span>
+              <select
+                value={
+                  ["ABC Holdings (Pvt) Ltd", "Lanka Trading (Pvt) Ltd", "Ocean Foods (Pvt) Ltd", "Tech Solutions (Pvt) Ltd", "Ceylon BioTech (Pvt) Ltd"].includes(currentCompany)
+                    ? currentCompany
+                    : "custom"
+                }
+                onChange={(e) => handleCompanyChange(e.target.value)}
+                className="rounded-lg border border-blue-200 bg-white py-1.5 pl-3 pr-8 text-xs font-semibold text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue cursor-pointer"
+              >
+                <option value="ABC Holdings (Pvt) Ltd">ABC Holdings (Pvt) Ltd</option>
+                <option value="Lanka Trading (Pvt) Ltd">Lanka Trading (Pvt) Ltd</option>
+                <option value="Ocean Foods (Pvt) Ltd">Ocean Foods (Pvt) Ltd</option>
+                <option value="Tech Solutions (Pvt) Ltd">Tech Solutions (Pvt) Ltd</option>
+                <option value="Ceylon BioTech (Pvt) Ltd">Ceylon BioTech (Pvt) Ltd</option>
+                <option value="custom">+ Type New Company Name...</option>
+              </select>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={customCompanyName}
+                onChange={(e) => setCustomCompanyName(e.target.value)}
+                placeholder="Enter Company Name..."
+                className="rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSaveCustomCompany();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleSaveCustomCompany}
+                className="rounded-lg bg-brand-blue px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
+              >
+                Set
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsCustomCompany(false)}
+                className="text-xs text-gray-500 hover:text-gray-700 underline"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard label="Documents Uploaded" value={String(stats.uploaded)} />
         <StatCard label="Processed" value={String(stats.processed)} />
