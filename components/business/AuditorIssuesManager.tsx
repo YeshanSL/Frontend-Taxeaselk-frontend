@@ -281,7 +281,7 @@ export default function AuditorIssuesManager({ initialIssues }: Props) {
             {/* Response Area */}
             <div className="mt-4">
               <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Your Explanation / Response to Auditor
+                {t("business.issues.yourResponse")}
               </label>
               <textarea
                 rows={3}
@@ -298,7 +298,7 @@ export default function AuditorIssuesManager({ initialIssues }: Props) {
             {/* Optional Document Upload Feature */}
             <div className="mt-4">
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                {t("business.auditorReview.attachFile")}{" "}
+                {t("business.issues.uploadSupport")}{" "}
                 <span className="text-gray-400 font-normal">({t("common.optional")})</span>
               </label>
 
@@ -319,7 +319,7 @@ export default function AuditorIssuesManager({ initialIssues }: Props) {
                     <UploadCloud className="h-5 w-5" />
                   </div>
                   <p className="mt-1.5 text-xs font-medium text-gray-700">
-                    {t("business.auditorReview.attachFile")}
+                    {t("business.issues.uploadSupport")}
                   </p>
                   <p className="text-[11px] text-gray-400">
                     PDF, Excel, Word, or images up to 10MB
@@ -347,7 +347,7 @@ export default function AuditorIssuesManager({ initialIssues }: Props) {
                       if (fileInputRef.current) fileInputRef.current.value = "";
                     }}
                     className="p-1 text-gray-400 hover:text-red-500 cursor-pointer"
-                    title="Remove file"
+                    title={t("common.remove")}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -378,8 +378,8 @@ export default function AuditorIssuesManager({ initialIssues }: Props) {
                 disabled={isSubmitting || (!responseText.trim() && !selectedFile)}
               >
                 {isSubmitting
-                  ? t("business.auditorReview.submitting")
-                  : t("business.auditorReview.submitResponse")}
+                  ? t("business.issues.submitting")
+                  : t("business.issues.submitResponse")}
               </Button>
             </div>
           </Card>

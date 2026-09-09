@@ -8,9 +8,11 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import T from "@/components/layout/T";
 import { Field, Input, Select } from "@/components/ui/Input";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { AuditorRequestsSummary, AuditorRequestRow } from "@/lib/types";
 
 export default function RequestsManager({ initial }: { initial: AuditorRequestsSummary }) {
+  const { t } = useLanguage();
   const [requests, setRequests] = useState<AuditorRequestRow[]>(initial.requests);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -154,7 +156,7 @@ export default function RequestsManager({ initial }: { initial: AuditorRequestsS
             icon={<Plus className="h-4 w-4" />}
             onClick={() => setModalOpen(true)}
           >
-            Create New Request
+            {t("auditor.requests.newRequest")}
           </Button>
         </div>
       </div>
@@ -212,12 +214,12 @@ export default function RequestsManager({ initial }: { initial: AuditorRequestsS
           <thead>
             <tr className="border-b border-gray-100 text-xs font-medium uppercase tracking-wide text-gray-400">
               <th className="px-5 py-3">Reference</th>
-              <th className="px-5 py-3">Company</th>
+              <th className="px-5 py-3">{t("common.company")}</th>
               <th className="px-5 py-3">Request Details</th>
               <th className="px-5 py-3">Priority</th>
-              <th className="px-5 py-3">Status</th>
-              <th className="px-5 py-3">Due Date</th>
-              <th className="px-5 py-3 text-right">Actions</th>
+              <th className="px-5 py-3">{t("common.status")}</th>
+              <th className="px-5 py-3">{t("auditor.requests.dueDate")}</th>
+              <th className="px-5 py-3 text-right">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -276,7 +278,7 @@ export default function RequestsManager({ initial }: { initial: AuditorRequestsS
                 <td className="px-5 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Button variant="secondary" className="px-2.5 py-1 text-xs">
-                      View
+                      {t("common.view")}
                     </Button>
                     {req.status === "pending" && (
                       <Button
@@ -301,7 +303,7 @@ export default function RequestsManager({ initial }: { initial: AuditorRequestsS
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <Card className="w-full max-w-lg p-6">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <p className="font-semibold text-gray-900">Create New Request (RFI)</p>
+              <p className="font-semibold text-gray-900">{t("auditor.requests.newRequest")}</p>
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
@@ -320,7 +322,7 @@ export default function RequestsManager({ initial }: { initial: AuditorRequestsS
               </div>
             ) : (
               <form onSubmit={handleCreateRequest} className="mt-4 flex flex-col gap-4">
-                <Field label="Request Title">
+                <Field label={t("auditor.requests.requestTitle")}>
                   <Input
                     required
                     placeholder="e.g. Clarification on Entertainment Expense Invoices"
@@ -329,7 +331,7 @@ export default function RequestsManager({ initial }: { initial: AuditorRequestsS
                   />
                 </Field>
 
-                <Field label="Description & Specific Inquiries">
+                <Field label={t("auditor.requests.requestDesc")}>
                   <textarea
                     required
                     rows={3}
@@ -361,7 +363,7 @@ export default function RequestsManager({ initial }: { initial: AuditorRequestsS
                   </Field>
                 </div>
 
-                <Field label="Due Date">
+                <Field label={t("auditor.requests.dueDate")}>
                   <Input
                     type="date"
                     required
@@ -376,10 +378,10 @@ export default function RequestsManager({ initial }: { initial: AuditorRequestsS
                     variant="secondary"
                     onClick={() => setModalOpen(false)}
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   <Button type="submit" disabled={loading}>
-                    {loading ? "Sending..." : "Create & Send Request"}
+                    {loading ? "Sending..." : t("auditor.requests.newRequest")}
                   </Button>
                 </div>
               </form>

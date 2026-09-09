@@ -35,24 +35,32 @@ export default async function AuditorReviewPage() {
               <User className="h-6 w-6 text-brand-blue" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-gray-900">Assigned Auditor</p>
+              <p className="font-semibold text-gray-900">
+                <T k="business.auditorReview.assignedAuditor" />
+              </p>
               <p className="text-sm text-gray-500">
                 {data.auditorName} ({data.auditorFirm})
               </p>
 
               <div className="mt-4 flex flex-wrap gap-8">
                 <div>
-                  <p className="text-xs text-gray-400">Status</p>
+                  <p className="text-xs text-gray-400">
+                    <T k="common.status" />
+                  </p>
                   <Badge tone="warning">{data.reviewStatus}</Badge>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Submitted</p>
+                  <p className="text-xs text-gray-400">
+                    <T k="business.auditorReview.submitted" />
+                  </p>
                   <p className="text-sm font-medium text-gray-700">
                     {data.submittedDate}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Expected by</p>
+                  <p className="text-xs text-gray-400">
+                    <T k="business.auditorReview.expectedBy" />
+                  </p>
                   <p className="text-sm font-medium text-gray-700">
                     {data.expectedByDate}
                   </p>
@@ -71,7 +79,9 @@ export default async function AuditorReviewPage() {
         </Card>
 
         <Card className="p-5">
-          <p className="mb-2 font-semibold text-gray-800">Review Summary</p>
+          <p className="mb-2 font-semibold text-gray-800">
+            <T k="business.auditorReview.citStatus" />
+          </p>
           <div className="divide-y divide-gray-50">
             <SummaryCountRow label="Approved" count={data.approvedCount} tone="success" />
             <SummaryCountRow label="Warnings" count={data.warningsCount} tone="warning" />

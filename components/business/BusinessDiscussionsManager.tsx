@@ -24,6 +24,7 @@ import {
   createBusinessDiscussion,
   resolveBusinessDiscussion,
 } from "@/lib/api/business";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface BusinessDiscussionsManagerProps {
   initialData: BusinessDiscussionSummary;
@@ -40,6 +41,7 @@ const CATEGORIES = [
 export default function BusinessDiscussionsManager({
   initialData,
 }: BusinessDiscussionsManagerProps) {
+  const { t } = useLanguage();
   const [threads, setThreads] = useState<DiscussionThread[]>(initialData.threads);
   const [activeThreadId, setActiveThreadId] = useState<string>(
     initialData.threads[0]?.id || ""
@@ -293,7 +295,7 @@ export default function BusinessDiscussionsManager({
               </span>
               {isLoadingThreads && (
                 <span className="inline-flex items-center text-[10px] text-gray-400 animate-pulse">
-                  Syncing discussions...
+                  {t("discussions.syncingDiscussions")}
                 </span>
               )}
             </div>
@@ -343,14 +345,14 @@ export default function BusinessDiscussionsManager({
                 onClick={handleSaveCustomCompany}
                 className="rounded-lg bg-brand-blue px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
               >
-                Set
+                {t("common.set")}
               </button>
               <button
                 type="button"
                 onClick={() => setIsCustomCompany(false)}
                 className="text-xs text-gray-500 hover:text-gray-700 underline"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           )}
@@ -365,7 +367,7 @@ export default function BusinessDiscussionsManager({
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <MessagesSquare className="h-5 w-5 text-brand-blue" />
-                <h3 className="font-bold text-gray-900 text-sm">Discussions</h3>
+                <h3 className="font-bold text-gray-900 text-sm">{t("discussions.title")}</h3>
                 <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-brand-blue">
                   {threads.length}
                 </span>
@@ -376,7 +378,7 @@ export default function BusinessDiscussionsManager({
                 icon={<Plus className="h-3.5 w-3.5" />}
                 onClick={() => setIsModalOpen(true)}
               >
-                New Topic
+                {t("discussions.newTopic")}
               </Button>
             </div>
 
@@ -387,7 +389,7 @@ export default function BusinessDiscussionsManager({
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search topics or messages..."
+                placeholder={t("discussions.searchPlaceholder")}
                 className="w-full rounded-lg border border-gray-200 py-1.5 pl-8 pr-3 text-xs placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
               />
             </div>
@@ -402,7 +404,7 @@ export default function BusinessDiscussionsManager({
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
-                All ({threads.length})
+                {t("common.all")} ({threads.length})
               </button>
               <button
                 onClick={() => setFilterStatus("OPEN")}
@@ -412,7 +414,7 @@ export default function BusinessDiscussionsManager({
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
-                Open ({threads.filter((t) => t.status === "Open").length})
+                {t("discussions.openWithCount", { count: threads.filter((t) => t.status === "Open").length })}
               </button>
               <button
                 onClick={() => setFilterStatus("CLOSED")}
@@ -422,7 +424,7 @@ export default function BusinessDiscussionsManager({
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
-                Resolved ({threads.filter((t) => t.status === "Closed").length})
+                {t("discussions.resolvedWithCount", { count: threads.filter((t) => t.status === "Closed").length })}
               </button>
             </div>
           </div>
@@ -432,9 +434,9 @@ export default function BusinessDiscussionsManager({
             {filteredThreads.length === 0 ? (
               <div className="p-8 text-center text-gray-400">
                 <MessagesSquare className="mx-auto h-8 w-8 stroke-1 text-gray-300 mb-2" />
-                <p className="text-xs font-medium">No discussion topics found</p>
+                <p className="text-xs font-medium">{t("discussions.noTopicsFound")}</p>
                 <p className="text-[11px] text-gray-400 mt-0.5">
-                  Click &ldquo;New Topic&rdquo; to start discussing with your auditor.
+                  {t("discussions.noTopicsSubtitle")}
                 </p>
               </div>
             ) : (
@@ -523,7 +525,7 @@ export default function BusinessDiscussionsManager({
                     <div className="mt-1.5 flex items-center gap-2 text-xs text-gray-500">
                       <div className="flex items-center gap-1 font-medium text-gray-700">
                         <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                        <span>Assigned Auditor:</span>
+                        <span>{t("discussions.assignedAuditor")}</span>
                         <span className="text-gray-900 font-semibold">
                           {initialData.assignedAuditor?.name || "Mr. Karunaratne & Associates"}
                         </span>
@@ -542,7 +544,7 @@ export default function BusinessDiscussionsManager({
                         icon={<CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />}
                         onClick={handleToggleResolve}
                       >
-                        Mark as Resolved
+                        {t("discussions.markResolved")}
                       </Button>
                     ) : (
                       <Button
@@ -551,7 +553,7 @@ export default function BusinessDiscussionsManager({
                         icon={<RotateCcw className="h-3.5 w-3.5" />}
                         onClick={handleToggleResolve}
                       >
-                        Reopen Discussion
+                        {t("discussions.reopen")}
                       </Button>
                     )}
                   </div>
@@ -624,7 +626,7 @@ export default function BusinessDiscussionsManager({
                   type="text"
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Type your clarification, inquiry, or response for the auditor..."
+                  placeholder={t("discussions.typePlaceholder")}
                   className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
                 />
                 <Button
@@ -632,7 +634,7 @@ export default function BusinessDiscussionsManager({
                   disabled={!replyText.trim() || isSubmitting}
                   icon={<Send className="h-4 w-4" />}
                 >
-                  Send
+                  {t("common.send")}
                 </Button>
               </form>
             </>
@@ -640,10 +642,10 @@ export default function BusinessDiscussionsManager({
             <div className="flex flex-1 flex-col items-center justify-center text-gray-400 p-8">
               <MessagesSquare className="h-12 w-12 stroke-1 text-gray-300" />
               <p className="mt-3 text-sm font-semibold text-gray-600">
-                Select a discussion thread to view
+                {t("discussions.selectThreadPrompt")}
               </p>
               <p className="text-xs text-gray-400 mt-1 max-w-sm text-center">
-                Review clarification requests, explain variances, or ask questions directly to your assigned auditor.
+                {t("discussions.selectThreadSubtitle")}
               </p>
               <Button
                 variant="primary"
@@ -651,7 +653,7 @@ export default function BusinessDiscussionsManager({
                 icon={<Plus className="h-3.5 w-3.5" />}
                 onClick={() => setIsModalOpen(true)}
               >
-                Start New Discussion
+                {t("discussions.startNewDiscussion")}
               </Button>
             </div>
           )}
@@ -669,10 +671,13 @@ export default function BusinessDiscussionsManager({
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 text-sm">
-                    Start New Auditor Discussion
+                    {t("discussions.modalTitle")}
                   </h3>
                   <p className="text-xs text-gray-500">
-                    With {initialData.assignedAuditor?.name || "Mr. Karunaratne & Associates"} &bull; For {currentCompany}
+                    {t("discussions.modalWithAuditor", {
+                      auditor: initialData.assignedAuditor?.name || "Mr. Karunaratne & Associates",
+                      company: currentCompany,
+                    })}
                   </p>
                 </div>
               </div>
@@ -687,21 +692,21 @@ export default function BusinessDiscussionsManager({
             <form onSubmit={handleCreateNewTopic} className="mt-4 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Topic / Subject <span className="text-red-500">*</span>
+                  {t("discussions.topicSubject")} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={newTopic}
                   onChange={(e) => setNewTopic(e.target.value)}
-                  placeholder="e.g., Clarification on WHT Certificates or Ledger Reconciliation"
+                  placeholder={t("discussions.topicPlaceholder")}
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue placeholder:text-gray-400"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Category <span className="text-red-500">*</span>
+                  {t("discussions.category")} <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={newCategory}
@@ -718,14 +723,14 @@ export default function BusinessDiscussionsManager({
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Initial Message / Question <span className="text-red-500">*</span>
+                  {t("discussions.initialMessage")} <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   required
                   rows={4}
                   value={newInitialMessage}
                   onChange={(e) => setNewInitialMessage(e.target.value)}
-                  placeholder="Describe your question, cite relevant documents, or explain the reconciliation note for the auditor..."
+                  placeholder={t("discussions.initialMessagePlaceholder")}
                   className="w-full rounded-lg border border-gray-200 p-3 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue placeholder:text-gray-400 resize-none"
                 />
               </div>
@@ -737,7 +742,7 @@ export default function BusinessDiscussionsManager({
                   className="text-xs"
                   onClick={() => setIsModalOpen(false)}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -745,7 +750,7 @@ export default function BusinessDiscussionsManager({
                   className="text-xs"
                   disabled={!newTopic.trim() || !newInitialMessage.trim() || isCreatingTopic}
                 >
-                  {isCreatingTopic ? "Creating..." : "Start Discussion"}
+                  {isCreatingTopic ? t("discussions.creating") : t("discussions.startNewDiscussion")}
                 </Button>
               </div>
             </form>

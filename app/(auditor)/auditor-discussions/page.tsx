@@ -6,6 +6,7 @@ import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import T from "@/components/layout/T";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { DiscussionThread } from "@/lib/types";
 
 const INITIAL_THREADS: DiscussionThread[] = [
@@ -87,6 +88,7 @@ const INITIAL_THREADS: DiscussionThread[] = [
 ];
 
 export default function DiscussionsPage() {
+  const { t } = useLanguage();
   const [threads, setThreads] = useState<DiscussionThread[]>(INITIAL_THREADS);
   const [activeThreadId, setActiveThreadId] = useState<string>("disc_1");
   const [replyText, setReplyText] = useState<string>("");
@@ -217,7 +219,7 @@ export default function DiscussionsPage() {
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search conversations..."
+                placeholder={t("discussions.searchDiscussions")}
                 className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-xs placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-blue"
               />
             </div>
@@ -252,7 +254,7 @@ export default function DiscussionsPage() {
                       tone={thread.status === "Open" ? "info" : "neutral"}
                       className="text-[10px] px-1.5 py-0.5"
                     >
-                      {thread.status}
+                      {thread.status === "Open" ? t("common.active") : t("status.approved")}
                     </Badge>
                     {thread.unreadCount > 0 && (
                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-blue text-[11px] font-bold text-white">
@@ -276,11 +278,11 @@ export default function DiscussionsPage() {
                   <div className="flex items-center gap-2">
                     <h2 className="font-bold text-gray-900">{activeThread.topic}</h2>
                     <Badge tone={activeThread.status === "Open" ? "info" : "neutral"}>
-                      {activeThread.status}
+                      {activeThread.status === "Open" ? t("common.active") : t("status.approved")}
                     </Badge>
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Discussion with {activeThread.companyName}
+                    {t("auditor.discussions.discussionWith", { company: activeThread.companyName })}
                   </p>
                 </div>
                 {activeThread.status === "Open" && (
@@ -310,7 +312,7 @@ export default function DiscussionsPage() {
                       }
                     }}
                   >
-                    Mark as Resolved
+                    {t("discussions.markResolved")}
                   </Button>
 
                 )}
@@ -366,18 +368,18 @@ export default function DiscussionsPage() {
                   type="text"
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Type your response or clarification query..."
+                  placeholder={t("auditor.discussions.replyPlaceholder")}
                   className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-blue"
                 />
                 <Button type="submit" icon={<Send className="h-4 w-4" />}>
-                  Send
+                  {t("auditor.discussions.sendReply")}
                 </Button>
               </form>
             </>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center text-gray-400">
               <MessagesSquare className="h-12 w-12 stroke-1" />
-              <p className="mt-2 text-sm">Select a discussion thread to view</p>
+              <p className="mt-2 text-sm">{t("discussions.selectThreadPrompt")}</p>
             </div>
           )}
         </Card>

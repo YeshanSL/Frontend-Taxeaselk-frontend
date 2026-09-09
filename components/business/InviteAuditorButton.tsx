@@ -16,6 +16,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import { Field, Input } from "@/components/ui/Input";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface SuggestedAuditor {
   id: string;
@@ -82,6 +83,7 @@ const SUGGESTED_AUDITORS: SuggestedAuditor[] = [
 ];
 
 export default function InviteAuditorButton() {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"suggested" | "manual">("suggested");
   const [searchQuery, setSearchQuery] = useState("");
@@ -199,7 +201,9 @@ export default function InviteAuditorButton() {
         className="shrink-0"
         onClick={() => setOpen(true)}
       >
-        {assignedAuditor ? `Auditor: ${assignedAuditor.firm}` : "Invite Auditor"}
+        {assignedAuditor
+          ? t("business.inviteAuditor.assignedButton", { name: assignedAuditor.firm })
+          : t("business.inviteAuditor.button")}
       </Button>
 
       {open && (
@@ -212,9 +216,9 @@ export default function InviteAuditorButton() {
                   <UserPlus className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900">Invite Tax Auditor</p>
+                  <p className="font-bold text-gray-900">{t("business.inviteAuditor.modalTitle")}</p>
                   <p className="text-xs text-gray-500">
-                    Connect an accredited audit partner or firm for <span className="font-semibold text-gray-800">{currentCompany}</span>
+                    {t("business.inviteAuditor.modalSubtitle")}
                   </p>
                 </div>
               </div>
@@ -256,7 +260,7 @@ export default function InviteAuditorButton() {
                     }`}
                   >
                     <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
-                    Suggested High-Rated Auditors
+                    {t("business.inviteAuditor.selectAccredited")}
                     <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-brand-blue">
                       {SUGGESTED_AUDITORS.length}
                     </span>
@@ -271,7 +275,7 @@ export default function InviteAuditorButton() {
                     }`}
                   >
                     <Mail className="h-3.5 w-3.5" />
-                    Invite by Email
+                    {t("business.inviteAuditor.customEmailOption")}
                   </button>
                 </div>
 
@@ -345,7 +349,7 @@ export default function InviteAuditorButton() {
                               }
                             >
                               <ShieldCheck className="mr-1.5 h-3.5 w-3.5 text-status-success" />
-                              Invite
+                              {t("business.inviteAuditor.button")}
                             </Button>
                           </div>
                         ))}
@@ -364,7 +368,7 @@ export default function InviteAuditorButton() {
                         Enter the email and audit firm of your existing certified accountant or auditor to grant them access to this tax computation file.
                       </p>
 
-                      <Field label="Auditor Email">
+                      <Field label={t("business.inviteAuditor.auditorEmail")}>
                         <Input
                           type="email"
                           placeholder="auditor@firm.lk"
@@ -374,7 +378,7 @@ export default function InviteAuditorButton() {
                         />
                       </Field>
 
-                      <Field label="Audit Firm Name">
+                      <Field label={t("business.inviteAuditor.auditorFirm")}>
                         <Input
                           type="text"
                           placeholder="e.g. Mr. Karunaratne & Associates"
@@ -390,10 +394,10 @@ export default function InviteAuditorButton() {
                           variant="secondary"
                           onClick={() => setOpen(false)}
                         >
-                          Cancel
+                          {t("common.cancel")}
                         </Button>
                         <Button type="submit" disabled={loading}>
-                          {loading ? "Sending Invitation..." : "Send Invitation"}
+                          {loading ? t("business.inviteAuditor.sending") : t("business.inviteAuditor.sendButton")}
                         </Button>
                       </div>
                     </form>
