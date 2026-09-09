@@ -8,6 +8,7 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import ProgressBar from "@/components/ui/ProgressBar";
 import { recordAuditorActivity } from "@/lib/utils/auditorActivity";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const TAG_TONE = {
   critical: "critical",
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export default function AuditorPriorityReviews({ initialReviews }: Props) {
+  const { t } = useLanguage();
   const [reviews, setReviews] = useState(initialReviews);
   const [approvedCompanies, setApprovedCompanies] = useState<string[]>([]);
 
@@ -61,7 +63,9 @@ export default function AuditorPriorityReviews({ initialReviews }: Props) {
     <Card className="p-5">
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-semibold text-gray-800">Priority Reviews</p>
+          <p className="font-semibold text-gray-800">
+            {t("auditor.dashboard.priorityReviews")}
+          </p>
           <p className="text-sm text-gray-400">
             Companies requiring your attention.
           </p>
@@ -70,7 +74,7 @@ export default function AuditorPriorityReviews({ initialReviews }: Props) {
           href="/responses"
           className="text-sm font-medium text-brand-blue hover:underline"
         >
-          View Responses →
+          {t("pages.responses.title")} →
         </Link>
       </div>
 

@@ -1,9 +1,10 @@
+import { ReactNode } from "react";
 import Card from "./Card";
 
 interface StatCardProps {
-  label: string;
-  value: string;
-  hint?: string;
+  label: ReactNode;
+  value: ReactNode;
+  hint?: ReactNode;
   valueClassName?: string;
 }
 

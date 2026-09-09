@@ -8,6 +8,7 @@ import ProgressBar from "@/components/ui/ProgressBar";
 import IssueCountPair from "@/components/auditor/IssueCountPair";
 import { ReviewQueueFilter, ReviewQueueRow } from "@/lib/types";
 import { recordAuditorActivity } from "@/lib/utils/auditorActivity";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const FILTERS: ReviewQueueFilter[] = [
   "All",
@@ -22,6 +23,7 @@ const FILTERS: ReviewQueueFilter[] = [
 // table (tabs + rows) is a Client Component. The page fetches the raw
 // rows on the server and passes them in as a prop.
 export default function ReviewQueueTable({ rows }: { rows: ReviewQueueRow[] }) {
+  const { t } = useLanguage();
   const [filter, setFilter] = useState<ReviewQueueFilter>("All");
   const [tableRows, setTableRows] = useState<ReviewQueueRow[]>(rows);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -85,7 +87,17 @@ export default function ReviewQueueTable({ rows }: { rows: ReviewQueueRow[] }) {
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             )}
           >
-            {f}
+            {f === "All"
+              ? t("common.all")
+              : f === "Pending"
+              ? t("common.pending")
+              : f === "In Progress"
+              ? t("status.underReview")
+              : f === "Waiting for Company"
+              ? t("status.waitingForCompany")
+              : f === "Ready for Approval"
+              ? t("status.readyForAuditor")
+              : t("common.completed")}
           </button>
         ))}
       </div>
@@ -93,12 +105,12 @@ export default function ReviewQueueTable({ rows }: { rows: ReviewQueueRow[] }) {
       <table className="w-full min-w-[800px] text-left text-sm">
         <thead>
           <tr className="border-b border-gray-100 text-xs font-medium uppercase tracking-wide text-gray-400">
-            <th className="px-5 py-3">Company</th>
-            <th className="px-5 py-3">Status</th>
-            <th className="px-5 py-3">Issues</th>
-            <th className="px-5 py-3">Progress</th>
-            <th className="px-5 py-3">Due</th>
-            <th className="px-5 py-3 text-right">Action</th>
+            <th className="px-5 py-3">{t("auditor.companies.colCompany")}</th>
+            <th className="px-5 py-3">{t("common.status")}</th>
+            <th className="px-5 py-3">{t("auditor.companies.colIssues")}</th>
+            <th className="px-5 py-3">{t("auditor.companies.colProgress")}</th>
+            <th className="px-5 py-3">{t("auditor.requests.dueDate")}</th>
+            <th className="px-5 py-3 text-right">{t("common.actions")}</th>
           </tr>
         </thead>
         <tbody>
@@ -134,7 +146,7 @@ export default function ReviewQueueTable({ rows }: { rows: ReviewQueueRow[] }) {
               <td className="px-5 py-3.5 text-right">
                 <div className="flex items-center justify-end gap-2">
                   <a href="/auditor-documents">
-                    <Button variant="secondary">Review</Button>
+                    <Button variant="secondary">{t("common.view")}</Button>
                   </a>
                   {row.status !== "Approved" && (
                     <Button
@@ -142,7 +154,7 @@ export default function ReviewQueueTable({ rows }: { rows: ReviewQueueRow[] }) {
                       disabled={updatingId === row.id}
                       onClick={() => handleUpdateStatus(row.id, "Approved")}
                     >
-                      {updatingId === row.id ? "Approving..." : "Approve"}
+                      {updatingId === row.id ? t("common.saving") : t("auditor.reviewQueue.approveReturn")}
                     </Button>
                   )}
                 </div>

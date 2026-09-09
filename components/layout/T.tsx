@@ -7,7 +7,13 @@ import { TranslationKey } from "@/lib/i18n/translations";
 // string without converting the whole page to a Client Component —
 // e.g. <h1><T k="pages.documents.title" /></h1>. Only this small piece
 // re-renders when the language changes.
-export default function T({ k }: { k: TranslationKey }) {
+export default function T({
+  k,
+  params,
+}: {
+  k: TranslationKey;
+  params?: Record<string, string | number>;
+}) {
   const { t } = useLanguage();
-  return <>{t(k)}</>;
+  return <>{t(k, params)}</>;
 }

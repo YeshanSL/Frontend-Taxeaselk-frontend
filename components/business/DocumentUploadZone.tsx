@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { UploadCloud, AlertCircle } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { validateFiles } from "@/lib/files";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 // Visual drag & drop zone from the "Documents" Figma screen. This
 // component only handles picking files from the user's machine
@@ -15,6 +16,7 @@ export default function DocumentUploadZone({
 }: {
   onFilesAccepted: (files: File[]) => void;
 }) {
+  const { t } = useLanguage();
   const [isDragging, setIsDragging] = useState(false);
   const [rejections, setRejections] = useState<{ fileName: string; reason: string }[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,13 +57,13 @@ export default function DocumentUploadZone({
           <UploadCloud className="h-6 w-6 text-brand-blue" />
         </div>
         <p className="mt-3 font-semibold text-gray-800">
-          Upload Financial Documents
+          {t("business.documents.dragDropTitle")}
         </p>
         <p className="mt-1 text-sm text-gray-400">
-          Drag &amp; drop files here · PDF · XLSX · XLS · CSV · max 10MB
+          {t("business.documents.supportedFormats")}
         </p>
         <Button className="mt-4" onClick={() => inputRef.current?.click()}>
-          Browse
+          {t("business.documents.dragDropOrBrowse")}
         </Button>
         <input
           ref={inputRef}

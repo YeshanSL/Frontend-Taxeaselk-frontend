@@ -29,12 +29,20 @@ import {
   removeFinanceTeamMember,
   updateCompanySecurity,
 } from "@/lib/api/business";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { TranslationKey } from "@/lib/i18n/translations";
 
 const TABS = [
-  { id: "profile", label: "Company & Tax Profile", icon: Building2 },
-  { id: "team", label: "Finance Team & Access", icon: Users },
-  { id: "security", label: "Security & Activity Log", icon: Shield },
+  { id: "profile", icon: Building2 },
+  { id: "team", icon: Users },
+  { id: "security", icon: Shield },
 ] as const;
+
+const TAB_LABEL_KEYS: Record<string, TranslationKey> = {
+  profile: "business.settings.tabCompanyProfile",
+  team: "business.settings.tabFinanceTeam",
+  security: "business.settings.tabSecurity",
+};
 
 type TabId = (typeof TABS)[number]["id"];
 
@@ -722,6 +730,7 @@ export default function SettingsTabs({
   companyTabContent: React.ReactNode;
   fullSettings: CompanyFullSettings;
 }) {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabId>("profile");
 
   return (
@@ -743,7 +752,7 @@ export default function SettingsTabs({
               )}
             >
               <Icon className={clsx("h-4 w-4", isActive ? "text-white" : "text-gray-400")} />
-              <span>{tab.label}</span>
+              <span>{t(TAB_LABEL_KEYS[tab.id])}</span>
             </button>
           );
         })}

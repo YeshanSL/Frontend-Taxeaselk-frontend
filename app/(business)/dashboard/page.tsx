@@ -31,16 +31,20 @@ export default async function DashboardPage() {
       <Card className="mt-6 p-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="font-semibold text-gray-800">Progress</p>
+            <p className="font-semibold text-gray-800">
+              <T k="business.dashboard.progress" />
+            </p>
             <p className="text-xs text-gray-400">
-              Updated {data.progressUpdatedAt}
+              <T k="business.dashboard.updated" params={{ time: data.progressUpdatedAt }} />
             </p>
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-brand-blue">
               {data.progressPercent}%
             </p>
-            <p className="text-xs text-gray-400">Complete</p>
+            <p className="text-xs text-gray-400">
+              <T k="business.dashboard.complete" />
+            </p>
           </div>
         </div>
 
@@ -72,24 +76,31 @@ export default async function DashboardPage() {
       {/* Stat tiles */}
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
-          label="Documents"
+          label={<T k="business.dashboard.documents" />}
           value={`${data.documentsUploaded} / ${data.documentsTotal}`}
-          hint={`${data.documentsTotal - data.documentsUploaded} pending upload`}
+          hint={
+            <T
+              k="business.dashboard.pendingUpload"
+              params={{ count: data.documentsTotal - data.documentsUploaded }}
+            />
+          }
         />
         <StatCard
-          label="Accounting Profit"
+          label={<T k="business.dashboard.accountingProfit" />}
           value={data.accountingProfit}
-          hint="From Financial Statements"
+          hint={<T k="business.dashboard.fromFinancialStatements" />}
         />
         <StatCard
-          label="Auditor Status"
+          label={<T k="business.dashboard.auditorStatus" />}
           value={data.auditorStatus}
           hint={
-            data.auditorStatus === "Approved"
-              ? "Sign-off completed"
-              : data.auditorStatus === "Under Review"
-              ? "Auditor reviewing"
-              : "Pending submission"
+            data.auditorStatus === "Approved" ? (
+              <T k="business.dashboard.signOffCompleted" />
+            ) : data.auditorStatus === "Under Review" ? (
+              <T k="business.dashboard.auditorReviewing" />
+            ) : (
+              <T k="business.dashboard.pendingSubmission" />
+            )
           }
         />
       </div>
@@ -97,11 +108,13 @@ export default async function DashboardPage() {
       {/* Quick actions + attention */}
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
         <Card className="p-5">
-          <p className="mb-4 font-semibold text-gray-800">Quick Actions</p>
+          <p className="mb-4 font-semibold text-gray-800">
+            <T k="business.dashboard.quickActions" />
+          </p>
           <div className="flex flex-col gap-2.5">
             <Link href="/documents">
               <Button icon={<Upload className="h-4 w-4" />} className="w-full justify-start">
-                Upload Documents
+                <T k="business.dashboard.uploadDocuments" />
               </Button>
             </Link>
             <Button
@@ -110,7 +123,7 @@ export default async function DashboardPage() {
               className="justify-start bg-blue-50 text-brand-blue"
               title="AI Guidance is on the roadmap — not built yet"
             >
-              AI Guidance
+              <T k="business.dashboard.aiGuidance" />
             </Button>
             <Link href="/financials">
               <Button
@@ -118,7 +131,7 @@ export default async function DashboardPage() {
                 icon={<FileBarChart className="h-4 w-4" />}
                 className="w-full justify-start"
               >
-                View Financials
+                <T k="business.dashboard.viewFinancials" />
               </Button>
             </Link>
           </div>
@@ -126,7 +139,7 @@ export default async function DashboardPage() {
 
         <Card className="p-5">
           <p className="mb-4 font-semibold text-gray-800">
-            Requires Your Attention
+            <T k="business.dashboard.requiresAttention" />
           </p>
           <div className="flex flex-col gap-3">
             {data.attentionItems.map((item) => (
@@ -166,7 +179,7 @@ export default async function DashboardPage() {
                     href={`/auditor-review?issue=${item.issueId || item.id || ""}`}
                     className="shrink-0 text-xs font-medium text-brand-blue whitespace-nowrap hover:underline"
                   >
-                    Review →
+                    <T k="business.dashboard.reviewLink" />
                   </Link>
                 </div>
               </div>

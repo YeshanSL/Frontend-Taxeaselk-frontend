@@ -8,7 +8,7 @@ const STORAGE_KEY = "taxeaselk_language";
 interface LanguageContextValue {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: TranslationKey) => string;
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -32,8 +32,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, lang);
   }
 
-  function t(key: TranslationKey): string {
-    return translations[language][key] ?? translations.en[key] ?? key;
+  function t(key: TranslationKey, params?: Record<string, string | number>): string {
+    let str =
+      (translations[language] as Record<string, string>)[key] ??
+      (translations.en as Record<string, string>)[key] ??
+      key;
+    if (params) {
+      for (const [paramKey, paramVal] of Object.entries(params)) {
+        str = str.replace(new RegExp(`\\{${paramKey}\\}`, "g"), String(paramVal));
+      }
+    }
+    return str;
   }
 
   return (

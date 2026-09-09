@@ -15,6 +15,7 @@ import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { AuditorReviewIssue } from "@/lib/types";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface Props {
   initialIssues: AuditorReviewIssue[];
@@ -27,6 +28,7 @@ function formatFileSize(bytes: number): string {
 }
 
 export default function AuditorIssuesManager({ initialIssues }: Props) {
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -162,7 +164,7 @@ export default function AuditorIssuesManager({ initialIssues }: Props) {
     <>
       <Card className="mt-6 p-6">
         <p className="mb-4 font-semibold text-gray-800">
-          Auditor Comments &amp; Issues
+          {t("business.auditorReview.issuesTitle")}
         </p>
         <div className="divide-y divide-gray-50">
           {issues.map((issue) => (
@@ -191,11 +193,11 @@ export default function AuditorIssuesManager({ initialIssues }: Props) {
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge tone={issue.status === "action_required" ? "critical" : "warning"}>
                       {issue.status === "action_required"
-                        ? "Action Required"
-                        : "Pending Clarification"}
+                        ? t("status.reviewRequired")
+                        : t("common.pending")}
                     </Badge>
                     {issue.response && (
-                      <Badge tone="info">Responded</Badge>
+                      <Badge tone="info">{t("status.processed")}</Badge>
                     )}
                     <p className="font-semibold text-gray-900">{issue.title}</p>
                   </div>
@@ -204,7 +206,7 @@ export default function AuditorIssuesManager({ initialIssues }: Props) {
                     onClick={() => openIssueModal(issue)}
                     className="inline-flex items-center gap-1 rounded-lg border border-brand-blue/30 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-brand-blue hover:bg-brand-blue hover:text-white transition-colors cursor-pointer shadow-sm"
                   >
-                    Review &amp; Respond →
+                    {t("business.auditorReview.respond")} →
                   </button>
                 </div>
                 <p className="mt-2 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
@@ -217,7 +219,7 @@ export default function AuditorIssuesManager({ initialIssues }: Props) {
                 {/* Show user response if submitted */}
                 {issue.response && (
                   <div className="mt-2.5 rounded-lg border border-blue-100 bg-blue-50/60 p-2.5 text-xs text-brand-blue">
-                    <span className="font-semibold">Your Response to Auditor: </span>
+                    <span className="font-semibold">{t("business.auditorReview.replyToAuditor")}: </span>
                     {issue.response}
                   </div>
                 )}
@@ -296,7 +298,8 @@ export default function AuditorIssuesManager({ initialIssues }: Props) {
             {/* Optional Document Upload Feature */}
             <div className="mt-4">
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Attach Supporting Document <span className="text-gray-400 font-normal">(Optional)</span>
+                {t("business.auditorReview.attachFile")}{" "}
+                <span className="text-gray-400 font-normal">({t("common.optional")})</span>
               </label>
 
               <input
@@ -316,7 +319,7 @@ export default function AuditorIssuesManager({ initialIssues }: Props) {
                     <UploadCloud className="h-5 w-5" />
                   </div>
                   <p className="mt-1.5 text-xs font-medium text-gray-700">
-                    Click to upload supporting file
+                    {t("business.auditorReview.attachFile")}
                   </p>
                   <p className="text-[11px] text-gray-400">
                     PDF, Excel, Word, or images up to 10MB
@@ -367,14 +370,16 @@ export default function AuditorIssuesManager({ initialIssues }: Props) {
                 onClick={handleCloseModal}
                 disabled={isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button
                 variant="primary"
                 onClick={handleSendResponse}
                 disabled={isSubmitting || (!responseText.trim() && !selectedFile)}
               >
-                {isSubmitting ? "Sending..." : "Respond to Auditor"}
+                {isSubmitting
+                  ? t("business.auditorReview.submitting")
+                  : t("business.auditorReview.submitResponse")}
               </Button>
             </div>
           </Card>

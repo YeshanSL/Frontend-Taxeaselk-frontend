@@ -6,7 +6,7 @@ import { getAuditLogSummary } from "@/lib/api/auditor";
 
 // Matches the "Audit Log" Figma screen: filter bar (visual only for
 // now — see TODO) and an immutable, timestamped table of every action.
-function FilterPill({ label }: { label: string }) {
+function FilterPill({ label }: { label: React.ReactNode }) {
   return (
     <button className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
       {label}
@@ -31,21 +31,21 @@ export default async function AuditLogPage() {
         {/* TODO (Week 2): wire these to actually filter the table below
             once the log comes from the FastAPI backend (query params). */}
         <div className="flex flex-wrap gap-2 border-b border-gray-100 p-4">
-          <FilterPill label="Company" />
-          <FilterPill label="User" />
-          <FilterPill label="Action" />
-          <FilterPill label="Date" />
-          <FilterPill label="Financial Year" />
+          <FilterPill label={<T k="common.company" />} />
+          <FilterPill label={<T k="sidebar.companyUser" />} />
+          <FilterPill label={<T k="auditor.auditLog.colEvent" />} />
+          <FilterPill label={<T k="common.date" />} />
+          <FilterPill label={<T k="auditor.companies.colFy" />} />
         </div>
 
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-xs font-medium uppercase tracking-wide text-gray-400">
-              <th className="px-5 py-3">Timestamp</th>
-              <th className="px-5 py-3">Company</th>
-              <th className="px-5 py-3">User</th>
-              <th className="px-5 py-3">Action</th>
-              <th className="px-5 py-3">Details</th>
+              <th className="px-5 py-3"><T k="auditor.auditLog.colTimestamp" /></th>
+              <th className="px-5 py-3"><T k="common.company" /></th>
+              <th className="px-5 py-3"><T k="auditor.auditLog.colActor" /></th>
+              <th className="px-5 py-3"><T k="auditor.auditLog.colEvent" /></th>
+              <th className="px-5 py-3"><T k="common.details" /></th>
             </tr>
           </thead>
           <tbody>

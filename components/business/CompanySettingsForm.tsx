@@ -6,12 +6,14 @@ import Button from "@/components/ui/Button";
 import { CompanySettings } from "@/lib/types";
 import { updateCompanyTaxProfile } from "@/lib/api/business";
 import { Building2, FileText, CheckCircle2 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function CompanySettingsForm({
   initial,
 }: {
   initial: CompanySettings;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState<CompanySettings>({
     companyName: initial.companyName || "ABC (Pvt) Ltd",
     tradingName: initial.tradingName || "ABC Tech Solutions",
@@ -121,7 +123,7 @@ export default function CompanySettingsForm({
         {saved && (
           <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-medium text-green-700">
             <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-            Settings saved &amp; synced!
+            {t("common.saved")}
           </div>
         )}
       </div>
@@ -129,10 +131,10 @@ export default function CompanySettingsForm({
       {/* Section 1: Entity Information */}
       <div>
         <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
-          1. Legal &amp; Trading Profile
+          1. {t("business.settings.tabCompanyProfile")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Registered Legal Name" required>
+          <Field label={t("business.settings.companyName")} required>
             <Input
               value={form.companyName}
               onChange={(e) => update("companyName", e.target.value)}
@@ -141,7 +143,7 @@ export default function CompanySettingsForm({
             />
           </Field>
 
-          <Field label="Trading / Brand Name">
+          <Field label={t("business.settings.tradingName")}>
             <Input
               value={form.tradingName || ""}
               onChange={(e) => update("tradingName", e.target.value)}
@@ -149,7 +151,7 @@ export default function CompanySettingsForm({
             />
           </Field>
 
-          <Field label="Industry Sector">
+          <Field label={t("business.settings.sector")}>
             <Input
               value={form.industrySector || ""}
               onChange={(e) => update("industrySector", e.target.value)}
@@ -157,7 +159,7 @@ export default function CompanySettingsForm({
             />
           </Field>
 
-          <Field label="Financial / Assessment Year" required>
+          <Field label={t("business.settings.financialYear")} required>
             <Select
               value={form.financialYear}
               onChange={(e) => update("financialYear", e.target.value)}
@@ -174,11 +176,11 @@ export default function CompanySettingsForm({
       <div className="border-t border-gray-100 pt-6">
         <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 flex items-center gap-1.5">
           <FileText className="h-3.5 w-3.5 text-gray-400" />
-          2. Sri Lanka IRD Tax Registrations
+          2. {t("business.settings.brn")} &amp; {t("business.settings.tin")}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Company Registration No. (ROC)" required>
+          <Field label={t("business.settings.brn")} required>
             <Input
               value={form.registrationNumber}
               onChange={(e) => update("registrationNumber", e.target.value)}
@@ -187,7 +189,7 @@ export default function CompanySettingsForm({
             />
           </Field>
 
-          <Field label="Taxpayer Identification No. (TIN)" required>
+          <Field label={t("business.settings.tin")} required>
             <Input
               value={form.tinNumber}
               onChange={(e) => update("tinNumber", e.target.value)}
@@ -196,7 +198,7 @@ export default function CompanySettingsForm({
             />
           </Field>
 
-          <Field label="VAT Registration Number">
+          <Field label={t("business.settings.vat")}>
             <Input
               value={form.vatNumber || ""}
               onChange={(e) => update("vatNumber", e.target.value)}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, AlertTriangle, FileText, Send } from "lucide-react";
 import Card from "@/components/ui/Card";
+import T from "@/components/layout/T";
 import {
   AuditorActivityItem,
   getAuditorActivities,
@@ -80,7 +81,9 @@ export default function AuditorRecentActivityCard({ initialActivities }: Props) 
   return (
     <Card className="p-5">
       <div className="mb-3 flex items-center justify-between">
-        <p className="font-semibold text-gray-800">Recent Activity</p>
+        <p className="font-semibold text-gray-800">
+          <T k="auditor.dashboard.recentActivity" />
+        </p>
         <span className="flex h-2 w-2 relative" title="Live real-time sync active">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>

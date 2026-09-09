@@ -19,9 +19,9 @@ import Badge from "@/components/ui/Badge";
 import ProgressBar from "@/components/ui/ProgressBar";
 import CitStatusBadge from "@/components/auditor/CitStatusBadge";
 import IssueCountPair from "@/components/auditor/IssueCountPair";
-import T from "@/components/layout/T";
 import { Field, Input } from "@/components/ui/Input";
 import { CompaniesSummary, CompanyRow } from "@/lib/types";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export interface ClientInvitation {
   id: string;
@@ -80,6 +80,7 @@ const INITIAL_INVITATIONS: ClientInvitation[] = [
 ];
 
 export default function CompaniesManager({ initial }: { initial: CompaniesSummary }) {
+  const { t } = useLanguage();
   const [companies, setCompanies] = useState<CompanyRow[]>(initial.companies);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -248,10 +249,10 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            <T k="pages.companies.title" />
+            {t("pages.companies.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            <T k="pages.companies.subtitle" />
+            {t("pages.companies.subtitle")}
           </p>
         </div>
         <div className="flex gap-2">
@@ -261,7 +262,7 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
             onClick={() => setInvitationsModalOpen(true)}
             className="relative"
           >
-            <span>Invitations</span>
+            <span>{t("auditor.companies.clientInvitations")}</span>
             {pendingCount > 0 && (
               <span className="ml-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand-blue text-[10px] font-bold text-white shadow-xs">
                 {pendingCount}
@@ -269,7 +270,7 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
             )}
           </Button>
           <Button icon={<Plus className="h-4 w-4" />} onClick={() => setModalOpen(true)}>
-            Add Company
+            {t("auditor.companies.addCompany")}
           </Button>
         </div>
       </div>
@@ -281,7 +282,7 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search company..."
+            placeholder={t("auditor.companies.searchCompanies")}
             className="w-full rounded-lg border border-gray-200 py-2.5 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-blue"
           />
         </div>
@@ -291,12 +292,12 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-xs font-medium uppercase tracking-wide text-gray-400">
-              <th className="px-5 py-3">Company</th>
-              <th className="px-5 py-3">TIN</th>
-              <th className="px-5 py-3">FY</th>
-              <th className="px-5 py-3">CIT Status</th>
-              <th className="px-5 py-3">Issues</th>
-              <th className="px-5 py-3">Progress</th>
+              <th className="px-5 py-3">{t("auditor.companies.colCompany")}</th>
+              <th className="px-5 py-3">{t("auditor.companies.colTin")}</th>
+              <th className="px-5 py-3">{t("auditor.companies.colFy")}</th>
+              <th className="px-5 py-3">{t("auditor.companies.colCitStatus")}</th>
+              <th className="px-5 py-3">{t("auditor.companies.colIssues")}</th>
+              <th className="px-5 py-3">{t("auditor.companies.colProgress")}</th>
             </tr>
           </thead>
           <tbody>
