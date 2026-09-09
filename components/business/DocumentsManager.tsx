@@ -9,6 +9,7 @@ import DocumentUploadZone from "@/components/business/DocumentUploadZone";
 import DocumentStatusBadge from "@/components/business/DocumentStatusBadge";
 import { DocumentRow, DocumentsSummary } from "@/lib/types";
 import { formatFileSize, formatUploadedDate, guessDocumentType } from "@/lib/files";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 let localIdCounter = 0;
 function nextLocalId() {
@@ -17,6 +18,7 @@ function nextLocalId() {
 }
 
 export default function DocumentsManager({ initial }: { initial: DocumentsSummary }) {
+  const { t } = useLanguage();
   const [documents, setDocuments] = useState<DocumentRow[]>(initial.documents);
   const [missingCount] = useState(initial.missingCount);
   const [currentCompany, setCurrentCompany] = useState<string>("ABC Holdings (Pvt) Ltd");
@@ -201,9 +203,11 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Active Company</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                {t("business.documents.activeCompany")}
+              </span>
               <span className="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
-                Connected
+                {t("status.connected")}
               </span>
             </div>
             <p className="text-sm font-bold text-gray-900">{currentCompany}</p>
@@ -213,7 +217,9 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
         <div className="flex items-center gap-2">
           {!isCustomCompany ? (
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-500 font-medium hidden sm:inline">Switch Company:</span>
+              <span className="text-xs text-gray-500 font-medium hidden sm:inline">
+                {t("business.documents.switchCompany")}
+              </span>
               <select
                 value={
                   ["ABC Holdings (Pvt) Ltd", "Lanka Trading (Pvt) Ltd", "Ocean Foods (Pvt) Ltd", "Tech Solutions (Pvt) Ltd", "Ceylon BioTech (Pvt) Ltd"].includes(currentCompany)
@@ -228,7 +234,7 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
                 <option value="Ocean Foods (Pvt) Ltd">Ocean Foods (Pvt) Ltd</option>
                 <option value="Tech Solutions (Pvt) Ltd">Tech Solutions (Pvt) Ltd</option>
                 <option value="Ceylon BioTech (Pvt) Ltd">Ceylon BioTech (Pvt) Ltd</option>
-                <option value="custom">+ Type New Company Name...</option>
+                <option value="custom">{t("business.documents.typeNewCompanyName")}</option>
               </select>
             </div>
           ) : (
@@ -237,7 +243,7 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
                 type="text"
                 value={customCompanyName}
                 onChange={(e) => setCustomCompanyName(e.target.value)}
-                placeholder="Enter Company Name..."
+                placeholder={t("business.documents.enterCompanyName")}
                 className="rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
                 autoFocus
                 onKeyDown={(e) => {
@@ -252,14 +258,14 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
                 onClick={handleSaveCustomCompany}
                 className="rounded-lg bg-brand-blue px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
               >
-                Set
+                {t("common.set")}
               </button>
               <button
                 type="button"
                 onClick={() => setIsCustomCompany(false)}
                 className="text-xs text-gray-500 hover:text-gray-700 underline"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           )}
@@ -267,15 +273,15 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard label="Documents Uploaded" value={String(stats.uploaded)} />
-        <StatCard label="Processed" value={String(stats.processed)} />
+        <StatCard label={t("business.documents.uploadedCount")} value={String(stats.uploaded)} />
+        <StatCard label={t("business.documents.processedCount")} value={String(stats.processed)} />
         <StatCard
-          label="Review Required"
+          label={t("business.documents.reviewRequiredCount")}
           value={String(stats.reviewRequired)}
           valueClassName="text-status-warning"
         />
         <StatCard
-          label="Missing"
+          label={t("business.documents.missingCount")}
           value={String(missingCount)}
           valueClassName="text-status-critical"
         />
@@ -289,19 +295,19 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-xs font-medium uppercase tracking-wide text-gray-400">
-              <th className="px-5 py-3">Documents</th>
-              <th className="px-5 py-3">Type</th>
-              <th className="px-5 py-3">Status</th>
-              <th className="px-5 py-3">AI Confidence</th>
-              <th className="px-5 py-3">Uploaded</th>
-              <th className="px-5 py-3 text-right">Actions</th>
+              <th className="px-5 py-3">{t("business.documents.colDocuments")}</th>
+              <th className="px-5 py-3">{t("business.documents.colType")}</th>
+              <th className="px-5 py-3">{t("business.documents.colStatus")}</th>
+              <th className="px-5 py-3">{t("business.documents.colAiConfidence")}</th>
+              <th className="px-5 py-3">{t("business.documents.colUploaded")}</th>
+              <th className="px-5 py-3 text-right">{t("business.documents.colActions")}</th>
             </tr>
           </thead>
           <tbody>
             {documents.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-5 py-10 text-center text-sm text-gray-400">
-                  No documents uploaded yet.
+                  {t("business.documents.noDocuments")}
                 </td>
               </tr>
             )}

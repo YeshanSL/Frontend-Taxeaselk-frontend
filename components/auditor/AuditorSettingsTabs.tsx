@@ -37,6 +37,7 @@ import {
   updateAuditorNotifications,
   inviteAuditorTeamMember,
 } from "@/lib/api/auditor";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const TABS = [
   { id: "profile", label: "Profile & Credentials", icon: User },
@@ -97,6 +98,7 @@ export default function AuditorSettingsTabs({
   initial: AuditorFullSettings;
   profileTabContent: React.ReactNode;
 }) {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabId>("profile");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -198,6 +200,13 @@ export default function AuditorSettingsTabs({
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
+          const labelMap: Record<string, string> = {
+            profile: t("auditor.settings.tabProfile"),
+            team: t("auditor.settings.tabFirmTeam"),
+            preferences: t("auditor.settings.tabPreferences"),
+            notifications: t("auditor.settings.tabNotifications"),
+            security: t("auditor.settings.tabSecurity"),
+          };
           return (
             <button
               key={tab.id}
@@ -210,7 +219,7 @@ export default function AuditorSettingsTabs({
               )}
             >
               <Icon className={clsx("h-4 w-4", isActive ? "text-white" : "text-gray-400")} />
-              {tab.label}
+              {labelMap[tab.id] || tab.label}
             </button>
           );
         })}
@@ -245,7 +254,7 @@ export default function AuditorSettingsTabs({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 rounded-xl border border-gray-200 bg-gray-50/70 p-4">
               <div>
                 <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Firm Name
+                  {t("auditor.settings.org")}
                 </span>
                 <p className="text-sm font-bold text-gray-900 mt-0.5">
                   {initial.profile.organization}
@@ -253,7 +262,7 @@ export default function AuditorSettingsTabs({
               </div>
               <div>
                 <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Firm Registration No.
+                  {t("auditor.settings.firmReg")}
                 </span>
                 <p className="text-sm font-bold text-gray-900 mt-0.5">
                   {initial.profile.firmRegNo || "PV-98214 / CA-AF-552"}
@@ -353,7 +362,7 @@ export default function AuditorSettingsTabs({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Field label="Default Tax Assessment Year">
+              <Field label={t("auditor.settings.taxYear")}>
                 <Select
                   value={preferences.defaultTaxYear}
                   onChange={(e) =>
@@ -366,7 +375,7 @@ export default function AuditorSettingsTabs({
                 </Select>
               </Field>
 
-              <Field label="Sri Lanka Accounting Standard Framework">
+              <Field label={t("auditor.settings.framework")}>
                 <Select
                   value={preferences.accountingStandard}
                   onChange={(e) =>
@@ -381,7 +390,7 @@ export default function AuditorSettingsTabs({
                 </Select>
               </Field>
 
-              <Field label="Materiality Threshold (% of Profit Before Tax)">
+              <Field label={t("auditor.settings.threshold")}>
                 <div className="flex items-center gap-3">
                   <Input
                     type="number"

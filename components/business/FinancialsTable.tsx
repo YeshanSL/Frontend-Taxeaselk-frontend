@@ -4,6 +4,8 @@ import { useState } from "react";
 import clsx from "clsx";
 import Card from "@/components/ui/Card";
 import { FinancialsSummary, FinancialsTab } from "@/lib/types";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { TranslationKey } from "@/lib/i18n/translations";
 
 const TABS: FinancialsTab[] = [
   "Income Statement",
@@ -13,10 +15,19 @@ const TABS: FinancialsTab[] = [
   "Fixed Assets",
 ];
 
+const TAB_KEYS: Record<FinancialsTab, TranslationKey> = {
+  "Income Statement": "business.financials.tabIncomeStatement",
+  "Balance Sheet": "business.financials.tabBalanceSheet",
+  "Trial Balance": "business.financials.tabTrialBalance",
+  "General Ledger": "business.financials.tabGeneralLedger",
+  "Fixed Assets": "business.financials.tabFixedAssets",
+};
+
 // Tabs need client-side state to track which one is active, so this is
 // split out from the (server) page component. The page fetches the data
 // once and passes it down — this component only handles which tab is shown.
 export default function FinancialsTable({ data }: { data: FinancialsSummary }) {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<FinancialsTab>("Income Statement");
   const rows = data.tabs[activeTab];
 
@@ -34,7 +45,7 @@ export default function FinancialsTable({ data }: { data: FinancialsSummary }) {
                 : "border-transparent text-gray-500 hover:text-gray-700"
             )}
           >
-            {tab}
+            {t(TAB_KEYS[tab])}
           </button>
         ))}
       </div>
@@ -42,9 +53,9 @@ export default function FinancialsTable({ data }: { data: FinancialsSummary }) {
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-gray-100 text-xs font-medium uppercase tracking-wide text-gray-400">
-            <th className="px-5 py-3">Items</th>
-            <th className="px-5 py-3">Amount (Rs.)</th>
-            <th className="px-5 py-3">Source</th>
+            <th className="px-5 py-3">{t("business.financials.colItems")}</th>
+            <th className="px-5 py-3">{t("business.financials.colAmount")}</th>
+            <th className="px-5 py-3">{t("business.financials.colSource")}</th>
           </tr>
         </thead>
         <tbody>

@@ -13,10 +13,12 @@ import {
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 type Stage = "idle" | "organizing" | "ready" | "submitting" | "success";
 
 export default function SubmitToAuditorButton() {
+  const { t } = useLanguage();
   const [modalOpen, setModalOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [submitted, setSubmitted] = useState(false);
@@ -156,7 +158,7 @@ export default function SubmitToAuditorButton() {
         disabled={submitted}
         variant={submitted ? "success" : "primary"}
       >
-        {submitted ? "Submitted to Auditor" : "Submit to Auditor"}
+        {submitted ? t("status.approved") : t("business.submitPack.button")}
       </Button>
 
       {modalOpen && (
@@ -168,7 +170,7 @@ export default function SubmitToAuditorButton() {
                 type="button"
                 onClick={handleCloseModal}
                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 cursor-pointer"
-                aria-label="Close"
+                aria-label={t("common.close")}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -208,7 +210,7 @@ export default function SubmitToAuditorButton() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">
-                      File Pack Ready for Submission
+                      {t("business.submitPack.modalTitle")}
                     </h3>
                     <p className="text-xs text-gray-400">
                       All uploaded documents for {currentCompany} have been organized
@@ -237,7 +239,7 @@ export default function SubmitToAuditorButton() {
                     <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 p-3 text-xs">
                       <div className="flex items-center gap-1.5 font-semibold text-emerald-800">
                         <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                        <span>Assigned Auditor: {assignedAuditorInfo.firmName}</span>
+                        <span>{t("business.submitPack.assignedAuditorCard")}: {assignedAuditorInfo.firmName}</span>
                       </div>
                       <p className="mt-1 text-gray-600">
                         Invited Email: <span className="font-mono font-medium text-gray-900">{assignedAuditorInfo.email}</span> • Status: <span className="font-semibold text-emerald-700">{assignedAuditorInfo.status}</span>
@@ -266,7 +268,7 @@ export default function SubmitToAuditorButton() {
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Assigned Auditor:
+                      {t("discussions.assignedAuditor")}
                     </label>
                     <select
                       value={auditorOption}
@@ -303,7 +305,7 @@ export default function SubmitToAuditorButton() {
                     onClick={handleCloseModal}
                     disabled={stage === "submitting"}
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   <Button
                     variant="primary"
@@ -317,7 +319,7 @@ export default function SubmitToAuditorButton() {
                       )
                     }
                   >
-                    {stage === "submitting" ? "Sending..." : "Send File Pack to Auditor"}
+                    {stage === "submitting" ? t("business.submitPack.submitting") : t("business.submitPack.submitButton")}
                   </Button>
                 </div>
               </div>
@@ -333,7 +335,7 @@ export default function SubmitToAuditorButton() {
                   Success!
                 </h3>
                 <p className="mt-2 text-sm text-gray-600 max-w-sm mx-auto">
-                  Your document file pack has been successfully organized and sent to your auditor.
+                  {t("business.submitPack.successMessage", { auditor: submittedAuditor })}
                 </p>
                 <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-medium text-status-success">
                   <Check className="h-3.5 w-3.5" />
@@ -346,7 +348,7 @@ export default function SubmitToAuditorButton() {
                     onClick={handleCloseModal}
                     className="w-full"
                   >
-                    Done
+                    {t("common.close")}
                   </Button>
                 </div>
               </div>

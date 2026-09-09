@@ -28,6 +28,7 @@ import ProgressBar from "@/components/ui/ProgressBar";
 import MiniConfidenceBar from "@/components/ui/MiniConfidenceBar";
 import T from "@/components/layout/T";
 import { AuditorDocumentRow, AuditorDocumentsSummary } from "@/lib/types";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface AuditorDocumentsManagerProps {
   initialData: AuditorDocumentsSummary;
@@ -36,6 +37,7 @@ interface AuditorDocumentsManagerProps {
 export default function AuditorDocumentsManager({
   initialData,
 }: AuditorDocumentsManagerProps) {
+  const { t } = useLanguage();
   const [documents, setDocuments] = useState<AuditorDocumentRow[]>(initialData.documents);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -216,7 +218,7 @@ export default function AuditorDocumentsManager({
             </div>
             <div className="flex gap-2">
               <Button variant="secondary" icon={<Download className="h-4 w-4" />}>
-                Export All Archives
+                {t("common.download")}
               </Button>
             </div>
           </div>
@@ -230,7 +232,7 @@ export default function AuditorDocumentsManager({
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search client companies..."
+                  placeholder={t("auditor.companies.searchCompanies")}
                   className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-blue"
                 />
               </div>
@@ -245,7 +247,7 @@ export default function AuditorDocumentsManager({
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
-                  All Companies ({companyPacks.length})
+                  {t("common.allCompanies")} ({companyPacks.length})
                 </button>
                 <button
                   onClick={() => setStatusFilter("REVIEW_REQUIRED")}
@@ -255,7 +257,7 @@ export default function AuditorDocumentsManager({
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
-                  Needs Review ({companyPacks.filter((c) => c.pendingCount > 0).length})
+                  {t("status.reviewRequired")} ({companyPacks.filter((c) => c.pendingCount > 0).length})
                 </button>
                 <button
                   onClick={() => setStatusFilter("VERIFIED")}

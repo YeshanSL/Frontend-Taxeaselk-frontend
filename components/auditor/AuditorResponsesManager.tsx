@@ -24,6 +24,7 @@ import StatCard from "@/components/ui/StatCard";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import T from "@/components/layout/T";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   AuditorResponsesSummary,
   ClientResponseItem,
@@ -36,6 +37,7 @@ export default function AuditorResponsesManager({
 }: {
   initial: AuditorResponsesSummary;
 }) {
+  const { t } = useLanguage();
   const [responses, setResponses] = useState<ClientResponseItem[]>(initial.responses);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | "unreviewed" | "resolved" | "revision_requested">("all");
@@ -451,12 +453,12 @@ export default function AuditorResponsesManager({
                         icon={<CheckCircle2 className="h-4 w-4" />}
                         onClick={() => handleAccept(resp.id)}
                       >
-                        Accept & Resolve
+                        {t("auditor.responses.markVerified")}
                       </Button>
                     ) : (
                       <div className="flex items-center gap-1.5 text-sm font-semibold text-green-700 bg-green-50 px-3 py-1.5 rounded-lg">
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
-                        Verified & Accepted
+                        {t("auditor.documents.verified")}
                       </div>
                     )}
 
@@ -466,7 +468,7 @@ export default function AuditorResponsesManager({
                         icon={<RotateCcw className="h-4 w-4 text-orange-600" />}
                         onClick={() => handleOpenRevisionModal(resp)}
                       >
-                        Request Revision
+                        {t("auditor.responses.requestClarification")}
                       </Button>
                     )}
                   </div>
@@ -478,7 +480,7 @@ export default function AuditorResponsesManager({
                         icon={<MessageSquare className="h-4 w-4" />}
                         className="!px-3 !py-1.5 !text-xs"
                       >
-                        Discuss with Company
+                        {t("discussions.title")}
                       </Button>
                     </Link>
                   </div>
@@ -496,7 +498,9 @@ export default function AuditorResponsesManager({
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <RotateCcw className="h-5 w-5 text-orange-600" />
-                <h2 className="text-lg font-bold text-gray-900">Request Revision</h2>
+                <h2 className="text-lg font-bold text-gray-900">
+                  {t("auditor.responses.requestClarification")}
+                </h2>
               </div>
               <button
                 onClick={() => setRevisionModalOpen(false)}
@@ -509,7 +513,7 @@ export default function AuditorResponsesManager({
             <form onSubmit={handleSubmitRevision} className="mt-4 space-y-4">
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Company
+                  {t("common.company")}
                 </p>
                 <p className="text-sm font-bold text-gray-900 mt-0.5">
                   {selectedResponse.companyName} ({selectedResponse.requestId})
@@ -536,7 +540,7 @@ export default function AuditorResponsesManager({
                   variant="secondary"
                   onClick={() => setRevisionModalOpen(false)}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -544,7 +548,7 @@ export default function AuditorResponsesManager({
                   icon={<Send className="h-4 w-4" />}
                   disabled={submittingRevision || !revisionNote.trim()}
                 >
-                  {submittingRevision ? "Sending..." : "Send Revision Request"}
+                  {submittingRevision ? t("common.saving") : t("common.send")}
                 </Button>
               </div>
             </form>
