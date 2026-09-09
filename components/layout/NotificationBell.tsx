@@ -268,14 +268,17 @@ export default function NotificationBell() {
           </div>
 
           {/* Footer Quick Action */}
+          <div className="border-t border-gray-100 bg-gray-50/50 p-2 text-center">
           <div className="border-t border-gray-100 bg-gray-50/50 p-2.5 text-center">
             <button
               onClick={() => {
                 setOpen(false);
                 router.push(userRole === "auditor" ? "/auditor-discussions" : "/discussions");
               }}
+              className="w-full rounded-lg py-1.5 text-center text-xs font-semibold text-brand-blue hover:bg-blue-50 transition-colors"
               className="flex w-full items-center justify-center gap-1.5 rounded-lg py-1.5 text-center text-xs font-semibold text-brand-blue hover:bg-blue-50 transition-colors"
             >
+              {userRole === "auditor" ? "Open Audit Discussions &rarr;" : "View Discussions Hub &rarr;"}
               <span>{t("common.viewAll") || "View all notifications"}</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
