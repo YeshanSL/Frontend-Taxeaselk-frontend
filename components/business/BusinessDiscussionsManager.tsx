@@ -47,8 +47,6 @@ export default function BusinessDiscussionsManager({
     initialData.threads[0]?.id || ""
   );
   const [currentCompany, setCurrentCompany] = useState<string>("ABC Holdings (Pvt) Ltd");
-  const [isCustomCompany, setIsCustomCompany] = useState(false);
-  const [customCompanyName, setCustomCompanyName] = useState("");
   const [isLoadingThreads, setIsLoadingThreads] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"ALL" | "OPEN" | "CLOSED">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -128,37 +126,6 @@ export default function BusinessDiscussionsManager({
       isCancelled = true;
     };
   }, [currentCompany]);
-
-  function handleCompanyChange(newCompany: string) {
-    if (newCompany === "custom") {
-      setIsCustomCompany(true);
-      return;
-    }
-    setIsCustomCompany(false);
-    setCurrentCompany(newCompany);
-    try {
-      const saved = localStorage.getItem("taxease_company_settings");
-      const parsed = saved ? JSON.parse(saved) : {};
-      parsed.companyName = newCompany;
-      localStorage.setItem("taxease_company_settings", JSON.stringify(parsed));
-      window.dispatchEvent(new Event("taxease_company_updated"));
-    } catch {}
-  }
-
-  function handleSaveCustomCompany() {
-    if (!customCompanyName.trim()) return;
-    const name = customCompanyName.trim();
-    setCurrentCompany(name);
-    setIsCustomCompany(false);
-    setCustomCompanyName("");
-    try {
-      const saved = localStorage.getItem("taxease_company_settings");
-      const parsed = saved ? JSON.parse(saved) : {};
-      parsed.companyName = name;
-      localStorage.setItem("taxease_company_settings", JSON.stringify(parsed));
-      window.dispatchEvent(new Event("taxease_company_updated"));
-    } catch {}
-  }
 
   const filteredThreads = threads.filter((t) => {
     const matchesSearch =
@@ -281,7 +248,7 @@ export default function BusinessDiscussionsManager({
 
   return (
     <div className="mt-6 space-y-4">
-      {/* Active Company Selector Bar */}
+      {/* Active Company Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 shadow-sm">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-brand-blue">
@@ -289,9 +256,11 @@ export default function BusinessDiscussionsManager({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Active Company</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                {t("business.documents.activeCompany")}
+              </span>
               <span className="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
-                Connected
+                {t("status.connected")}
               </span>
               {isLoadingThreads && (
                 <span className="inline-flex items-center text-[10px] text-gray-400 animate-pulse">
@@ -301,61 +270,6 @@ export default function BusinessDiscussionsManager({
             </div>
             <p className="text-sm font-bold text-gray-900">{currentCompany}</p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {!isCustomCompany ? (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-500 font-medium hidden sm:inline">Switch Company:</span>
-              <select
-                value={
-                  ["ABC Holdings (Pvt) Ltd", "Lanka Trading (Pvt) Ltd", "Ocean Foods (Pvt) Ltd", "Tech Solutions (Pvt) Ltd", "Ceylon BioTech (Pvt) Ltd"].includes(currentCompany)
-                    ? currentCompany
-                    : "custom"
-                }
-                onChange={(e) => handleCompanyChange(e.target.value)}
-                className="rounded-lg border border-blue-200 bg-white py-1.5 pl-3 pr-8 text-xs font-semibold text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue cursor-pointer"
-              >
-                <option value="ABC Holdings (Pvt) Ltd">ABC Holdings (Pvt) Ltd</option>
-                <option value="Lanka Trading (Pvt) Ltd">Lanka Trading (Pvt) Ltd</option>
-                <option value="Ocean Foods (Pvt) Ltd">Ocean Foods (Pvt) Ltd</option>
-                <option value="Tech Solutions (Pvt) Ltd">Tech Solutions (Pvt) Ltd</option>
-                <option value="Ceylon BioTech (Pvt) Ltd">Ceylon BioTech (Pvt) Ltd</option>
-                <option value="custom">+ Type New Company Name...</option>
-              </select>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={customCompanyName}
-                onChange={(e) => setCustomCompanyName(e.target.value)}
-                placeholder="Enter Company Name..."
-                className="rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleSaveCustomCompany();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleSaveCustomCompany}
-                className="rounded-lg bg-brand-blue px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
-              >
-                {t("common.set")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsCustomCompany(false)}
-                className="text-xs text-gray-500 hover:text-gray-700 underline"
-              >
-                {t("common.cancel")}
-              </button>
-            </div>
-          )}
         </div>
       </div>
 

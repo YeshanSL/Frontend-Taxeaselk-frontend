@@ -22,8 +22,6 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
   const [documents, setDocuments] = useState<DocumentRow[]>(initial.documents);
   const [missingCount] = useState(initial.missingCount);
   const [currentCompany, setCurrentCompany] = useState<string>("ABC Holdings (Pvt) Ltd");
-  const [isCustomCompany, setIsCustomCompany] = useState(false);
-  const [customCompanyName, setCustomCompanyName] = useState("");
   const [toastMessage, setToastMessage] = useState<string>("");
 
   useEffect(() => {
@@ -57,37 +55,6 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
       window.removeEventListener("storage", syncCompany);
     };
   }, []);
-
-  function handleCompanyChange(newCompany: string) {
-    if (newCompany === "custom") {
-      setIsCustomCompany(true);
-      return;
-    }
-    setIsCustomCompany(false);
-    setCurrentCompany(newCompany);
-    try {
-      const saved = localStorage.getItem("taxease_company_settings");
-      const parsed = saved ? JSON.parse(saved) : {};
-      parsed.companyName = newCompany;
-      localStorage.setItem("taxease_company_settings", JSON.stringify(parsed));
-      window.dispatchEvent(new Event("taxease_company_updated"));
-    } catch {}
-  }
-
-  function handleSaveCustomCompany() {
-    if (!customCompanyName.trim()) return;
-    const name = customCompanyName.trim();
-    setCurrentCompany(name);
-    setIsCustomCompany(false);
-    setCustomCompanyName("");
-    try {
-      const saved = localStorage.getItem("taxease_company_settings");
-      const parsed = saved ? JSON.parse(saved) : {};
-      parsed.companyName = name;
-      localStorage.setItem("taxease_company_settings", JSON.stringify(parsed));
-      window.dispatchEvent(new Event("taxease_company_updated"));
-    } catch {}
-  }
 
   const stats = useMemo(() => {
     const uploaded = documents.length;
@@ -212,63 +179,6 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
             </div>
             <p className="text-sm font-bold text-gray-900">{currentCompany}</p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {!isCustomCompany ? (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-500 font-medium hidden sm:inline">
-                {t("business.documents.switchCompany")}
-              </span>
-              <select
-                value={
-                  ["ABC Holdings (Pvt) Ltd", "Lanka Trading (Pvt) Ltd", "Ocean Foods (Pvt) Ltd", "Tech Solutions (Pvt) Ltd", "Ceylon BioTech (Pvt) Ltd"].includes(currentCompany)
-                    ? currentCompany
-                    : "custom"
-                }
-                onChange={(e) => handleCompanyChange(e.target.value)}
-                className="rounded-lg border border-blue-200 bg-white py-1.5 pl-3 pr-8 text-xs font-semibold text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue cursor-pointer"
-              >
-                <option value="ABC Holdings (Pvt) Ltd">ABC Holdings (Pvt) Ltd</option>
-                <option value="Lanka Trading (Pvt) Ltd">Lanka Trading (Pvt) Ltd</option>
-                <option value="Ocean Foods (Pvt) Ltd">Ocean Foods (Pvt) Ltd</option>
-                <option value="Tech Solutions (Pvt) Ltd">Tech Solutions (Pvt) Ltd</option>
-                <option value="Ceylon BioTech (Pvt) Ltd">Ceylon BioTech (Pvt) Ltd</option>
-                <option value="custom">{t("business.documents.typeNewCompanyName")}</option>
-              </select>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={customCompanyName}
-                onChange={(e) => setCustomCompanyName(e.target.value)}
-                placeholder={t("business.documents.enterCompanyName")}
-                className="rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleSaveCustomCompany();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleSaveCustomCompany}
-                className="rounded-lg bg-brand-blue px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
-              >
-                {t("common.set")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsCustomCompany(false)}
-                className="text-xs text-gray-500 hover:text-gray-700 underline"
-              >
-                {t("common.cancel")}
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
