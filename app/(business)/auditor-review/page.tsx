@@ -1,11 +1,9 @@
 import { Suspense } from "react";
-import { User } from "lucide-react";
 import Card from "@/components/ui/Card";
-import Badge from "@/components/ui/Badge";
-import ProgressBar from "@/components/ui/ProgressBar";
 import SummaryCountRow from "@/components/business/SummaryCountRow";
 import InviteAuditorButton from "@/components/business/InviteAuditorButton";
 import AuditorIssuesManager from "@/components/business/AuditorIssuesManager";
+import AssignedAuditorCard from "@/components/business/AssignedAuditorCard";
 import T from "@/components/layout/T";
 import { getAuditorReviewSummary } from "@/lib/api/business";
 
@@ -29,54 +27,15 @@ export default async function AuditorReviewPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
-        <Card className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue-50">
-              <User className="h-6 w-6 text-brand-blue" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">
-                <T k="business.auditorReview.assignedAuditor" />
-              </p>
-              <p className="text-sm text-gray-500">
-                {data.auditorName} ({data.auditorFirm})
-              </p>
-
-              <div className="mt-4 flex flex-wrap gap-8">
-                <div>
-                  <p className="text-xs text-gray-400">
-                    <T k="common.status" />
-                  </p>
-                  <Badge tone="warning">{data.reviewStatus}</Badge>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400">
-                    <T k="business.auditorReview.submitted" />
-                  </p>
-                  <p className="text-sm font-medium text-gray-700">
-                    {data.submittedDate}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400">
-                    <T k="business.auditorReview.expectedBy" />
-                  </p>
-                  <p className="text-sm font-medium text-gray-700">
-                    {data.expectedByDate}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-5">
-            <div className="mb-1.5 flex justify-between text-xs text-gray-400">
-              <span>Reviewed by</span>
-              <span>{data.reviewedPercent}%</span>
-            </div>
-            <ProgressBar value={data.reviewedPercent} />
-          </div>
-        </Card>
+        <AssignedAuditorCard
+          auditorName={data.auditorName}
+          auditorFirm={data.auditorFirm}
+          auditorEmail="audit@karunaratne.lk"
+          reviewStatus={data.reviewStatus}
+          submittedDate={data.submittedDate}
+          expectedByDate={data.expectedByDate}
+          reviewedPercent={data.reviewedPercent}
+        />
 
         <Card className="p-5">
           <p className="mb-2 font-semibold text-gray-800">

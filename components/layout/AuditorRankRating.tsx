@@ -73,8 +73,37 @@ export default function AuditorRankRating() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function syncRating() {
+    async function syncRating() {
       try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const res = await fetch(`${apiUrl}/api/auditors/audit@karunaratne.lk/reviews`).catch(() => null);
+        if (res && res.ok) {
+          const apiData = await res.json();
+          if (apiData.success && apiData.total_reviews) {
+            setData((prev) => ({
+              ...prev,
+              overallRating: apiData.average_rating,
+              totalReviews: apiData.total_reviews,
+              breakdown: {
+                accuracy: Number(((apiData.subcategories?.technical_rigor || 5.0) * 20).toFixed(1)),
+                responsiveness: Number(((apiData.subcategories?.communication || 4.9) * 20).toFixed(1)),
+                turnaround: Number(((apiData.subcategories?.timeliness || 4.9) * 20).toFixed(1)),
+              },
+              recentReviews: (apiData.reviews && apiData.reviews.length > 0)
+                ? apiData.reviews.slice(0, 5).map((r: any) => ({
+                    id: r.id,
+                    companyName: r.company_name,
+                    rating: Number(r.rating),
+                    date: r.created_at ? new Date(r.created_at).toLocaleDateString("en-GB") : "Recently",
+                    comment: r.review_comment || "Verified statutory review.",
+                    service: `Corporate Income Tax (${r.tax_year || "2025/26"})`,
+                  }))
+                : prev.recentReviews,
+            }));
+            return;
+          }
+        }
+
         const saved = localStorage.getItem("taxease_auditor_rating");
         if (saved) {
           const parsed = JSON.parse(saved);

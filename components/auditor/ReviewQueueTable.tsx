@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import clsx from "clsx";
+import { CheckCircle2 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import ProgressBar from "@/components/ui/ProgressBar";
@@ -48,6 +49,18 @@ export default function ReviewQueueTable({ rows }: { rows: ReviewQueueRow[] }) {
           company: target.companyName,
           type: newStatus === "Approved" ? "approval" : "issue",
         });
+
+        // Cross-portal event sync to business dashboard
+        try {
+          localStorage.setItem(`taxease_audit_status_${companyId}`, newStatus);
+          localStorage.setItem(`taxease_audit_status_${target.companyName}`, newStatus);
+          localStorage.setItem("taxease_last_audit_status", newStatus);
+          window.dispatchEvent(
+            new CustomEvent("taxease_audit_status_updated", {
+              detail: { companyId, companyName: target.companyName, status: newStatus },
+            })
+          );
+        } catch {}
       }
 
       setTableRows((prev) =>
@@ -146,16 +159,36 @@ export default function ReviewQueueTable({ rows }: { rows: ReviewQueueRow[] }) {
               <td className="px-5 py-3.5 text-right">
                 <div className="flex items-center justify-end gap-2">
                   <a href="/auditor-documents">
-                    <Button variant="secondary">{t("common.view")}</Button>
+                    <Button variant="secondary" className="text-xs py-1.5 px-3">{t("common.view")}</Button>
                   </a>
-                  {row.status !== "Approved" && (
-                    <Button
-                      variant="primary"
-                      disabled={updatingId === row.id}
-                      onClick={() => handleUpdateStatus(row.id, "Approved")}
-                    >
-                      {updatingId === row.id ? t("common.saving") : t("auditor.reviewQueue.approveReturn")}
-                    </Button>
+                  {row.status === "Approved" ? (
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      Approved & Signed Off
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        value={row.status}
+                        disabled={updatingId === row.id}
+                        onChange={(e) => handleUpdateStatus(row.id, e.target.value)}
+                        className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:border-brand-blue focus:border-brand-blue focus:outline-none"
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Waiting for Company">Waiting for Client</option>
+                        <option value="Ready for Approval">Ready for Approval</option>
+                        <option value="Approved">Approve & Sign Off</option>
+                      </select>
+                      <Button
+                        variant="primary"
+                        className="text-xs py-1.5 px-3"
+                        disabled={updatingId === row.id}
+                        onClick={() => handleUpdateStatus(row.id, "Approved")}
+                      >
+                        {updatingId === row.id ? t("common.saving") : t("auditor.reviewQueue.approveReturn")}
+                      </Button>
+                    </div>
                   )}
                 </div>
               </td>

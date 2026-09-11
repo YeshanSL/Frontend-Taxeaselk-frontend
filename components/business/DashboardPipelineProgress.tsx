@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   FileText,
@@ -84,6 +85,23 @@ export default function DashboardPipelineProgress({
   summary: DashboardSummary;
 }) {
   const { progressPercent, progressUpdatedAt, steps } = summary;
+  const [liveStatus, setLiveStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    function handleUpdate(e: any) {
+      if (e.detail?.status) {
+        setLiveStatus(e.detail.status);
+      }
+    }
+    const saved = localStorage.getItem("taxease_last_audit_status");
+    if (saved) setLiveStatus(saved);
+
+    window.addEventListener("taxease_audit_status_updated", handleUpdate);
+    return () => window.removeEventListener("taxease_audit_status_updated", handleUpdate);
+  }, []);
+
+  const isApproved = liveStatus === "Approved" || progressPercent >= 100;
+  const effectivePercent = isApproved ? 100 : progressPercent;
 
   return (
     <Card className="mt-6 p-6 shadow-sm border border-gray-200/90 bg-white">
@@ -96,16 +114,16 @@ export default function DashboardPipelineProgress({
             </h2>
             <span
               className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                progressPercent >= 100
+                effectivePercent >= 100
                   ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                  : progressPercent >= 60
+                  : effectivePercent >= 60
                   ? "bg-blue-50 text-brand-blue border border-blue-200"
                   : "bg-amber-50 text-amber-800 border border-amber-200"
               }`}
             >
-              {progressPercent >= 100
+              {effectivePercent >= 100
                 ? "Audit Pack Signed Off"
-                : progressPercent >= 60
+                : effectivePercent >= 60
                 ? "Handover In Progress"
                 : "Awaiting Documents"}
             </span>
@@ -118,7 +136,7 @@ export default function DashboardPipelineProgress({
         <div className="text-right">
           <div className="flex items-baseline justify-end gap-1">
             <span className="text-3xl font-extrabold text-brand-blue tracking-tight">
-              {progressPercent}%
+              {effectivePercent}%
             </span>
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Complete
@@ -132,7 +150,7 @@ export default function DashboardPipelineProgress({
 
       {/* Main Overall Progress Bar */}
       <div className="mt-4">
-        <ProgressBar value={progressPercent} />
+        <ProgressBar value={effectivePercent} />
       </div>
 
       {/* 5 Real Data-Driven Pipeline Stage Progress Cards */}
@@ -147,8 +165,18 @@ export default function DashboardPipelineProgress({
           };
           const Icon = cfg.icon;
           const href = step.href || cfg.defaultHref;
-          const isDone = step.progressPercent >= 100 || step.state === "done";
-          const isWarning = step.state === "warning";
+          const isAuditStage = step.label === "Auditor Inquiries" || step.label === "Audit Sign-Off";
+          const currentStepPercent = (isApproved && isAuditStage) ? 100 : step.progressPercent;
+          const isDone = currentStepPercent >= 100 || (isApproved && isAuditStage) || step.state === "done";
+          const isWarning = !isDone && step.state === "warning";
+          const displayRatio = (isApproved && step.label === "Auditor Inquiries")
+            ? "5/5 Resolved"
+            : (isApproved && step.label === "Audit Sign-Off")
+            ? "Signed Off"
+            : step.ratioLabel;
+          const displaySublabel = (isApproved && isAuditStage)
+            ? (step.label === "Auditor Inquiries" ? "All inquiries cleared by auditor" : "Audited & Certified for RAMIS submission")
+            : step.sublabel;
 
           return (
             <Link
@@ -179,12 +207,12 @@ export default function DashboardPipelineProgress({
                   ) : isWarning ? (
                     <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
                       <AlertTriangle className="h-3 w-3" />
-                      {step.progressPercent}%
+                      {currentStepPercent}%
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-brand-blue">
                       <Clock className="h-3 w-3" />
-                      {step.progressPercent}%
+                      {currentStepPercent}%
                     </span>
                   )}
                 </div>
@@ -195,9 +223,9 @@ export default function DashboardPipelineProgress({
                     <span>{step.label}</span>
                     <ChevronRight className="h-3 w-3 text-gray-300 group-hover:text-brand-blue group-hover:translate-x-0.5 transition-all" />
                   </h4>
-                  {step.ratioLabel && (
+                  {displayRatio && (
                     <p className="mt-0.5 text-[11px] font-semibold text-gray-600">
-                      {step.ratioLabel}
+                      {displayRatio}
                     </p>
                   )}
                 </div>
@@ -214,12 +242,12 @@ export default function DashboardPipelineProgress({
                         ? "bg-amber-500"
                         : "bg-brand-blue"
                     }`}
-                    style={{ width: `${Math.min(100, Math.max(0, step.progressPercent))}%` }}
+                    style={{ width: `${Math.min(100, Math.max(0, currentStepPercent))}%` }}
                   />
                 </div>
-                {step.sublabel && (
-                  <p className="mt-1.5 text-[10px] text-gray-400 truncate" title={step.sublabel}>
-                    {step.sublabel}
+                {displaySublabel && (
+                  <p className="mt-1.5 text-[10px] text-gray-400 truncate" title={displaySublabel}>
+                    {displaySublabel}
                   </p>
                 )}
               </div>

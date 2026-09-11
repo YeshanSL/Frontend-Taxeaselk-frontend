@@ -92,10 +92,12 @@ export default function InviteAuditorButton() {
   const [loading, setLoading] = useState(false);
   const [invitedAuditor, setInvitedAuditor] = useState<string | null>(null);
   const [currentCompany, setCurrentCompany] = useState<string>("ABC Holdings (Pvt) Ltd");
-  const [assignedAuditor, setAssignedAuditor] = useState<{ firm: string; email: string } | null>(null);
+  const [assignedAuditor, setAssignedAuditor] = useState<{ firm: string; email: string; name?: string } | null>(null);
+  const [confirmSwitchTarget, setConfirmSwitchTarget] = useState<{ email: string; firm: string; name?: string } | null>(null);
+  const [disengaging, setDisengaging] = useState(false);
 
   useEffect(() => {
-    function syncCompanyAndAuditor() {
+    async function syncCompanyAndAuditor() {
       try {
         let company = "ABC Holdings (Pvt) Ltd";
         const savedSettings = localStorage.getItem("taxease_company_settings");
@@ -105,6 +107,25 @@ export default function InviteAuditorButton() {
         }
         setCurrentCompany(company);
 
+        // Fetch from backend engagement endpoint
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        try {
+          const res = await fetch(`${apiUrl}/api/auditor-engagement/${encodeURIComponent(company)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.has_active_auditor && data.engagement) {
+              setAssignedAuditor({
+                firm: data.engagement.auditor_firm,
+                email: data.engagement.auditor_email,
+                name: data.engagement.auditor_name,
+              });
+              return;
+            }
+          }
+        } catch {
+          // fallback to localStorage
+        }
+
         const savedAuditor = localStorage.getItem(`taxease_assigned_auditor_${company}`) || localStorage.getItem("taxease_last_assigned_auditor");
         if (savedAuditor) {
           const parsedAuditor = JSON.parse(savedAuditor);
@@ -112,6 +133,7 @@ export default function InviteAuditorButton() {
             setAssignedAuditor({
               firm: parsedAuditor.firm_name || parsedAuditor.auditor_name || "Assigned Auditor",
               email: parsedAuditor.auditor_email,
+              name: parsedAuditor.auditor_name,
             });
           }
         }
@@ -127,7 +149,38 @@ export default function InviteAuditorButton() {
     };
   }, []);
 
+  async function handleDisengage() {
+    setDisengaging(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      await fetch(`${apiUrl}/api/auditor-engagement/disengage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company_name: currentCompany,
+          tax_year: "2025/26",
+          reason: "Concluded by client",
+        }),
+      }).catch(() => {});
+
+      localStorage.removeItem(`taxease_assigned_auditor_${currentCompany}`);
+      localStorage.removeItem("taxease_last_assigned_auditor");
+      setAssignedAuditor(null);
+      window.dispatchEvent(new CustomEvent("taxease_auditor_assigned", { detail: null }));
+    } catch (err) {
+      console.error("Disengage failed:", err);
+    } finally {
+      setDisengaging(false);
+    }
+  }
+
   async function sendInvitation(targetEmail: string, targetFirm: string, auditorName?: string) {
+    // If different auditor is already active, request confirmation before replacing
+    if (assignedAuditor && assignedAuditor.email !== targetEmail && !confirmSwitchTarget) {
+      setConfirmSwitchTarget({ email: targetEmail, firm: targetFirm, name: auditorName });
+      return;
+    }
+
     setLoading(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -136,6 +189,32 @@ export default function InviteAuditorButton() {
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
+
+      // If switching, disengage previous auditor first
+      if (assignedAuditor && assignedAuditor.email !== targetEmail) {
+        await fetch(`${apiUrl}/api/auditor-engagement/disengage`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            company_name: currentCompany,
+            tax_year: "2025/26",
+            reason: `Transferred appointment to ${auditorName || targetFirm}`,
+          }),
+        }).catch(() => {});
+      }
+
+      // Appoint new auditor
+      await fetch(`${apiUrl}/api/auditor-engagement`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          company_name: currentCompany,
+          tax_year: "2025/26",
+          auditor_email: targetEmail,
+          auditor_name: auditorName || targetFirm,
+          auditor_firm: targetFirm,
+        }),
+      }).catch(() => {});
 
       await fetch(`${apiUrl}/api/auditor-review/invite`, {
         method: "POST",
@@ -146,23 +225,23 @@ export default function InviteAuditorButton() {
           auditorName,
           company_name: currentCompany,
         }),
-      }).catch(() => {
-        // Fallback gracefully for local testing
-      });
+      }).catch(() => {});
 
       const assignedRecord = {
         company_name: currentCompany,
         auditor_email: targetEmail,
         firm_name: targetFirm,
         auditor_name: auditorName || targetFirm,
-        status: "Invited",
+        status: "Active",
       };
       localStorage.setItem(`taxease_assigned_auditor_${currentCompany}`, JSON.stringify(assignedRecord));
       localStorage.setItem("taxease_last_assigned_auditor", JSON.stringify(assignedRecord));
       window.dispatchEvent(new CustomEvent("taxease_auditor_assigned", { detail: assignedRecord }));
 
-      setAssignedAuditor({ firm: targetFirm, email: targetEmail });
+      setAssignedAuditor({ firm: targetFirm, email: targetEmail, name: auditorName });
       setInvitedAuditor(auditorName || targetFirm || targetEmail);
+      setConfirmSwitchTarget(null);
+
       setTimeout(() => {
         setOpen(false);
         setInvitedAuditor(null);
@@ -172,7 +251,7 @@ export default function InviteAuditorButton() {
         setSearchQuery("");
       }, 2000);
     } catch (err) {
-      console.error("Failed to invite auditor:", err);
+      console.error("Failed to appoint auditor:", err);
     } finally {
       setLoading(false);
     }
@@ -238,16 +317,86 @@ export default function InviteAuditorButton() {
                   <Check className="h-8 w-8" />
                 </div>
                 <p className="mt-4 text-xl font-bold text-gray-900">
-                  Invitation Sent Successfully!
+                  Appointment Confirmed!
                 </p>
                 <p className="mt-1.5 max-w-md text-sm text-gray-500">
-                  An invitation has been sent to{" "}
-                  <span className="font-semibold text-gray-800">{invitedAuditor}</span>.
-                  They will be granted access to review your corporate tax return.
+                  <span className="font-semibold text-gray-800">{invitedAuditor}</span> is now appointed as your statutory auditor for Corporate Income Tax review.
                 </p>
               </div>
             ) : (
               <>
+                {/* Active Auditor Statutory Notice */}
+                {assignedAuditor && (
+                  <div className="mx-6 mt-4 flex items-center justify-between rounded-xl bg-blue-50/80 border border-blue-200/70 p-3.5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-blue text-white shadow-sm">
+                        <ShieldCheck className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-bold text-gray-900">
+                            Active Statutory Auditor Appointed
+                          </p>
+                          <span className="rounded-full bg-blue-100 px-2 py-0.2 text-[10px] font-bold text-brand-blue">
+                            1 Auditor Limit
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-600">
+                          <strong className="font-semibold text-gray-800">{assignedAuditor.firm}</strong> ({assignedAuditor.email})
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          Inland Revenue Act & Companies Act: Strictly 1 appointed auditor allowed per company per tax year.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleDisengage}
+                      disabled={disengaging}
+                      className="shrink-0 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-white hover:bg-rose-50 border border-rose-200 rounded-lg px-2.5 py-1.5 transition ml-2"
+                    >
+                      {disengaging ? "Concluding..." : "Disengage"}
+                    </button>
+                  </div>
+                )}
+
+                {/* Transfer Appointment Confirmation Modal Overlay */}
+                {confirmSwitchTarget && (
+                  <div className="mx-6 mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4">
+                    <p className="text-xs font-bold text-amber-900">
+                      Confirm Statutory Auditor Reassignment?
+                    </p>
+                    <p className="mt-1 text-xs text-amber-800">
+                      Sri Lankan Corporate Law allows only <strong>1 appointed auditor or audit firm</strong> per tax year. Appointing <strong>{confirmSwitchTarget.name || confirmSwitchTarget.firm}</strong> will conclude your active appointment with <strong>{assignedAuditor?.firm}</strong>.
+                    </p>
+                    <div className="mt-3 flex items-center justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="text-xs py-1.5 px-3"
+                        onClick={() => setConfirmSwitchTarget(null)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="primary"
+                        className="text-xs py-1.5 px-3 bg-amber-600 hover:bg-amber-700 border-none text-white"
+                        disabled={loading}
+                        onClick={() =>
+                          sendInvitation(
+                            confirmSwitchTarget.email,
+                            confirmSwitchTarget.firm,
+                            confirmSwitchTarget.name
+                          )
+                        }
+                      >
+                        {loading ? "Reassigning..." : "Confirm & Transfer Appointment"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Navigation Tabs */}
                 <div className="flex border-b border-gray-100 bg-gray-50/70 px-6 pt-3">
                   <button
@@ -297,62 +446,78 @@ export default function InviteAuditorButton() {
 
                       {/* Suggested Auditors List */}
                       <div className="space-y-3">
-                        {filteredAuditors.map((auditor) => (
-                          <div
-                            key={auditor.id}
-                            className="flex flex-col justify-between gap-3 rounded-xl border border-gray-200 p-4 transition-all hover:border-brand-blue hover:bg-blue-50/20 sm:flex-row sm:items-center"
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-navy text-xs font-bold text-white shadow-sm">
-                                {auditor.initials}
-                              </div>
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <p className="font-semibold text-gray-900 text-sm">
-                                    {auditor.name}
-                                  </p>
-                                  <span className="text-xs font-medium text-gray-500">
-                                    ({auditor.credentials})
-                                  </span>
-                                  <div className="flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-xs font-bold text-amber-700">
-                                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                                    {auditor.rating}
-                                    <span className="font-normal text-amber-600/70">
-                                      ({auditor.reviewCount})
+                        {filteredAuditors.map((auditor) => {
+                          const isCurrent = assignedAuditor?.email === auditor.email;
+                          return (
+                            <div
+                              key={auditor.id}
+                              className={`flex flex-col justify-between gap-3 rounded-xl border p-4 transition-all sm:flex-row sm:items-center ${
+                                isCurrent
+                                  ? "border-blue-300 bg-blue-50/30"
+                                  : "border-gray-200 hover:border-brand-blue hover:bg-blue-50/20"
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-navy text-xs font-bold text-white shadow-sm">
+                                  {auditor.initials}
+                                </div>
+                                <div>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <p className="font-semibold text-gray-900 text-sm">
+                                      {auditor.name}
+                                    </p>
+                                    <span className="text-xs font-medium text-gray-500">
+                                      ({auditor.credentials})
+                                    </span>
+                                    {isCurrent && (
+                                      <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                        Currently Appointed
+                                      </span>
+                                    )}
+                                    <div className="flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-xs font-bold text-amber-700">
+                                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                                      {auditor.rating}
+                                      <span className="font-normal text-amber-600/70">
+                                        ({auditor.reviewCount})
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-600">
+                                    <Building2 className="h-3.5 w-3.5 text-gray-400" />
+                                    <span>{auditor.firm}</span>
+                                  </div>
+
+                                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                                    <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+                                      {auditor.specialization}
+                                    </span>
+                                    <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                                      <Award className="h-3 w-3 text-status-success" />
+                                      {auditor.completedAudits}
                                     </span>
                                   </div>
                                 </div>
-
-                                <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-600">
-                                  <Building2 className="h-3.5 w-3.5 text-gray-400" />
-                                  <span>{auditor.firm}</span>
-                                </div>
-
-                                <div className="mt-2 flex flex-wrap items-center gap-2">
-                                  <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
-                                    {auditor.specialization}
-                                  </span>
-                                  <span className="flex items-center gap-1 text-[11px] text-gray-400">
-                                    <Award className="h-3 w-3 text-status-success" />
-                                    {auditor.completedAudits}
-                                  </span>
-                                </div>
                               </div>
-                            </div>
 
-                            <Button
-                              variant="secondary"
-                              className="shrink-0 text-xs font-semibold hover:bg-brand-blue hover:text-white"
-                              disabled={loading}
-                              onClick={() =>
-                                sendInvitation(auditor.email, auditor.firm, auditor.name)
-                              }
-                            >
-                              <ShieldCheck className="mr-1.5 h-3.5 w-3.5 text-status-success" />
-                              {t("business.inviteAuditor.button")}
-                            </Button>
-                          </div>
-                        ))}
+                              <Button
+                                variant="secondary"
+                                className="shrink-0 text-xs font-semibold hover:bg-brand-blue hover:text-white"
+                                disabled={loading || isCurrent}
+                                onClick={() =>
+                                  sendInvitation(auditor.email, auditor.firm, auditor.name)
+                                }
+                              >
+                                <ShieldCheck className="mr-1.5 h-3.5 w-3.5 text-status-success" />
+                                {isCurrent
+                                  ? "Appointed"
+                                  : assignedAuditor
+                                  ? "Reassign Auditor"
+                                  : t("business.inviteAuditor.button")}
+                              </Button>
+                            </div>
+                          );
+                        })}
 
                         {filteredAuditors.length === 0 && (
                           <div className="py-8 text-center text-xs text-gray-500">
