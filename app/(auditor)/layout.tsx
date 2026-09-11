@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Sidebar, { NavItem } from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
+import AuditorRankRating from "@/components/layout/AuditorRankRating";
 import T from "@/components/layout/T";
 
 const navItems: NavItem[] = [
@@ -47,6 +48,8 @@ export default function AuditorLayout({
           displayName="Professional Auditor"
           email="auditor@example.com"
           settingsHref="/auditor-settings"
+          showSearch={false}
+          extraContent={<AuditorRankRating />}
           leftContent={
             <>
               <span className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600">

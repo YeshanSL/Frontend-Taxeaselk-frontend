@@ -17,6 +17,7 @@ interface TopBarProps {
   email: string;
   settingsHref: string;
   showSearch?: boolean;
+  extraContent?: ReactNode;
 }
 
 export default function TopBar({
@@ -27,6 +28,7 @@ export default function TopBar({
   email,
   settingsHref,
   showSearch = true,
+  extraContent,
 }: TopBarProps) {
   const { t } = useLanguage();
 
@@ -38,6 +40,8 @@ export default function TopBar({
       </div>
 
       <div className="flex items-center gap-4">
+        {extraContent}
+
         {showSearch && (
           <div className="relative hidden md:block">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />

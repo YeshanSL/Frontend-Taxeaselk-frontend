@@ -217,6 +217,14 @@ export interface CompanyRow {
   warningsCount: number;
   progressPercent: number;
   dueDate: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  registrationNumber?: string;
+  address?: string;
+  businessCategory?: string;
+  annualTurnover?: string;
+  contactPerson?: string;
+  taxOffice?: string;
 }
 
 // --- Auditor Dashboard (home) ---
