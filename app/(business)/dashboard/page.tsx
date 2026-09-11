@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { CheckCircle2, AlertTriangle, Circle, Upload, Sparkles, FileBarChart } from "lucide-react";
+import { Upload, Sparkles, FileBarChart, AlertTriangle } from "lucide-react";
 import Card from "@/components/ui/Card";
-import ProgressBar from "@/components/ui/ProgressBar";
 import StatCard from "@/components/ui/StatCard";
 import Button from "@/components/ui/Button";
 import T from "@/components/layout/T";
 import DashboardSubtitle from "@/components/business/DashboardSubtitle";
+import DashboardPipelineProgress from "@/components/business/DashboardPipelineProgress";
 import { getDashboardSummary, getCompanySettings } from "@/lib/api/business";
 
 // Server Component: fetches through the data layer (lib/api/business.ts)
@@ -27,51 +27,8 @@ export default async function DashboardPage() {
         initialFinancialYear={settings.financialYear}
       />
 
-      {/* Progress card */}
-      <Card className="mt-6 p-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="font-semibold text-gray-800">
-              <T k="business.dashboard.progress" />
-            </p>
-            <p className="text-xs text-gray-400">
-              <T k="business.dashboard.updated" params={{ time: data.progressUpdatedAt }} />
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-brand-blue">
-              {data.progressPercent}%
-            </p>
-            <p className="text-xs text-gray-400">
-              <T k="business.dashboard.complete" />
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <ProgressBar value={data.progressPercent} />
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          {data.steps.map((step) => (
-            <span
-              key={step.label}
-              className="inline-flex items-center gap-1.5 rounded-md border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-600"
-            >
-              {step.state === "done" && (
-                <CheckCircle2 className="h-3.5 w-3.5 text-status-success" />
-              )}
-              {step.state === "warning" && (
-                <AlertTriangle className="h-3.5 w-3.5 text-status-warning" />
-              )}
-              {step.state === "pending" && (
-                <Circle className="h-3.5 w-3.5 text-gray-300" />
-              )}
-              {step.label}
-            </span>
-          ))}
-        </div>
-      </Card>
+      {/* Real Multi-Stage Pipeline Progress Card */}
+      <DashboardPipelineProgress summary={data} />
 
       {/* Stat tiles */}
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">

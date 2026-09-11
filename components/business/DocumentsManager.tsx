@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { FileText, Trash2, Building2, CheckCircle2, ChevronDown } from "lucide-react";
 import Card from "@/components/ui/Card";
 import StatCard from "@/components/ui/StatCard";
 import MiniConfidenceBar from "@/components/ui/MiniConfidenceBar";
 import DocumentUploadZone from "@/components/business/DocumentUploadZone";
+import AuditorDocumentChecklist from "@/components/business/AuditorDocumentChecklist";
 import DocumentStatusBadge from "@/components/business/DocumentStatusBadge";
 import { DocumentRow, DocumentsSummary } from "@/lib/types";
 import { formatFileSize, formatUploadedDate, guessDocumentType } from "@/lib/files";
@@ -23,6 +24,8 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
   const [missingCount] = useState(initial.missingCount);
   const [currentCompany, setCurrentCompany] = useState<string>("ABC Holdings (Pvt) Ltd");
   const [toastMessage, setToastMessage] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     function syncCompany() {
@@ -65,13 +68,15 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
 
   async function handleFilesAccepted(files: File[]) {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const currentTargetCategory = selectedCategory;
 
     for (const file of files) {
       const tempId = nextLocalId();
+      const resolvedType = currentTargetCategory || guessDocumentType(file.name);
       const newRow: DocumentRow = {
         id: tempId,
         name: file.name,
-        type: guessDocumentType(file.name),
+        type: resolvedType,
         status: "processing",
         aiConfidencePercent: null,
         uploadedDate: formatUploadedDate(new Date()),
@@ -83,7 +88,7 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
       try {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("doc_type", guessDocumentType(file.name));
+        formData.append("doc_type", resolvedType);
         formData.append("company_name", currentCompany);
 
         const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
@@ -197,8 +202,28 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
         />
       </div>
 
-      <div className="mt-6">
-        <DocumentUploadZone onFilesAccepted={handleFilesAccepted} />
+      {/* Side-by-Side Auditor Checklist and Drag & Drop Upload Zone */}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+        <div className="lg:col-span-5 h-full">
+          <AuditorDocumentChecklist
+            companyName={currentCompany}
+            documents={documents}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+            onBrowseForCategory={(category) => {
+              setSelectedCategory(category);
+              uploadInputRef.current?.click();
+            }}
+          />
+        </div>
+        <div className="lg:col-span-7 h-full">
+          <DocumentUploadZone
+            onFilesAccepted={handleFilesAccepted}
+            preselectedType={selectedCategory}
+            onClearPreselectedType={() => setSelectedCategory(null)}
+            fileInputRef={uploadInputRef}
+          />
+        </div>
       </div>
 
       <Card className="mt-6 overflow-hidden">

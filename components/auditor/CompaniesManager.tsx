@@ -23,6 +23,7 @@ import {
   Briefcase,
   ShieldCheck,
   Eye,
+  ClipboardCheck,
 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -30,6 +31,7 @@ import Badge from "@/components/ui/Badge";
 import ProgressBar from "@/components/ui/ProgressBar";
 import CitStatusBadge from "@/components/auditor/CitStatusBadge";
 import IssueCountPair from "@/components/auditor/IssueCountPair";
+import AuditorChecklistModal from "@/components/auditor/AuditorChecklistModal";
 import { Field, Input } from "@/components/ui/Input";
 import { CompaniesSummary, CompanyRow } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -99,6 +101,7 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
   // View Company Profile Modal State
   const [viewCompany, setViewCompany] = useState<CompanyRow | null>(null);
   const [copiedTin, setCopiedTin] = useState(false);
+  const [checklistCompany, setChecklistCompany] = useState<CompanyRow | null>(null);
 
   // Invitations State
   const [invitations, setInvitations] = useState<ClientInvitation[]>(INITIAL_INVITATIONS);
@@ -413,14 +416,25 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
                   </div>
                 </td>
                 <td className="px-5 py-3.5 text-right">
-                  <button
-                    type="button"
-                    onClick={() => setViewCompany(c)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-brand-blue hover:border-blue-200 transition-all shadow-2xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-blue"
-                  >
-                    <Eye className="h-3.5 w-3.5 text-brand-blue" />
-                    <span>{t("auditor.companies.viewCompany")}</span>
-                  </button>
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setChecklistCompany(c)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50/80 px-2.5 py-1.5 text-xs font-semibold text-brand-blue hover:bg-blue-100 hover:border-blue-300 transition-all shadow-2xs cursor-pointer focus:outline-none"
+                      title="Manage statutory & custom audit document checklist for this company"
+                    >
+                      <ClipboardCheck className="h-3.5 w-3.5 text-brand-blue" />
+                      <span>Checklist</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewCompany(c)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-brand-blue hover:border-blue-200 transition-all shadow-2xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-brand-blue" />
+                      <span>{t("auditor.companies.viewCompany")}</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -949,6 +963,18 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
             {/* Modal Footer Quick Actions */}
             <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/70 px-6 py-3.5">
               <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const co = viewCompany;
+                    setViewCompany(null);
+                    setChecklistCompany(co);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-brand-blue hover:bg-blue-100 shadow-2xs transition-colors cursor-pointer"
+                >
+                  <ClipboardCheck className="h-3.5 w-3.5 text-brand-blue" />
+                  Customize Checklist
+                </button>
                 <Link
                   href="/auditor-documents"
                   className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-brand-blue shadow-2xs transition-colors"
@@ -978,6 +1004,16 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
             </div>
           </Card>
         </div>
+      )}
+
+      {/* Auditor Document Checklist Modal */}
+      {checklistCompany && (
+        <AuditorChecklistModal
+          companyName={checklistCompany.name}
+          tin={checklistCompany.tin}
+          isOpen={!!checklistCompany}
+          onClose={() => setChecklistCompany(null)}
+        />
       )}
     </div>
   );

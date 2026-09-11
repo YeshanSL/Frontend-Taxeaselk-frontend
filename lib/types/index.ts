@@ -4,10 +4,19 @@
 
 export type Role = "business" | "auditor";
 
+export interface DashboardStep {
+  label: string;
+  state: "done" | "warning" | "pending" | "in_progress";
+  progressPercent: number;
+  ratioLabel?: string;
+  sublabel?: string;
+  href?: string;
+}
+
 export interface DashboardSummary {
   progressPercent: number;
   progressUpdatedAt: string;
-  steps: { label: string; state: "done" | "warning" | "pending" }[];
+  steps: DashboardStep[];
   documentsUploaded: number;
   documentsTotal: number;
   accountingProfit: string;
