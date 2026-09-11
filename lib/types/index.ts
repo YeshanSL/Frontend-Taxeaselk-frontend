@@ -70,6 +70,10 @@ export interface FinancialLineItem {
   item: string;
   amount: string;
   source: string;
+  category?: string;
+  taxTreatment?: string;
+  aiConfidence?: number;
+  isSubtotal?: boolean;
 }
 
 export interface FinancialsSummary {
@@ -77,7 +81,47 @@ export interface FinancialsSummary {
   expenses: string;
   accountingProfit: string;
   taxAdjustments: string;
+  // Enriched corporate metrics
+  costOfSales?: string;
+  grossProfit?: string;
+  grossMarginPercent?: number;
+  operatingExpenses?: string;
+  netPbt?: string;
+  // Statutory Sri Lanka CIT computation
+  disallowableAddBacks?: string;
+  taxCapitalAllowances?: string;
+  taxableIncome?: string;
+  citRatePercent?: number;
+  estCitLiability?: string;
+  auditorStatus?: string;
+  irdGazetteRef?: string;
   tabs: Record<FinancialsTab, FinancialLineItem[]>;
+}
+
+export interface AiFinancialReportData {
+  generatedAt: string;
+  taxYear: string;
+  companyName: string;
+  executiveSummary: string;
+  profitabilityAnalysis: {
+    revenue: string;
+    grossProfit: string;
+    grossMargin: string;
+    operatingExpenses: string;
+    netPbt: string;
+  };
+  taxReconciliation: {
+    accountingProfit: string;
+    disallowablesTotal: string;
+    disallowablesItems: { item: string; amount: string; reason: string }[];
+    capitalAllowancesTotal: string;
+    taxableIncome: string;
+    citRate: string;
+    estimatedLiability: string;
+  };
+  complianceScore: number;
+  keyTaxRisks: string[];
+  recommendations: string[];
 }
 
 // --- Auditor Review page (business side) ---

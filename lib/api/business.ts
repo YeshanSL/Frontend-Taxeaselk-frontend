@@ -4,6 +4,7 @@ import {
   DocumentsSummary,
   DocumentRow,
   FinancialsSummary,
+  AiFinancialReportData,
   AuditorReviewSummary,
   AuditorReviewIssue,
   CompanySettings,
@@ -465,7 +466,6 @@ export async function getFinancialsSummary(): Promise<FinancialsSummary> {
       headers: authHeaders,
     });
 
-
     if (res.ok) {
       const data = await res.json();
       return {
@@ -473,6 +473,18 @@ export async function getFinancialsSummary(): Promise<FinancialsSummary> {
         expenses: data.expenses || "Rs. 20.4M",
         accountingProfit: data.accounting_profit || "Rs. 4.6M",
         taxAdjustments: data.tax_adjustments || "Rs. 0.7M",
+        costOfSales: data.cost_of_sales || "Rs. 15.2M",
+        grossProfit: data.gross_profit || "Rs. 9.8M",
+        grossMarginPercent: data.gross_margin_percent || 39.2,
+        operatingExpenses: data.operating_expenses || "Rs. 5.2M",
+        netPbt: data.net_pbt || "Rs. 4.6M",
+        disallowableAddBacks: data.disallowable_add_backs || "Rs. 2.10M",
+        taxCapitalAllowances: data.tax_capital_allowances || "Rs. 1.50M",
+        taxableIncome: data.taxable_income || "Rs. 5.20M",
+        citRatePercent: data.cit_rate_percent || 30,
+        estCitLiability: data.est_cit_liability || "Rs. 1.56M",
+        auditorStatus: data.auditor_status || "Under Review by Auditor",
+        irdGazetteRef: data.ird_gazette_ref || "Inland Revenue Act No. 24 of 2017 (Gazette 2311/38 — 30% Standard CIT Rate)",
         tabs: data.tabs || {},
       };
     }
@@ -481,49 +493,116 @@ export async function getFinancialsSummary(): Promise<FinancialsSummary> {
   }
 
   return {
-    revenue: "Rs. 25.0M",
-    expenses: "Rs. 20.4M",
-    accountingProfit: "Rs. 4.6M",
-    taxAdjustments: "Rs. 0.7M",
+    revenue: "Rs. 25,000,000",
+    expenses: "Rs. 20,400,000",
+    accountingProfit: "Rs. 4,600,000",
+    taxAdjustments: "Rs. 600,000",
+    costOfSales: "Rs. 15,200,000",
+    grossProfit: "Rs. 9,800,000",
+    grossMarginPercent: 39.2,
+    operatingExpenses: "Rs. 5,200,000",
+    netPbt: "Rs. 4,600,000",
+    disallowableAddBacks: "Rs. 2,100,000",
+    taxCapitalAllowances: "Rs. 1,500,000",
+    taxableIncome: "Rs. 5,200,000",
+    citRatePercent: 30,
+    estCitLiability: "Rs. 1,560,000",
+    auditorStatus: "Under Review by Auditor",
+    irdGazetteRef: "Inland Revenue Act No. 24 of 2017 (Gazette 2311/38 — 30% Standard Rate)",
     tabs: {
       "Income Statement": [
-        { item: "Revenue from Operations", amount: "25,000,000", source: "Financial Statements.pdf" },
-        { item: "Cost of Sales", amount: "(15,200,000)", source: "Financial Statements.pdf" },
-        { item: "Gross Profit", amount: "9,800,000", source: "Calculated" },
-        { item: "Administrative Expenses", amount: "(3,100,000)", source: "General Ledger.xlsx" },
-        { item: "Entertainment Expenses", amount: "(300,000)", source: "General Ledger.xlsx" },
-        { item: "Depreciation", amount: "(1,800,000)", source: "Fixed Asset Schedule.xlsx" },
-        { item: "Accounting Profit", amount: "4,600,000", source: "Calculated" },
+        { item: "Revenue from Operations", amount: "25,000,000", source: "Financial Statements.pdf", category: "Gross Inflow", taxTreatment: "Assessable Income", aiConfidence: 99 },
+        { item: "Cost of Sales", amount: "(15,200,000)", source: "Financial Statements.pdf", category: "Direct Cost", taxTreatment: "Allowable Deduction", aiConfidence: 98 },
+        { item: "Gross Profit", amount: "9,800,000", source: "Calculated", category: "Subtotal", taxTreatment: "Gross Trading Profit", aiConfidence: 100 },
+        { item: "Administrative Expenses", amount: "(3,100,000)", source: "General Ledger.xlsx", category: "OPEX", taxTreatment: "Allowable OPEX", aiConfidence: 97 },
+        { item: "Entertainment Expenses", amount: "(300,000)", source: "General Ledger.xlsx", category: "Hospitality", taxTreatment: "Disallowable (Sec 11)", aiConfidence: 96 },
+        { item: "Accounting Depreciation", amount: "(1,800,000)", source: "Fixed Asset Schedule.xlsx", category: "Non-Cash Cost", taxTreatment: "Disallowable (Sec 11)", aiConfidence: 99 },
+        { item: "Accounting Profit Before Tax (PBT)", amount: "4,600,000", source: "Calculated", category: "P&L Balance", taxTreatment: "Starting PBT", aiConfidence: 100 },
       ],
       "Balance Sheet": [
-        { item: "Property, Plant & Equipment", amount: "18,400,000", source: "Fixed Asset Schedule.xlsx" },
-        { item: "Trade Receivables", amount: "6,200,000", source: "Trial Balance.xlsx" },
-        { item: "Cash & Bank Balances", amount: "3,050,000", source: "Bank Reconciliation.xlsx" },
-        { item: "Trade Payables", amount: "(4,700,000)", source: "Trial Balance.xlsx" },
-        { item: "Retained Earnings", amount: "16,300,000", source: "Financial Statements.pdf" },
+        { item: "Property, Plant & Equipment", amount: "18,400,000", source: "Fixed Asset Schedule.xlsx", category: "Non-Current Asset", taxTreatment: "Capital Asset Base", aiConfidence: 98 },
+        { item: "Trade Receivables", amount: "6,200,000", source: "Trial Balance.xlsx", category: "Current Asset", taxTreatment: "Commercial Inflow", aiConfidence: 96 },
+        { item: "Cash & Bank Balances", amount: "3,050,000", source: "Bank Reconciliation.xlsx", category: "Liquid Asset", taxTreatment: "Reconciled Cash", aiConfidence: 99 },
+        { item: "Trade Payables", amount: "(4,700,000)", source: "Trial Balance.xlsx", category: "Current Liability", taxTreatment: "Commercial Outflow", aiConfidence: 97 },
+        { item: "Retained Earnings", amount: "16,300,000", source: "Financial Statements.pdf", category: "Equity", taxTreatment: "Cumulative Profit", aiConfidence: 99 },
       ],
       "Trial Balance": [
-        { item: "Sales", amount: "25,000,000", source: "Trial Balance.xlsx" },
-        { item: "Purchases", amount: "15,200,000", source: "Trial Balance.xlsx" },
-        { item: "Salaries & Wages", amount: "2,400,000", source: "Trial Balance.xlsx" },
-        { item: "Rent Expense", amount: "700,000", source: "Trial Balance.xlsx" },
-        { item: "Bank Balance", amount: "3,050,000", source: "Trial Balance.xlsx" },
+        { item: "Sales Account (4000)", amount: "25,000,000", source: "Trial Balance.xlsx", category: "Revenue", taxTreatment: "Assessable Turnover", aiConfidence: 100 },
+        { item: "Purchases Account (5000)", amount: "15,200,000", source: "Trial Balance.xlsx", category: "COGS", taxTreatment: "Allowable Cost", aiConfidence: 98 },
+        { item: "Salaries & Wages (6010)", amount: "2,400,000", source: "Trial Balance.xlsx", category: "Staff OPEX", taxTreatment: "Allowable OPEX", aiConfidence: 99 },
+        { item: "Rent Expense (6020)", amount: "700,000", source: "Trial Balance.xlsx", category: "Facility OPEX", taxTreatment: "Allowable OPEX", aiConfidence: 98 },
+        { item: "Bank Balance (1010)", amount: "3,050,000", source: "Trial Balance.xlsx", category: "Treasury", taxTreatment: "Asset Balance", aiConfidence: 99 },
       ],
       "General Ledger": [
-        { item: "Nov 2025 — Office Supplies", amount: "120,000", source: "General Ledger.xlsx" },
-        { item: "Dec 2025 — Utilities", amount: "95,000", source: "General Ledger.xlsx" },
-        { item: "Jan 2026 — Entertainment", amount: "300,000", source: "General Ledger.xlsx" },
-        { item: "Feb 2026 — Repairs", amount: "210,000", source: "General Ledger.xlsx" },
+        { item: "Nov 2025 — Office Supplies", amount: "120,000", source: "General Ledger.xlsx", category: "Office Admin", taxTreatment: "Allowable OPEX", aiConfidence: 95 },
+        { item: "Dec 2025 — Electricity & Water", amount: "95,000", source: "General Ledger.xlsx", category: "Utilities", taxTreatment: "Allowable OPEX", aiConfidence: 97 },
+        { item: "Jan 2026 — Executive Dining & Hospitality", amount: "300,000", source: "General Ledger.xlsx", category: "Entertainment", taxTreatment: "Disallowable (Sec 11)", aiConfidence: 98 },
+        { item: "Feb 2026 — Plant Maintenance & Repairs", amount: "210,000", source: "General Ledger.xlsx", category: "Repairs", taxTreatment: "Allowable OPEX", aiConfidence: 96 },
       ],
       "Fixed Assets": [
-        { item: "Motor Vehicles (WDV)", amount: "6,200,000", source: "Fixed Asset Schedule.xlsx" },
-        { item: "Office Equipment (WDV)", amount: "2,100,000", source: "Fixed Asset Schedule.xlsx" },
-        { item: "Buildings (WDV)", amount: "10,100,000", source: "Fixed Asset Schedule.xlsx" },
-        { item: "Current Year Depreciation", amount: "1,800,000", source: "Fixed Asset Schedule.xlsx" },
+        { item: "Motor Vehicles (WDV)", amount: "6,200,000", source: "Fixed Asset Schedule.xlsx", category: "Vehicles", taxTreatment: "4th Sched Allowance (20%)", aiConfidence: 97 },
+        { item: "Office Equipment & Computers (WDV)", amount: "2,100,000", source: "Fixed Asset Schedule.xlsx", category: "IT Assets", taxTreatment: "4th Sched Allowance (20%)", aiConfidence: 99 },
+        { item: "Commercial Factory Buildings (WDV)", amount: "10,100,000", source: "Fixed Asset Schedule.xlsx", category: "Buildings", taxTreatment: "4th Sched Allowance (5%)", aiConfidence: 98 },
+        { item: "Current Year Accounting Depreciation", amount: "1,800,000", source: "Fixed Asset Schedule.xlsx", category: "Depreciation", taxTreatment: "Disallowable (Sec 11)", aiConfidence: 100 },
       ],
     },
   };
 }
+
+export async function generateAiFinancialReport(): Promise<AiFinancialReportData> {
+  try {
+    const authHeaders = await getAuthHeaders();
+    const res = await fetch(`${API_URL}/api/financials/generate-report`, {
+      method: "POST",
+      headers: { ...authHeaders, "Content-Type": "application/json" },
+    });
+
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {
+    // Fallback
+  }
+
+  return {
+    generatedAt: new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }),
+    taxYear: "2025/2026",
+    companyName: "ABC (Pvt) Ltd",
+    executiveSummary:
+      "ABC (Pvt) Ltd generated Rs. 25.0M in gross operating turnover for Year of Assessment 2025/26 with a strong gross profit margin of 39.2% (Rs. 9.8M). After operating overheads and depreciation, commercial profit before tax stands at Rs. 4.60M. Statutory tax reconciliation under Inland Revenue Act No. 24 of 2017 requires disallowing Rs. 2.10M in non-deductible accounting depreciation and executive entertainment, offset by Rs. 1.50M in Fourth Schedule tax capital allowances, arriving at an estimated taxable business income of Rs. 5.20M and an estimated CIT liability of Rs. 1.56M at the standard 30% rate.",
+    profitabilityAnalysis: {
+      revenue: "Rs. 25,000,000",
+      grossProfit: "Rs. 9,800,000",
+      grossMargin: "39.2%",
+      operatingExpenses: "Rs. 5,200,000",
+      netPbt: "Rs. 4,600,000",
+    },
+    taxReconciliation: {
+      accountingProfit: "Rs. 4,600,000",
+      disallowablesTotal: "Rs. 2,100,000",
+      disallowablesItems: [
+        { item: "Accounting Depreciation", amount: "Rs. 1,800,000", reason: "Section 11(1)(b) replacement by tax capital allowances" },
+        { item: "Entertainment & Hospitality", amount: "Rs. 300,000", reason: "Section 11(1)(c) restriction on non-business hospitality" },
+      ],
+      capitalAllowancesTotal: "Rs. 1,500,000",
+      taxableIncome: "Rs. 5,200,000",
+      citRate: "30.0%",
+      estimatedLiability: "Rs. 1,560,000",
+    },
+    complianceScore: 94,
+    keyTaxRisks: [
+      "SVAT reconciliation variance: Ensure Schedule 05 sales matches RAMIS SVAT declaration.",
+      "Motor Vehicle lease payment add-back cap per Section 16 must be validated by statutory auditor.",
+      "Advance CIT installment receipts for Q1-Q3 should be linked to offset final liability.",
+    ],
+    recommendations: [
+      "Submit draft schedules to Assigned Auditor (A. Karunaratne & Co.) for official audit sign-off.",
+      "Ensure tax capital allowance schedule includes original invoice references for new IT additions.",
+      "Verify that withholding taxes (WHT/AIT) suffered on treasury balances are claimed via Form 38 certificates.",
+    ],
+  };
+}
+
 
 export async function getAuditorReviewSummary(): Promise<AuditorReviewSummary> {
   try {
