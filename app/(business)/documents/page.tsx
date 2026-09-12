@@ -1,13 +1,17 @@
 import DocumentsManager from "@/components/business/DocumentsManager";
 import SubmitToAuditorButton from "@/components/business/SubmitToAuditorButton";
 import T from "@/components/layout/T";
-import { getDocumentsSummary } from "@/lib/api/business";
+import { getDocumentsSummary, getCompanySettings } from "@/lib/api/business";
 
-// Matches the "Documents" Figma screen. The interactive parts (upload,
-// live stats, remove) need client-side state, so they live in
-// DocumentsManager — this page just fetches the initial data.
 export default async function DocumentsPage() {
-  const data = await getDocumentsSummary();
+  const [initialDocs, settings] = await Promise.all([
+    getDocumentsSummary(),
+    getCompanySettings(),
+  ]);
+
+  const data = (initialDocs.documents.length === 0 && settings.companyName)
+    ? await getDocumentsSummary(settings.companyName)
+    : initialDocs;
 
   return (
     <div>

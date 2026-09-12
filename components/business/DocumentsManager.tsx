@@ -32,21 +32,26 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
   useEffect(() => {
     function syncCompany() {
       try {
+        let compName = "";
         const saved = localStorage.getItem("taxease_company_settings");
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed.companyName) {
-            setCurrentCompany(parsed.companyName);
-            return;
+            compName = parsed.companyName;
           }
         }
-        const user = localStorage.getItem("taxease_user");
-        if (user) {
-          const parsed = JSON.parse(user);
-          const name = parsed.company_name || parsed.display_name || parsed.companyName;
-          if (name) {
-            setCurrentCompany(name);
+        if (!compName) {
+          const user = localStorage.getItem("taxease_user");
+          if (user) {
+            const parsed = JSON.parse(user);
+            const name = parsed.company_name || parsed.display_name || parsed.companyName;
+            if (name) {
+              compName = name;
+            }
           }
+        }
+        if (compName) {
+          setCurrentCompany(compName);
         }
       } catch {
         // Ignored
@@ -60,6 +65,51 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
       window.removeEventListener("storage", syncCompany);
     };
   }, []);
+
+  // Hydrate from localStorage or re-fetch from backend on mount & company change
+  useEffect(() => {
+    const cacheKey = `taxease_docs_${currentCompany || "default"}`;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0 && documents.length === 0) {
+          setDocuments(parsed);
+        }
+      }
+    } catch {}
+
+    async function loadBackendDocuments() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+        const queryComp = currentCompany ? `?company_name=${encodeURIComponent(currentCompany)}` : "";
+        const res = await fetch(`${apiUrl}/api/documents${queryComp}`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.documents)) {
+            const mapped: DocumentRow[] = data.documents.map((d: any) => ({
+              id: String(d.id),
+              name: d.name,
+              type: d.type || d.doc_type || "Financial Statements",
+              status: (d.status === "review_required" ? "review_required" : "processed") as any,
+              aiConfidencePercent: d.ai_confidence_percent ?? 98,
+              uploadedDate: d.uploaded_date || "Today",
+              sizeLabel: d.size_label || "1.0 MB",
+            }));
+            setDocuments(mapped);
+            localStorage.setItem(cacheKey, JSON.stringify(mapped));
+          }
+        }
+      } catch {}
+    }
+
+    loadBackendDocuments();
+  }, [currentCompany]);
 
   const stats = useMemo(() => {
     const uploaded = documents.length;
@@ -107,15 +157,15 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
 
         if (res.ok) {
           const result = await res.json();
-          setDocuments((prev) =>
-            prev.map((d) =>
+          setDocuments((prev) => {
+            const updated = prev.map((d) =>
               d.id === tempId
                 ? {
                     ...d,
                     id: String(result.id || d.id),
                     name: result.name || d.name,
                     type: result.type || d.type,
-                    status: (result.status === "review_required" ? "review_required" : "processed"),
+                    status: (result.status === "review_required" ? "review_required" : "processed") as any,
                     aiConfidencePercent:
                       result.ai_confidence_percent ??
                       result.confidence_percent ??
@@ -124,25 +174,45 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
                     uploadedDate: result.uploaded_date || d.uploadedDate,
                   }
                 : d
-            )
-          );
+            );
+            try {
+              localStorage.setItem(`taxease_docs_${currentCompany || "default"}`, JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
           setToastMessage(`"${file.name}" uploaded successfully for ${currentCompany}`);
           setTimeout(() => setToastMessage(""), 4000);
+          window.dispatchEvent(new Event("taxease_documents_updated"));
         } else {
-          setDocuments((prev) =>
-            prev.map((d) => (d.id === tempId ? { ...d, status: "processed", aiConfidencePercent: 95 } : d))
-          );
+          setDocuments((prev) => {
+            const updated = prev.map((d) => (d.id === tempId ? { ...d, status: "processed" as any, aiConfidencePercent: 95 } : d));
+            try {
+              localStorage.setItem(`taxease_docs_${currentCompany || "default"}`, JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
         }
       } catch {
-        setDocuments((prev) =>
-          prev.map((d) => (d.id === tempId ? { ...d, status: "processed", aiConfidencePercent: 95 } : d))
-        );
+        setDocuments((prev) => {
+          const updated = prev.map((d) => (d.id === tempId ? { ...d, status: "processed" as any, aiConfidencePercent: 95 } : d));
+          try {
+            localStorage.setItem(`taxease_docs_${currentCompany || "default"}`, JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
       }
     }
   }
 
   async function handleRemove(id: string) {
-    setDocuments((prev) => prev.filter((d) => d.id !== id));
+    setDocuments((prev) => {
+      const updated = prev.filter((d) => d.id !== id);
+      try {
+        localStorage.setItem(`taxease_docs_${currentCompany || "default"}`, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    window.dispatchEvent(new Event("taxease_documents_updated"));
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;

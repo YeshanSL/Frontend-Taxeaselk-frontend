@@ -232,7 +232,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     if (dashRes.ok) {
       const backendData = await dashRes.json();
 
-      let attentionItems: { id?: string; issueId?: string; severity: "critical" | "warning"; title: string; description: string }[] = [];
+      let attentionItems: { id?: string; issueId?: string; severity: "critical" | "warning"; title: string; description: string; link?: string }[] = [];
       if (Array.isArray(backendData.attention_items) && backendData.attention_items.length > 0) {
         attentionItems = backendData.attention_items.map((i: any) => ({
           id: i.id ? String(i.id) : undefined,
@@ -240,6 +240,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
           severity: (i.type === "critical" || i.severity === "critical") ? "critical" : "warning",
           title: i.title,
           description: i.message || i.description || "",
+          link: i.link || (i.issue_id ? `/auditor-review?issue=${i.issue_id}` : undefined),
         }));
       }
 
@@ -319,10 +320,11 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   };
 }
 
-export async function getDocumentsSummary(): Promise<DocumentsSummary> {
+export async function getDocumentsSummary(companyName?: string): Promise<DocumentsSummary> {
   try {
     const authHeaders = await getAuthHeaders();
-    const res = await fetch(`${API_URL}/api/documents`, {
+    const query = companyName ? `?company_name=${encodeURIComponent(companyName)}` : "";
+    const res = await fetch(`${API_URL}/api/documents${query}`, {
       cache: "no-store",
       headers: authHeaders,
     });

@@ -29,6 +29,7 @@ export interface DashboardSummary {
     severity: "critical" | "warning";
     title: string;
     description: string;
+    link?: string;
   }[];
 }
 
