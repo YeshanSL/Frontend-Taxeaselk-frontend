@@ -28,42 +28,17 @@ export interface AuditorRatingState {
 }
 
 const DEFAULT_RATING_DATA: AuditorRatingState = {
-  rankLabel: "Rank #1",
-  overallRating: 4.9,
-  totalReviews: 48,
-  completedAudits: 142,
-  onTimeSignOffRate: 99.2,
+  rankLabel: "Verified Auditor",
+  overallRating: 0.0,
+  totalReviews: 0,
+  completedAudits: 0,
+  onTimeSignOffRate: 100,
   breakdown: {
-    accuracy: 99.5,
-    responsiveness: 98.6,
-    turnaround: 98.2,
+    accuracy: 100,
+    responsiveness: 100,
+    turnaround: 100,
   },
-  recentReviews: [
-    {
-      id: "rev_1",
-      companyName: "ABC Holdings (Pvt) Ltd",
-      rating: 5.0,
-      date: "2 days ago",
-      comment: "Flawless CIT tax computation & rapid clearance of GL variance queries.",
-      service: "Corporate Income Tax (CIT) 2025/26",
-    },
-    {
-      id: "rev_2",
-      companyName: "Lanka Trading (Pvt) Ltd",
-      rating: 4.8,
-      date: "1 week ago",
-      comment: "Prompt advisory on asset depreciation schedule and RAMIS compliance.",
-      service: "Annual Tax Return Review",
-    },
-    {
-      id: "rev_3",
-      companyName: "Ocean Foods (Pvt) Ltd",
-      rating: 5.0,
-      date: "2 weeks ago",
-      comment: "Exceptionally organized audit pack review. Certified within 48 hours.",
-      service: "CIT Sign-Off & Submission",
-    },
-  ],
+  recentReviews: [],
 };
 
 export default function AuditorRankRating() {
@@ -76,31 +51,43 @@ export default function AuditorRankRating() {
     async function syncRating() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const res = await fetch(`${apiUrl}/api/auditors/audit@karunaratne.lk/reviews`).catch(() => null);
-        if (res && res.ok) {
-          const apiData = await res.json();
-          if (apiData.success && apiData.total_reviews) {
-            setData((prev) => ({
-              ...prev,
-              overallRating: apiData.average_rating,
-              totalReviews: apiData.total_reviews,
-              breakdown: {
-                accuracy: Number(((apiData.subcategories?.technical_rigor || 5.0) * 20).toFixed(1)),
-                responsiveness: Number(((apiData.subcategories?.communication || 4.9) * 20).toFixed(1)),
-                turnaround: Number(((apiData.subcategories?.timeliness || 4.9) * 20).toFixed(1)),
-              },
-              recentReviews: (apiData.reviews && apiData.reviews.length > 0)
-                ? apiData.reviews.slice(0, 5).map((r: any) => ({
-                    id: r.id,
-                    companyName: r.company_name,
-                    rating: Number(r.rating),
-                    date: r.created_at ? new Date(r.created_at).toLocaleDateString("en-GB") : "Recently",
-                    comment: r.review_comment || "Verified statutory review.",
-                    service: `Corporate Income Tax (${r.tax_year || "2025/26"})`,
-                  }))
-                : prev.recentReviews,
-            }));
-            return;
+        let auditorEmail = "";
+        try {
+          const userStr = localStorage.getItem("taxease_user");
+          if (userStr) {
+            const u = JSON.parse(userStr);
+            if (u.email) auditorEmail = u.email;
+          }
+        } catch {}
+
+        if (auditorEmail) {
+          const res = await fetch(`${apiUrl}/api/auditors/${encodeURIComponent(auditorEmail)}/reviews`).catch(() => null);
+          if (res && res.ok) {
+            const apiData = await res.json();
+            if (apiData.success && typeof apiData.total_reviews === "number") {
+              setData((prev) => ({
+                ...prev,
+                rankLabel: apiData.total_reviews > 0 ? (apiData.rank || "Rank #1") : "Verified Auditor",
+                overallRating: apiData.average_rating || 0.0,
+                totalReviews: apiData.total_reviews || 0,
+                breakdown: {
+                  accuracy: Number(((apiData.subcategories?.technical_rigor || 5.0) * 20).toFixed(1)),
+                  responsiveness: Number(((apiData.subcategories?.communication || 5.0) * 20).toFixed(1)),
+                  turnaround: Number(((apiData.subcategories?.timeliness || 5.0) * 20).toFixed(1)),
+                },
+                recentReviews: (apiData.reviews && apiData.reviews.length > 0)
+                  ? apiData.reviews.slice(0, 5).map((r: any) => ({
+                      id: r.id,
+                      companyName: r.company_name,
+                      rating: Number(r.rating),
+                      date: r.created_at ? new Date(r.created_at).toLocaleDateString("en-GB") : "Recently",
+                      comment: r.review_comment || "Verified statutory review.",
+                      service: `Corporate Income Tax (${r.tax_year || "2025/26"})`,
+                    }))
+                  : [],
+              }));
+              return;
+            }
           }
         }
 
@@ -290,26 +277,32 @@ export default function AuditorRankRating() {
             </div>
 
             <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
-              {data.recentReviews.map((rev) => (
-                <div key={rev.id} className="rounded-md bg-gray-50/80 p-2 text-left border border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold text-gray-800 truncate max-w-[170px]">
-                      {rev.companyName}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-                      <span className="text-[10px] font-bold text-gray-700">{rev.rating.toFixed(1)}</span>
+              {data.recentReviews.length === 0 ? (
+                <div className="rounded-md bg-gray-50/80 p-3 text-center text-xs text-gray-500 border border-gray-100">
+                  No verified client reviews on record yet.
+                </div>
+              ) : (
+                data.recentReviews.map((rev) => (
+                  <div key={rev.id} className="rounded-md bg-gray-50/80 p-2 text-left border border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-semibold text-gray-800 truncate max-w-[170px]">
+                        {rev.companyName}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+                        <span className="text-[10px] font-bold text-gray-700">{rev.rating.toFixed(1)}</span>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-gray-600 line-clamp-2 mt-0.5">
+                      &ldquo;{rev.comment}&rdquo;
+                    </p>
+                    <div className="flex items-center justify-between mt-1 text-[9px] text-gray-400">
+                      <span className="truncate max-w-[180px]">{rev.service}</span>
+                      <span>{rev.date}</span>
                     </div>
                   </div>
-                  <p className="text-[11px] text-gray-600 line-clamp-2 mt-0.5">
-                    &ldquo;{rev.comment}&rdquo;
-                  </p>
-                  <div className="flex items-center justify-between mt-1 text-[9px] text-gray-400">
-                    <span className="truncate max-w-[180px]">{rev.service}</span>
-                    <span>{rev.date}</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

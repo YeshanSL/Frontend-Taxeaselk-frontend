@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, User, Settings, LogOut } from "lucide-react";
+import { ChevronDown, User, Settings, LogOut, Copy, Check, ShieldCheck } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface ProfileMenuProps {
@@ -13,9 +13,6 @@ interface ProfileMenuProps {
   settingsHref: string;
 }
 
-// The avatar + name button in the top-right corner, now with a real
-// dropdown (name/email, Profile/Settings link, Logout) instead of just
-// being a static, non-functional button.
 export default function ProfileMenu({
   displayName,
   email,
@@ -25,7 +22,25 @@ export default function ProfileMenu({
 }: ProfileMenuProps) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
+  const [userId, setUserId] = useState<string>("");
+  const [copied, setCopied] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function syncUser() {
+      try {
+        const userStr = localStorage.getItem("taxease_user");
+        if (userStr) {
+          const u = JSON.parse(userStr);
+          const rawId = u.formatted_id || (u.id ? (String(u.role || "").toUpperCase().includes("AUDITOR") ? `AUD-${u.id.replace(/-/g, "").slice(0, 8).toUpperCase()}` : `BIZ-${u.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`) : "");
+          if (rawId) setUserId(rawId);
+        }
+      } catch {}
+    }
+    syncUser();
+    window.addEventListener("storage", syncUser);
+    return () => window.removeEventListener("storage", syncUser);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -51,16 +66,46 @@ export default function ProfileMenu({
       </button>
 
       {open && (
-        <div className="absolute right-0 z-40 mt-2 w-64 rounded-card border border-gray-100 bg-white shadow-lg">
+        <div className="absolute right-0 z-40 mt-2 w-72 rounded-card border border-gray-100 bg-white shadow-lg">
           <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-blue text-sm font-semibold text-white">
               {userInitials}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-gray-800">
                 {displayName}
               </p>
               <p className="truncate text-xs text-gray-400">{email}</p>
+              {userId && (
+                <div className="mt-1 flex items-center justify-between gap-1 rounded bg-gray-50 border border-gray-200/80 px-2 py-0.5">
+                  <span className="font-mono text-[10px] font-bold text-gray-700 truncate">
+                    {userId}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(userId);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1800);
+                    }}
+                    title="Copy User ID"
+                    className="flex items-center gap-0.5 text-[10px] font-semibold text-brand-blue hover:text-blue-700 cursor-pointer"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-3 w-3 text-emerald-600" />
+                        <span className="text-emerald-600">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

@@ -92,8 +92,8 @@ interface AuditorChecklistModalProps {
 export default function AuditorChecklistModal({
   companyName,
   tin,
-  assignedAuditorName = "Mr. A. Karunaratne (FCA)",
-  assignedAuditorFirm = "Karunaratne & Associates",
+  assignedAuditorName = "Assigned Auditor",
+  assignedAuditorFirm = "Chartered Accountants",
   isOpen,
   onClose,
   onSaved,

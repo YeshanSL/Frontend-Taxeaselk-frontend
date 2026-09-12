@@ -22,8 +22,8 @@ export default function RateAuditorModal({
   onClose,
   auditorName,
   auditorFirm,
-  auditorEmail = "audit@karunaratne.lk",
-  companyName = "ABC (Pvt) Ltd",
+  auditorEmail = "",
+  companyName = "",
   initialRating = 5,
   onSuccess,
 }: RateAuditorModalProps) {

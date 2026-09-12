@@ -51,35 +51,9 @@ export async function getNotifications(
     // Graceful offline fallback
   }
 
-  // Fallback default
   return {
-    notifications: [
-      {
-        id: "notif_1",
-        recipient_role: role as any,
-        title: role === "auditor" ? "Audit Pack Submitted" : "Auditor Response Received",
-        message: role === "auditor"
-          ? "Client submitted tax document pack for annual review."
-          : "Mr. Karunaratne (Auditor) posted advice on GL reconciliation.",
-        type: "info",
-        link: role === "auditor" ? "/auditor-documents" : "/discussions",
-        is_read: false,
-        created_at: "10 minutes ago",
-      },
-      {
-        id: "notif_2",
-        recipient_role: role as any,
-        title: role === "auditor" ? "New Inquiry" : "Document Processed",
-        message: role === "auditor"
-          ? "Lanka Trading submitted a clarification request."
-          : "Trial Balance processed with 98% AI confidence.",
-        type: "success",
-        link: role === "auditor" ? "/auditor-discussions" : "/documents",
-        is_read: false,
-        created_at: "1 hour ago",
-      },
-    ],
-    unread_count: 2,
+    notifications: [],
+    unread_count: 0,
   };
 }
 

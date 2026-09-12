@@ -10,9 +10,9 @@ import {
   X,
   Tag,
   ShieldCheck,
+  Building2,
   RotateCcw,
   Sparkles,
-  Building2,
 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
@@ -46,7 +46,7 @@ export default function BusinessDiscussionsManager({
   const [activeThreadId, setActiveThreadId] = useState<string>(
     initialData.threads[0]?.id || ""
   );
-  const [currentCompany, setCurrentCompany] = useState<string>("ABC Holdings (Pvt) Ltd");
+  const [currentCompany, setCurrentCompany] = useState<string>("");
   const [isLoadingThreads, setIsLoadingThreads] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"ALL" | "OPEN" | "CLOSED">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -215,7 +215,7 @@ export default function BusinessDiscussionsManager({
     const newThread: DiscussionThread = {
       id: newId,
       companyName: currentCompany,
-      auditorName: initialData.assignedAuditor?.name || "Mr. Karunaratne & Associates",
+      auditorName: initialData.assignedAuditor?.name || "Assigned Auditor",
       topic: newTopic.trim(),
       category: newCategory,
       lastMessage: `You: ${newInitialMessage.trim()}`,
@@ -268,7 +268,7 @@ export default function BusinessDiscussionsManager({
                 </span>
               )}
             </div>
-            <p className="text-sm font-bold text-gray-900">{currentCompany}</p>
+            <p className="text-sm font-bold text-gray-900">{currentCompany || "Your Company"}</p>
           </div>
         </div>
       </div>
@@ -441,7 +441,7 @@ export default function BusinessDiscussionsManager({
                         <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
                         <span>{t("discussions.assignedAuditor")}</span>
                         <span className="text-gray-900 font-semibold">
-                          {initialData.assignedAuditor?.name || "Mr. Karunaratne & Associates"}
+                          {initialData.assignedAuditor?.name || "Assigned Auditor"}
                         </span>
                       </div>
                       <span className="text-gray-300">•</span>
@@ -589,8 +589,8 @@ export default function BusinessDiscussionsManager({
                   </h3>
                   <p className="text-xs text-gray-500">
                     {t("discussions.modalWithAuditor", {
-                      auditor: initialData.assignedAuditor?.name || "Mr. Karunaratne & Associates",
-                      company: currentCompany,
+                      auditor: initialData.assignedAuditor?.name || "Your Statutory Auditor",
+                      company: currentCompany || "Your Company",
                     })}
                   </p>
                 </div>

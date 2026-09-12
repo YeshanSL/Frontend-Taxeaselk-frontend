@@ -22,8 +22,8 @@ export default function SubmitToAuditorButton() {
   const [modalOpen, setModalOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [submitted, setSubmitted] = useState(false);
-  const [currentCompany, setCurrentCompany] = useState("ABC Holdings (Pvt) Ltd");
-  const [auditorOption, setAuditorOption] = useState("audit@karunaratne.lk");
+  const [currentCompany, setCurrentCompany] = useState("");
+  const [auditorOption, setAuditorOption] = useState("custom");
   const [customAuditorEmail, setCustomAuditorEmail] = useState("");
   const [submittedAuditor, setSubmittedAuditor] = useState("");
   const [assignedAuditorInfo, setAssignedAuditorInfo] = useState<{
@@ -33,17 +33,22 @@ export default function SubmitToAuditorButton() {
     status: string;
   } | null>(null);
 
-  const AUDITOR_OPTIONS = [
-    { email: "audit@karunaratne.lk", name: "Karunaratne & Associates", label: "Karunaratne & Associates (audit@karunaratne.lk)" },
-    { email: "tax@bdo.lk", name: "BDO Sri Lanka", label: "BDO Sri Lanka (tax@bdo.lk)" },
-    { email: "cit@kpmg.lk", name: "KPMG Sri Lanka", label: "KPMG Sri Lanka (cit@kpmg.lk)" },
-    { email: "cit.audit@ey.lk", name: "Ernst & Young", label: "Ernst & Young (cit.audit@ey.lk)" },
-    { email: "custom", name: "Custom Auditor", label: "Custom Auditor (Enter Email)" },
-  ];
+  const AUDITOR_OPTIONS = assignedAuditorInfo
+    ? [
+        {
+          email: assignedAuditorInfo.email,
+          name: assignedAuditorInfo.firmName,
+          label: `${assignedAuditorInfo.firmName} (${assignedAuditorInfo.email}) — Appointed Auditor`,
+        },
+        { email: "custom", name: "Other Auditor", label: "Other Auditor (Enter Email)" },
+      ]
+    : [
+        { email: "custom", name: "Custom Auditor", label: "Enter Statutory Auditor's Email Address" },
+      ];
 
   // Sync active company from localStorage and check assigned auditor
   useEffect(() => {
-    let company = "ABC Holdings (Pvt) Ltd";
+    let company = "";
     try {
       const saved = localStorage.getItem("taxease_company_settings");
       if (saved) {
@@ -51,6 +56,14 @@ export default function SubmitToAuditorButton() {
         if (parsed.companyName) {
           company = parsed.companyName;
           setCurrentCompany(company);
+        }
+      }
+      if (!company) {
+        const savedUser = localStorage.getItem("taxease_user");
+        if (savedUser) {
+          const parsedUser = JSON.parse(savedUser);
+          company = parsedUser.company_name || parsedUser.display_name || "";
+          if (company) setCurrentCompany(company);
         }
       }
     } catch {}
@@ -123,7 +136,7 @@ export default function SubmitToAuditorButton() {
       ? matchedAuditor.name 
       : targetAuditorEmail || "Auditor";
 
-    setSubmittedAuditor(`${auditorDisplayName} (${targetAuditorEmail || "audit@karunaratne.lk"})`);
+    setSubmittedAuditor(`${auditorDisplayName} (${targetAuditorEmail})`);
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -138,7 +151,7 @@ export default function SubmitToAuditorButton() {
         headers,
         body: JSON.stringify({
           company_name: currentCompany,
-          auditor_email: targetAuditorEmail || "audit@karunaratne.lk",
+          auditor_email: targetAuditorEmail,
         }),
       }).catch(() => null);
 

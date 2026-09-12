@@ -183,65 +183,73 @@ function TeamTab({ team: initialTeam }: { team: FinanceTeamMember[] }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {team.map((member) => (
-                <tr key={member.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-brand-blue/10 text-brand-blue font-bold text-xs flex items-center justify-center shrink-0 border border-brand-blue/20">
-                        {member.initials}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{member.name}</p>
-                        <p className="text-xs text-gray-500">{member.email}</p>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="px-4 py-3.5">
-                    <RoleBadge role={member.role} />
-                  </td>
-
-                  <td className="px-4 py-3.5">
-                    {member.canSignReturns ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
-                        <Check className="h-3 w-3 text-blue-600" /> Authorized Signatory
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-400">Preparer Only</span>
-                    )}
-                  </td>
-
-                  <td className="px-4 py-3.5">
-                    {member.status === "Active" ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                        Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700">
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                        Invited
-                      </span>
-                    )}
-                  </td>
-
-                  <td className="px-4 py-3.5 text-xs text-gray-500 whitespace-nowrap">
-                    {member.lastActive}
-                  </td>
-
-                  <td className="px-4 py-3.5 text-right">
-                    {member.role !== "Owner" && (
-                      <button
-                        onClick={() => handleRemove(member.id)}
-                        className="text-gray-400 hover:text-red-600 p-1 rounded transition-colors"
-                        title="Revoke access"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
+              {team.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-xs text-gray-500">
+                    No additional finance team members added yet. Click &quot;Invite Team Member&quot; to invite accounting staff.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                team.map((member) => (
+                  <tr key={member.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-brand-blue/10 text-brand-blue font-bold text-xs flex items-center justify-center shrink-0 border border-brand-blue/20">
+                          {member.initials}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{member.name}</p>
+                          <p className="text-xs text-gray-500">{member.email}</p>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-3.5">
+                      <RoleBadge role={member.role} />
+                    </td>
+
+                    <td className="px-4 py-3.5">
+                      {member.canSignReturns ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                          <Check className="h-3 w-3 text-blue-600" /> Authorized Signatory
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">Preparer Only</span>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-3.5">
+                      {member.status === "Active" ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                          Invited
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-3.5 text-xs text-gray-500 whitespace-nowrap">
+                      {member.lastActive}
+                    </td>
+
+                    <td className="px-4 py-3.5 text-right">
+                      {member.role !== "Owner" && (
+                        <button
+                          onClick={() => handleRemove(member.id)}
+                          className="text-gray-400 hover:text-red-600 p-1 rounded transition-colors"
+                          title="Revoke access"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -619,29 +627,37 @@ function SecurityTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-5 py-3.5 font-mono text-xs text-gray-500 whitespace-nowrap">
-                      {log.timestamp}
-                    </td>
-                    <td className="px-5 py-3.5 font-medium text-gray-800">
-                      <div className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-brand-blue shrink-0" />
-                        <span>{log.action}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5 text-xs text-gray-600 whitespace-nowrap">
-                      <span className="font-semibold text-gray-800">{log.actor}</span>
-                      <span className="text-gray-400 ml-1">({log.actorRole})</span>
-                    </td>
-                    <td className="px-4 py-3.5 font-mono text-xs text-gray-400 whitespace-nowrap">
-                      {log.ipAddress || "—"}
-                    </td>
-                    <td className="px-4 py-3.5 text-right text-xs text-gray-400 whitespace-nowrap">
-                      {log.timeAgo}
+                {filteredLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-xs text-gray-400">
+                      No activity logged yet. Upload actions, configuration changes, and auditor clearances will appear here.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredLogs.map((log) => (
+                    <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-5 py-3.5 font-mono text-xs text-gray-500 whitespace-nowrap">
+                        {log.timestamp}
+                      </td>
+                      <td className="px-5 py-3.5 font-medium text-gray-800">
+                        <div className="flex items-center gap-2">
+                          <span className="h-1.5 w-1.5 rounded-full bg-brand-blue shrink-0" />
+                          <span>{log.action}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-xs text-gray-600 whitespace-nowrap">
+                        <span className="font-semibold text-gray-800">{log.actor}</span>
+                        <span className="text-gray-400 ml-1">({log.actorRole})</span>
+                      </td>
+                      <td className="px-4 py-3.5 font-mono text-xs text-gray-400 whitespace-nowrap">
+                        {log.ipAddress || "—"}
+                      </td>
+                      <td className="px-4 py-3.5 text-right text-xs text-gray-400 whitespace-nowrap">
+                        {log.timeAgo}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

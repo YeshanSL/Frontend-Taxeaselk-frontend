@@ -8,7 +8,7 @@ interface Props {
 }
 
 export default function DashboardSubtitle({
-  initialCompanyName = "ABC (Pvt) Ltd",
+  initialCompanyName = "",
   initialFinancialYear = "2025/26",
 }: Props) {
   const [companyName, setCompanyName] = useState(initialCompanyName);
@@ -56,7 +56,7 @@ export default function DashboardSubtitle({
 
   return (
     <p className="mt-1 text-sm text-gray-500">
-      Financial Year {cleanFy || "2025/26"} &mdash; {companyName || "ABC (Pvt) Ltd"}
+      Financial Year {cleanFy || "2025/26"} &mdash; {companyName || "Your Business"}
     </p>
   );
 }

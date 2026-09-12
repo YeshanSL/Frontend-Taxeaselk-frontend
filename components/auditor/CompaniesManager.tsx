@@ -50,47 +50,7 @@ export interface ClientInvitation {
   estimatedTurnover: string;
 }
 
-const INITIAL_INVITATIONS: ClientInvitation[] = [
-  {
-    id: "inv_1",
-    companyName: "ABC Holdings (Pvt) Ltd",
-    registrationNumber: "PV 00123456",
-    tinNumber: "134578291",
-    financialYear: "2025/26",
-    senderName: "Admin User (Finance Director)",
-    senderEmail: "admin@abc.lk",
-    note: "We have finalized our year-end Trial Balance and Income Statement. Requesting your firm to perform our statutory CIT audit and RAMIS tax sign-off.",
-    receivedAt: "10 mins ago",
-    status: "pending",
-    estimatedTurnover: "Rs. 25.0M",
-  },
-  {
-    id: "inv_2",
-    companyName: "Apex Agro Exports (Pvt) Ltd",
-    registrationNumber: "PV 00987123",
-    tinNumber: "109823471",
-    financialYear: "2025/26",
-    senderName: "Nimal Wickramasinghe (Managing Director)",
-    senderEmail: "nimal@apexagro.lk",
-    note: "Seeking Corporate Income Tax audit review for FY2025/26 including BOI agricultural export tax concessions and WHT credits.",
-    receivedAt: "2 hours ago",
-    status: "pending",
-    estimatedTurnover: "Rs. 48.5M",
-  },
-  {
-    id: "inv_3",
-    companyName: "Lanka Logistics & Shipping (Pvt) Ltd",
-    registrationNumber: "PV 00341829",
-    tinNumber: "128471923",
-    financialYear: "2025/26",
-    senderName: "Kavinda Perera (Chief Accountant)",
-    senderEmail: "kavinda@lankalogistics.lk",
-    note: "Requesting external audit verification for RAMIS CIT schedule filing and withholding tax reconciliation.",
-    receivedAt: "Yesterday",
-    status: "accepted",
-    estimatedTurnover: "Rs. 85.2M",
-  },
-];
+const INITIAL_INVITATIONS: ClientInvitation[] = [];
 
 export default function CompaniesManager({ initial }: { initial: CompaniesSummary }) {
   const { t } = useLanguage();
@@ -828,7 +788,7 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
                       Registration Number
                     </span>
                     <p className="text-sm font-bold text-gray-900 mt-1">
-                      {viewCompany.registrationNumber || "PV 00123456"}
+                      {viewCompany.registrationNumber || "—"}
                     </p>
                   </div>
 
@@ -837,7 +797,7 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
                       Business Sector
                     </span>
                     <p className="text-sm font-semibold text-gray-800 mt-1">
-                      {viewCompany.businessCategory || "Corporate Commercial Services"}
+                      {viewCompany.businessCategory || "General Commercial Services"}
                     </p>
                   </div>
                 </div>
@@ -856,12 +816,16 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
                     </span>
                     <div className="mt-1 flex items-center gap-2">
                       <Mail className="h-4 w-4 text-gray-400 shrink-0" />
-                      <a
-                        href={`mailto:${viewCompany.contactEmail || "admin@abc.lk"}`}
-                        className="text-sm font-medium text-brand-blue hover:underline truncate"
-                      >
-                        {viewCompany.contactEmail || "admin@abc.lk"}
-                      </a>
+                      {viewCompany.contactEmail ? (
+                        <a
+                          href={`mailto:${viewCompany.contactEmail}`}
+                          className="text-sm font-medium text-brand-blue hover:underline truncate"
+                        >
+                          {viewCompany.contactEmail}
+                        </a>
+                      ) : (
+                        <span className="text-sm text-gray-500">Not provided</span>
+                      )}
                     </div>
                   </div>
 
@@ -871,12 +835,16 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
                     </span>
                     <div className="mt-1 flex items-center gap-2">
                       <Phone className="h-4 w-4 text-gray-400 shrink-0" />
-                      <a
-                        href={`tel:${viewCompany.contactPhone || "+94 11 234 5678"}`}
-                        className="text-sm font-medium text-gray-800 hover:text-brand-blue transition-colors"
-                      >
-                        {viewCompany.contactPhone || "+94 11 234 5678"}
-                      </a>
+                      {viewCompany.contactPhone ? (
+                        <a
+                          href={`tel:${viewCompany.contactPhone}`}
+                          className="text-sm font-medium text-gray-800 hover:text-brand-blue transition-colors"
+                        >
+                          {viewCompany.contactPhone}
+                        </a>
+                      ) : (
+                        <span className="text-sm text-gray-500">—</span>
+                      )}
                     </div>
                   </div>
 
@@ -887,7 +855,7 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
                     <div className="mt-1 flex items-center gap-2">
                       <Briefcase className="h-4 w-4 text-gray-400 shrink-0" />
                       <span className="text-sm font-medium text-gray-800">
-                        {viewCompany.contactPerson || "Ruwan Silva (Finance Director)"}
+                        {viewCompany.contactPerson || "Authorized Representative"}
                       </span>
                     </div>
                   </div>
@@ -899,7 +867,7 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
                     <div className="mt-1 flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
                       <span className="text-sm font-medium text-gray-800 truncate" title={viewCompany.taxOffice}>
-                        {viewCompany.taxOffice || "Corporate Metropolitan Unit, IRD"}
+                        {viewCompany.taxOffice || "Inland Revenue Department"}
                       </span>
                     </div>
                   </div>
@@ -911,7 +879,7 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
                     <div className="mt-1 flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
                       <span className="text-sm text-gray-700">
-                        {viewCompany.address || "Level 14, West Tower, World Trade Center, Colombo 01, Sri Lanka"}
+                        {viewCompany.address || "Sri Lanka"}
                       </span>
                     </div>
                   </div>

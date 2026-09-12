@@ -223,14 +223,23 @@ export default function RequestsManager({ initial }: { initial: AuditorRequestsS
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {filteredRequests.map((req) => (
-              <tr key={req.id} className="hover:bg-gray-50/50">
-                <td className="px-5 py-4 font-mono text-xs font-semibold text-gray-500">
-                  {req.requestId}
+            {filteredRequests.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-12 text-center text-gray-400">
+                  <Clock className="mx-auto h-8 w-8 text-gray-300 stroke-1 mb-2" />
+                  <p className="text-sm font-medium text-gray-600">No requests found</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Information and document requests sent to client companies will appear here.</p>
                 </td>
-                <td className="px-5 py-4 font-medium text-gray-800">
-                  {req.companyName}
-                </td>
+              </tr>
+            ) : (
+              filteredRequests.map((req) => (
+                <tr key={req.id} className="hover:bg-gray-50/50">
+                  <td className="px-5 py-4 font-mono text-xs font-semibold text-gray-500">
+                    {req.requestId}
+                  </td>
+                  <td className="px-5 py-4 font-medium text-gray-800">
+                    {req.companyName}
+                  </td>
                 <td className="px-5 py-4 max-w-sm">
                   <p className="font-semibold text-gray-900">{req.title}</p>
                   <p className="mt-0.5 text-xs text-gray-500 line-clamp-1">
@@ -293,7 +302,8 @@ export default function RequestsManager({ initial }: { initial: AuditorRequestsS
                   </div>
                 </td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
       </Card>

@@ -70,10 +70,10 @@ function formatLKR(val: any, fallback: string): string {
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
   // 1. Sync real document & checklist metrics (Stage 1: Financial Data & Stage 2: AI Extraction)
-  let docsUploaded = 7;
-  let docsProcessed = 6;
-  let docsReviewRequired = 1;
-  let docsMissing = 2;
+  let docsUploaded = 0;
+  let docsProcessed = 0;
+  let docsReviewRequired = 0;
+  let docsMissing = 5;
   let docRows: DocumentRow[] = [];
 
   try {
@@ -112,14 +112,13 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 
   // Real Stage 3: Auditor Handover (Audit Pack packaged & submitted to auditor)
   let isHandedOver = false;
-  if (typeof window !== "undefined") {
+  if (typeof window !== "undefined" && docsUploaded > 0) {
     try {
       const sub = localStorage.getItem("taxease_submitted_to_auditor") || localStorage.getItem("taxease_handover_status");
       if (sub === "true" || sub === "submitted") isHandedOver = true;
     } catch {}
   }
-  // If at least 4 statutory docs provided, mark handed over in audit-ready demo state
-  const stage3Percent = isHandedOver ? 100 : stage1Percent >= 80 ? 100 : stage1Percent > 0 ? 50 : 0;
+  const stage3Percent = docsUploaded === 0 ? 0 : isHandedOver ? 100 : stage1Percent >= 80 ? 100 : 0;
 
   // Real Stage 4: Auditor Inquiries (Auditor queries & clarifications resolved)
   let stage4Percent = 0;
@@ -147,10 +146,11 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 
   // Real Stage 5: Audit Sign-Off (Auditor's formal sign-off & confirmation)
   const isApproved = totalAuditorItems > 0 && approvedCountTotal === totalAuditorItems;
-  const stage5Percent = isApproved ? 100 : stage3Percent === 100 ? 60 : 0;
+  const stage5Percent = isApproved ? 100 : 0;
+
 
   // Retrieve accounting profit for dashboard metric tiles
-  let accountingProfit = "Rs. 4.6M";
+  let accountingProfit = "Rs. 0.00";
   try {
     const fin = await getFinancialsSummary();
     if (fin?.accountingProfit) {
@@ -180,10 +180,10 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     },
     {
       label: "AI Extraction",
-      state: docsReviewRequired > 0 ? "warning" : stage2Percent === 100 ? "done" : "in_progress",
+      state: docsReviewRequired > 0 ? "warning" : stage2Percent === 100 && docsUploaded > 0 ? "done" : stage2Percent > 0 ? "in_progress" : "pending",
       progressPercent: stage2Percent,
       ratioLabel: `${docsProcessed}/${docsUploaded} Extracted`,
-      sublabel: docsReviewRequired > 0 ? `${docsReviewRequired} doc needs review` : "All files OCR-parsed",
+      sublabel: docsReviewRequired > 0 ? `${docsReviewRequired} doc needs review` : docsUploaded > 0 ? "All files OCR-parsed" : "Upload documents to begin",
       href: "/documents",
     },
     {
@@ -191,15 +191,15 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       state: stage3Percent === 100 ? "done" : stage3Percent > 0 ? "in_progress" : "pending",
       progressPercent: stage3Percent,
       ratioLabel: stage3Percent === 100 ? "Pack Handed Over" : "Ready for Handover",
-      sublabel: stage3Percent === 100 ? "Submitted to Karunaratne & Assoc" : "Submit in Documents tab",
+      sublabel: stage3Percent === 100 ? "Submitted to Auditor" : "Submit in Documents tab",
       href: "/documents",
     },
     {
       label: "Auditor Inquiries",
-      state: totalAuditorItems > 0 && approvedCountTotal === totalAuditorItems ? "done" : auditorIssues.some(i => i.status === "action_required") ? "warning" : "in_progress",
+      state: totalAuditorItems > 0 && approvedCountTotal === totalAuditorItems ? "done" : auditorIssues.some(i => i.status === "action_required") ? "warning" : totalAuditorItems > 0 ? "in_progress" : "pending",
       progressPercent: stage4Percent,
       ratioLabel: totalAuditorItems > 0 ? `${approvedCountTotal}/${totalAuditorItems} Resolved` : "No Open Inquiries",
-      sublabel: `${totalAuditorItems - approvedCountTotal} clarification point(s) open`,
+      sublabel: totalAuditorItems > 0 ? `${totalAuditorItems - approvedCountTotal} clarification point(s) open` : "No auditor queries yet",
       href: "/auditor-review",
     },
     {
@@ -220,29 +220,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
         title: `${issue.status === "action_required" ? "Action Required" : "Pending Clarification"}: ${issue.title}`,
         description: issue.comment,
       }))
-    : [
-        {
-          id: "issue_1",
-          issueId: "issue_1",
-          severity: "critical" as const,
-          title: "Action Required: Entertainment Expense Documentation",
-          description: "Please provide supporting documentation for the entertainment expense. Invoices and business purpose required.",
-        },
-        {
-          id: "issue_2",
-          issueId: "issue_2",
-          severity: "warning" as const,
-          title: "Pending Clarification: Fixed Asset Depreciation Method",
-          description: "Confirm the depreciation method applied is consistent with previous year and company accounting policy.",
-        },
-        {
-          id: "issue_3",
-          issueId: "issue_3",
-          severity: "warning" as const,
-          title: "Pending Clarification: General Ledger November 2025",
-          description: "Minor discrepancy detected in November 2025. Please reconcile and confirm.",
-        },
-      ];
+    : [];
 
   try {
     const authHeaders = await getAuthHeaders();
@@ -317,8 +295,8 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
         documentsUploaded,
         documentsTotal,
         accountingProfit: formatLKR(backendData.metrics?.accounting_profit, accountingProfit),
-        taxableIncome: formatLKR(backendData.metrics?.taxable_income, "Rs. 26.1M"),
-        estCitLiability: formatLKR(backendData.metrics?.estimated_cit_liability, "Rs. 7.83M"),
+        taxableIncome: formatLKR(backendData.metrics?.taxable_income, "Rs. 0.00"),
+        estCitLiability: formatLKR(backendData.metrics?.estimated_cit_liability, "Rs. 0.00"),
         auditorStatus,
         attentionItems: attentionItems.length > 0 ? attentionItems : defaultAttentionItems,
       };
@@ -334,8 +312,8 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     documentsUploaded: docsUploaded,
     documentsTotal: docsTotal,
     accountingProfit: accountingProfit,
-    taxableIncome: "Rs. 26.1M",
-    estCitLiability: "Rs. 7.83M",
+    taxableIncome: "Rs. 0.00",
+    estCitLiability: "Rs. 0.00",
     auditorStatus: "Waiting",
     attentionItems: defaultAttentionItems,
   };
@@ -377,7 +355,9 @@ export async function getDocumentsSummary(): Promise<DocumentsSummary> {
         const uploadedCount = data.uploaded_count ?? docs.filter((x: any) => x.status !== "missing").length;
         const processedCount = data.processed_count ?? docs.filter((x: any) => x.status === "processed").length;
         const reviewRequiredCount = data.review_required_count ?? docs.filter((x: any) => x.status === "review_required").length;
-        const missingCount = data.missing_count ?? Math.max(0, 10 - uploadedCount);
+        const requiredCategories = ["Financial Statements", "Trial Balance", "General Ledger", "Fixed Assets", "Previous CIT"];
+        const uploadedTypes = new Set(docs.map((d: any) => d.type));
+        const missingCount = data.missing_count ?? requiredCategories.filter((c) => !uploadedTypes.has(c)).length;
 
         return {
           uploadedCount,
@@ -393,68 +373,11 @@ export async function getDocumentsSummary(): Promise<DocumentsSummary> {
   }
 
   return {
-    uploadedCount: 7,
-    processedCount: 6,
-    reviewRequiredCount: 1,
-    missingCount: 2,
-    documents: [
-      {
-        id: "doc_1",
-        name: "Financial Statements.pdf",
-        type: "Financial Statements",
-        status: "processed",
-        aiConfidencePercent: 99,
-        uploadedDate: "16 Aug 2026",
-      },
-      {
-        id: "doc_2",
-        name: "Trial Balance.xlsx",
-        type: "Trial Balance",
-        status: "processed",
-        aiConfidencePercent: 99,
-        uploadedDate: "16 Aug 2026",
-      },
-      {
-        id: "doc_3",
-        name: "General Ledger.xlsx",
-        type: "General Ledger",
-        status: "review_required",
-        aiConfidencePercent: 91,
-        uploadedDate: "16 Aug 2026",
-      },
-      {
-        id: "doc_4",
-        name: "Fixed Asset Schedule.xlsx",
-        type: "Fixed Assets",
-        status: "review_required",
-        aiConfidencePercent: 87,
-        uploadedDate: "16 Aug 2026",
-      },
-      {
-        id: "doc_5",
-        name: "Previous CIT Return.pdf",
-        type: "Previous CIT",
-        status: "processed",
-        aiConfidencePercent: 99,
-        uploadedDate: "16 Aug 2026",
-      },
-      {
-        id: "doc_6",
-        name: "Board Resolution.pdf",
-        type: "Board Resolution",
-        status: "processed",
-        aiConfidencePercent: 99,
-        uploadedDate: "16 Aug 2026",
-      },
-      {
-        id: "doc_7",
-        name: "Bank Reconciliation.xlsx",
-        type: "Bank Reconciliation",
-        status: "processed",
-        aiConfidencePercent: 99,
-        uploadedDate: "16 Aug 2026",
-      },
-    ],
+    uploadedCount: 0,
+    processedCount: 0,
+    reviewRequiredCount: 0,
+    missingCount: 5,
+    documents: [],
   };
 }
 
@@ -469,21 +392,21 @@ export async function getFinancialsSummary(): Promise<FinancialsSummary> {
     if (res.ok) {
       const data = await res.json();
       return {
-        revenue: data.revenue || "Rs. 25.0M",
-        expenses: data.expenses || "Rs. 20.4M",
-        accountingProfit: data.accounting_profit || "Rs. 4.6M",
-        taxAdjustments: data.tax_adjustments || "Rs. 0.7M",
-        costOfSales: data.cost_of_sales || "Rs. 15.2M",
-        grossProfit: data.gross_profit || "Rs. 9.8M",
-        grossMarginPercent: data.gross_margin_percent || 39.2,
-        operatingExpenses: data.operating_expenses || "Rs. 5.2M",
-        netPbt: data.net_pbt || "Rs. 4.6M",
-        disallowableAddBacks: data.disallowable_add_backs || "Rs. 2.10M",
-        taxCapitalAllowances: data.tax_capital_allowances || "Rs. 1.50M",
-        taxableIncome: data.taxable_income || "Rs. 5.20M",
+        revenue: data.revenue || "Rs. 0.00",
+        expenses: data.expenses || "Rs. 0.00",
+        accountingProfit: data.accounting_profit || "Rs. 0.00",
+        taxAdjustments: data.tax_adjustments || "Rs. 0.00",
+        costOfSales: data.cost_of_sales || "Rs. 0.00",
+        grossProfit: data.gross_profit || "Rs. 0.00",
+        grossMarginPercent: data.gross_margin_percent || 0,
+        operatingExpenses: data.operating_expenses || "Rs. 0.00",
+        netPbt: data.net_pbt || "Rs. 0.00",
+        disallowableAddBacks: data.disallowable_add_backs || "Rs. 0.00",
+        taxCapitalAllowances: data.tax_capital_allowances || "Rs. 0.00",
+        taxableIncome: data.taxable_income || "Rs. 0.00",
         citRatePercent: data.cit_rate_percent || 30,
-        estCitLiability: data.est_cit_liability || "Rs. 1.56M",
-        auditorStatus: data.auditor_status || "Under Review by Auditor",
+        estCitLiability: data.est_cit_liability || "Rs. 0.00",
+        auditorStatus: data.auditor_status || "Waiting for Documents",
         irdGazetteRef: data.ird_gazette_ref || "Inland Revenue Act No. 24 of 2017 (Gazette 2311/38 — 30% Standard CIT Rate)",
         tabs: data.tabs || {},
       };
@@ -493,58 +416,28 @@ export async function getFinancialsSummary(): Promise<FinancialsSummary> {
   }
 
   return {
-    revenue: "Rs. 25,000,000",
-    expenses: "Rs. 20,400,000",
-    accountingProfit: "Rs. 4,600,000",
-    taxAdjustments: "Rs. 600,000",
-    costOfSales: "Rs. 15,200,000",
-    grossProfit: "Rs. 9,800,000",
-    grossMarginPercent: 39.2,
-    operatingExpenses: "Rs. 5,200,000",
-    netPbt: "Rs. 4,600,000",
-    disallowableAddBacks: "Rs. 2,100,000",
-    taxCapitalAllowances: "Rs. 1,500,000",
-    taxableIncome: "Rs. 5,200,000",
+    revenue: "Rs. 0.00",
+    expenses: "Rs. 0.00",
+    accountingProfit: "Rs. 0.00",
+    taxAdjustments: "Rs. 0.00",
+    costOfSales: "Rs. 0.00",
+    grossProfit: "Rs. 0.00",
+    grossMarginPercent: 0,
+    operatingExpenses: "Rs. 0.00",
+    netPbt: "Rs. 0.00",
+    disallowableAddBacks: "Rs. 0.00",
+    taxCapitalAllowances: "Rs. 0.00",
+    taxableIncome: "Rs. 0.00",
     citRatePercent: 30,
-    estCitLiability: "Rs. 1,560,000",
-    auditorStatus: "Under Review by Auditor",
+    estCitLiability: "Rs. 0.00",
+    auditorStatus: "Waiting for Documents",
     irdGazetteRef: "Inland Revenue Act No. 24 of 2017 (Gazette 2311/38 — 30% Standard Rate)",
     tabs: {
-      "Income Statement": [
-        { item: "Revenue from Operations", amount: "25,000,000", source: "Financial Statements.pdf", category: "Gross Inflow", taxTreatment: "Assessable Income", aiConfidence: 99 },
-        { item: "Cost of Sales", amount: "(15,200,000)", source: "Financial Statements.pdf", category: "Direct Cost", taxTreatment: "Allowable Deduction", aiConfidence: 98 },
-        { item: "Gross Profit", amount: "9,800,000", source: "Calculated", category: "Subtotal", taxTreatment: "Gross Trading Profit", aiConfidence: 100 },
-        { item: "Administrative Expenses", amount: "(3,100,000)", source: "General Ledger.xlsx", category: "OPEX", taxTreatment: "Allowable OPEX", aiConfidence: 97 },
-        { item: "Entertainment Expenses", amount: "(300,000)", source: "General Ledger.xlsx", category: "Hospitality", taxTreatment: "Disallowable (Sec 11)", aiConfidence: 96 },
-        { item: "Accounting Depreciation", amount: "(1,800,000)", source: "Fixed Asset Schedule.xlsx", category: "Non-Cash Cost", taxTreatment: "Disallowable (Sec 11)", aiConfidence: 99 },
-        { item: "Accounting Profit Before Tax (PBT)", amount: "4,600,000", source: "Calculated", category: "P&L Balance", taxTreatment: "Starting PBT", aiConfidence: 100 },
-      ],
-      "Balance Sheet": [
-        { item: "Property, Plant & Equipment", amount: "18,400,000", source: "Fixed Asset Schedule.xlsx", category: "Non-Current Asset", taxTreatment: "Capital Asset Base", aiConfidence: 98 },
-        { item: "Trade Receivables", amount: "6,200,000", source: "Trial Balance.xlsx", category: "Current Asset", taxTreatment: "Commercial Inflow", aiConfidence: 96 },
-        { item: "Cash & Bank Balances", amount: "3,050,000", source: "Bank Reconciliation.xlsx", category: "Liquid Asset", taxTreatment: "Reconciled Cash", aiConfidence: 99 },
-        { item: "Trade Payables", amount: "(4,700,000)", source: "Trial Balance.xlsx", category: "Current Liability", taxTreatment: "Commercial Outflow", aiConfidence: 97 },
-        { item: "Retained Earnings", amount: "16,300,000", source: "Financial Statements.pdf", category: "Equity", taxTreatment: "Cumulative Profit", aiConfidence: 99 },
-      ],
-      "Trial Balance": [
-        { item: "Sales Account (4000)", amount: "25,000,000", source: "Trial Balance.xlsx", category: "Revenue", taxTreatment: "Assessable Turnover", aiConfidence: 100 },
-        { item: "Purchases Account (5000)", amount: "15,200,000", source: "Trial Balance.xlsx", category: "COGS", taxTreatment: "Allowable Cost", aiConfidence: 98 },
-        { item: "Salaries & Wages (6010)", amount: "2,400,000", source: "Trial Balance.xlsx", category: "Staff OPEX", taxTreatment: "Allowable OPEX", aiConfidence: 99 },
-        { item: "Rent Expense (6020)", amount: "700,000", source: "Trial Balance.xlsx", category: "Facility OPEX", taxTreatment: "Allowable OPEX", aiConfidence: 98 },
-        { item: "Bank Balance (1010)", amount: "3,050,000", source: "Trial Balance.xlsx", category: "Treasury", taxTreatment: "Asset Balance", aiConfidence: 99 },
-      ],
-      "General Ledger": [
-        { item: "Nov 2025 — Office Supplies", amount: "120,000", source: "General Ledger.xlsx", category: "Office Admin", taxTreatment: "Allowable OPEX", aiConfidence: 95 },
-        { item: "Dec 2025 — Electricity & Water", amount: "95,000", source: "General Ledger.xlsx", category: "Utilities", taxTreatment: "Allowable OPEX", aiConfidence: 97 },
-        { item: "Jan 2026 — Executive Dining & Hospitality", amount: "300,000", source: "General Ledger.xlsx", category: "Entertainment", taxTreatment: "Disallowable (Sec 11)", aiConfidence: 98 },
-        { item: "Feb 2026 — Plant Maintenance & Repairs", amount: "210,000", source: "General Ledger.xlsx", category: "Repairs", taxTreatment: "Allowable OPEX", aiConfidence: 96 },
-      ],
-      "Fixed Assets": [
-        { item: "Motor Vehicles (WDV)", amount: "6,200,000", source: "Fixed Asset Schedule.xlsx", category: "Vehicles", taxTreatment: "4th Sched Allowance (20%)", aiConfidence: 97 },
-        { item: "Office Equipment & Computers (WDV)", amount: "2,100,000", source: "Fixed Asset Schedule.xlsx", category: "IT Assets", taxTreatment: "4th Sched Allowance (20%)", aiConfidence: 99 },
-        { item: "Commercial Factory Buildings (WDV)", amount: "10,100,000", source: "Fixed Asset Schedule.xlsx", category: "Buildings", taxTreatment: "4th Sched Allowance (5%)", aiConfidence: 98 },
-        { item: "Current Year Accounting Depreciation", amount: "1,800,000", source: "Fixed Asset Schedule.xlsx", category: "Depreciation", taxTreatment: "Disallowable (Sec 11)", aiConfidence: 100 },
-      ],
+      "Income Statement": [],
+      "Balance Sheet": [],
+      "Trial Balance": [],
+      "General Ledger": [],
+      "Fixed Assets": [],
     },
   };
 }
@@ -567,38 +460,32 @@ export async function generateAiFinancialReport(): Promise<AiFinancialReportData
   return {
     generatedAt: new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }),
     taxYear: "2025/2026",
-    companyName: "ABC (Pvt) Ltd",
+    companyName: "Your Business",
     executiveSummary:
-      "ABC (Pvt) Ltd generated Rs. 25.0M in gross operating turnover for Year of Assessment 2025/26 with a strong gross profit margin of 39.2% (Rs. 9.8M). After operating overheads and depreciation, commercial profit before tax stands at Rs. 4.60M. Statutory tax reconciliation under Inland Revenue Act No. 24 of 2017 requires disallowing Rs. 2.10M in non-deductible accounting depreciation and executive entertainment, offset by Rs. 1.50M in Fourth Schedule tax capital allowances, arriving at an estimated taxable business income of Rs. 5.20M and an estimated CIT liability of Rs. 1.56M at the standard 30% rate.",
+      "No financial documents have been uploaded yet for Year of Assessment 2025/2026. Please upload your Financial Statements, Trial Balance, or General Ledger in the Documents tab to initiate automated audit handover and tax analysis.",
     profitabilityAnalysis: {
-      revenue: "Rs. 25,000,000",
-      grossProfit: "Rs. 9,800,000",
-      grossMargin: "39.2%",
-      operatingExpenses: "Rs. 5,200,000",
-      netPbt: "Rs. 4,600,000",
+      revenue: "Rs. 0.00",
+      grossProfit: "Rs. 0.00",
+      grossMargin: "0.0%",
+      operatingExpenses: "Rs. 0.00",
+      netPbt: "Rs. 0.00",
     },
     taxReconciliation: {
-      accountingProfit: "Rs. 4,600,000",
-      disallowablesTotal: "Rs. 2,100,000",
-      disallowablesItems: [
-        { item: "Accounting Depreciation", amount: "Rs. 1,800,000", reason: "Section 11(1)(b) replacement by tax capital allowances" },
-        { item: "Entertainment & Hospitality", amount: "Rs. 300,000", reason: "Section 11(1)(c) restriction on non-business hospitality" },
-      ],
-      capitalAllowancesTotal: "Rs. 1,500,000",
-      taxableIncome: "Rs. 5,200,000",
+      accountingProfit: "Rs. 0.00",
+      disallowablesTotal: "Rs. 0.00",
+      disallowablesItems: [],
+      capitalAllowancesTotal: "Rs. 0.00",
+      taxableIncome: "Rs. 0.00",
       citRate: "30.0%",
-      estimatedLiability: "Rs. 1,560,000",
+      estimatedLiability: "Rs. 0.00",
     },
-    complianceScore: 94,
+    complianceScore: 0,
     keyTaxRisks: [
-      "SVAT reconciliation variance: Ensure Schedule 05 sales matches RAMIS SVAT declaration.",
-      "Motor Vehicle lease payment add-back cap per Section 16 must be validated by statutory auditor.",
-      "Advance CIT installment receipts for Q1-Q3 should be linked to offset final liability.",
+      "Awaiting statutory documents: Upload your Financial Statements and Trial Balance to begin audit checks.",
     ],
     recommendations: [
-      "Submit draft schedules to Assigned Auditor (A. Karunaratne & Co.) for official audit sign-off.",
-      "Ensure tax capital allowance schedule includes original invoice references for new IT additions.",
-      "Verify that withholding taxes (WHT/AIT) suffered on treasury balances are claimed via Form 38 certificates.",
+      "Upload your Financial Statements, Trial Balance, and Fixed Asset Schedule in the Documents tab.",
+      "Invite or assign your statutory auditor to review your uploaded files.",
     ],
   };
 }
@@ -617,15 +504,15 @@ export async function getAuditorReviewSummary(): Promise<AuditorReviewSummary> {
       const auditor = data.assigned_auditor || data.auditor;
       const summary = data.review_summary || data.stats;
       return {
-        auditorName: auditor?.firm_name || "Mr. Karunaratne & Associates",
-        auditorFirm: auditor?.designation || "Chartered Accountants",
-        reviewStatus: auditor?.status || "Waiting for Review",
-        submittedDate: auditor?.submitted_date || "16 Aug 2026",
-        expectedByDate: auditor?.expected_date || "20 Aug 2026",
-        reviewedPercent: auditor?.progress_percent ?? 75,
-        approvedCount: summary?.approved ?? summary?.approved_count ?? 12,
-        warningsCount: summary?.warnings ?? summary?.warnings_count ?? 3,
-        criticalCount: summary?.critical ?? summary?.critical_count ?? 1,
+        auditorName: auditor?.firm_name || auditor?.auditor_name || "",
+        auditorFirm: auditor?.designation || auditor?.firm_name || "",
+        reviewStatus: auditor?.status || "No Auditor Assigned",
+        submittedDate: auditor?.submitted_date || "—",
+        expectedByDate: auditor?.expected_date || "—",
+        reviewedPercent: auditor?.progress_percent ?? 0,
+        approvedCount: summary?.approved ?? summary?.approved_count ?? 0,
+        warningsCount: summary?.warnings ?? summary?.warnings_count ?? 0,
+        criticalCount: summary?.critical ?? summary?.critical_count ?? 0,
         pendingCount: summary?.pending ?? summary?.pending_count ?? 0,
         issues: Array.isArray(data.issues)
           ? data.issues.map((i: any) => ({
@@ -643,41 +530,17 @@ export async function getAuditorReviewSummary(): Promise<AuditorReviewSummary> {
   }
 
   return {
-    auditorName: "Mr. Karunaratne & Associates",
-    auditorFirm: "Chartered Accountants",
-    reviewStatus: "Waiting for Review",
-    submittedDate: "16 Aug 2026",
-    expectedByDate: "20 Aug 2026",
-    reviewedPercent: 75,
-    approvedCount: 12,
-    warningsCount: 3,
-    criticalCount: 1,
+    auditorName: "",
+    auditorFirm: "",
+    reviewStatus: "No Auditor Assigned",
+    submittedDate: "—",
+    expectedByDate: "—",
+    reviewedPercent: 0,
+    approvedCount: 0,
+    warningsCount: 0,
+    criticalCount: 0,
     pendingCount: 0,
-    issues: [
-      {
-        id: "issue_1",
-        status: "action_required",
-        title: "Entertainment Expense Documentation",
-        comment:
-          "Please provide supporting documentation for the entertainment expense. Invoices and business purpose required.",
-        source: "Financial Statements — Page 14",
-      },
-      {
-        id: "issue_2",
-        status: "pending_clarification",
-        title: "Fixed Asset Depreciation Method",
-        comment:
-          "Confirm the depreciation method applied is consistent with previous year and company accounting policy.",
-        source: "Fixed Asset Schedule",
-      },
-      {
-        id: "issue_3",
-        status: "pending_clarification",
-        title: "General Ledger November 2025",
-        comment: "Minor discrepancy detected in November 2025. Please reconcile and confirm.",
-        source: "General Ledger",
-      },
-    ],
+    issues: [],
   };
 }
 
@@ -689,16 +552,15 @@ export async function getCompanySettings(): Promise<CompanySettings> {
       headers: authHeaders,
     });
 
-
     if (res.ok) {
       const data = await res.json();
       return {
-        companyName: data.companyName || data.company_name || "ABC (Pvt) Ltd",
-        registrationNumber: data.registrationNumber || data.registration_number || "PV-12345",
-        tinNumber: data.tinNumber || data.tin_number || "123456789",
+        companyName: data.companyName || data.company_name || "",
+        registrationNumber: data.registrationNumber || data.registration_number || "",
+        tinNumber: data.tinNumber || data.tin_number || "",
         financialYear: data.financialYear || data.current_fiscal_year || "2025/26",
-        contactEmail: data.contactEmail || data.contact_email || "admin@abc.lk",
-        contactPhone: data.contactPhone || data.contact_phone || "+94 11 234 5678",
+        contactEmail: data.contactEmail || data.contact_email || "",
+        contactPhone: data.contactPhone || data.contact_phone || "",
       };
     }
   } catch {
@@ -706,12 +568,12 @@ export async function getCompanySettings(): Promise<CompanySettings> {
   }
 
   return {
-    companyName: "ABC (Pvt) Ltd",
-    registrationNumber: "PV 00123456",
-    tinNumber: "134578291",
+    companyName: "",
+    registrationNumber: "",
+    tinNumber: "",
     financialYear: "2025/26",
-    contactEmail: "admin@abc.lk",
-    contactPhone: "+94 11 234 5678",
+    contactEmail: "",
+    contactPhone: "",
   };
 }
 
@@ -730,15 +592,12 @@ export async function getBusinessDiscussions(companyName?: string): Promise<Busi
 
     if (res.ok) {
       const data = await res.json();
-      const auditor = data.assigned_auditor || data.auditor || {
-        name: "Mr. Karunaratne & Associates",
-        firm: "Chartered Accountants",
-      };
+      const auditor = data.assigned_auditor || data.auditor || null;
       const rawList = Array.isArray(data) ? data : Array.isArray(data.threads) ? data.threads : [];
       const threads: DiscussionThread[] = rawList.map((t: any) => ({
         id: String(t.id),
-        companyName: t.companyName || t.company_name || companyName || "ABC (Pvt) Ltd",
-        auditorName: t.auditorName || t.auditor_name || auditor.name,
+        companyName: t.companyName || t.company_name || companyName || "",
+        auditorName: t.auditorName || t.auditor_name || auditor?.name || "Auditor",
         topic: t.topic || t.title || "Audit Discussion",
         category: t.category || "General",
         lastMessage: t.lastMessage || t.last_message || "",
@@ -748,7 +607,7 @@ export async function getBusinessDiscussions(companyName?: string): Promise<Busi
         messages: Array.isArray(t.messages)
           ? t.messages.map((m: any) => ({
               id: String(m.id),
-              sender: m.sender || m.sender_name || (m.sender_role === "Auditor" || m.senderRole === "Auditor" || m.is_auditor ? "Mr. Karunaratne (Auditor)" : "You (Admin User)"),
+              sender: m.sender || m.sender_name || (m.sender_role === "Auditor" || m.senderRole === "Auditor" || m.is_auditor ? "Auditor" : "You"),
               senderRole: (m.is_auditor || m.sender_role === "Auditor" || m.senderRole === "Auditor" ? "Auditor" : "Company") as "Auditor" | "Company",
               text: m.text || m.message || "",
               timestamp: m.timestamp || "Recently",
@@ -762,100 +621,8 @@ export async function getBusinessDiscussions(companyName?: string): Promise<Busi
   }
 
   return {
-    assignedAuditor: {
-      name: "Mr. Karunaratne & Associates",
-      firm: "Chartered Accountants (FCA / ACMA)",
-    },
-    threads: [
-      {
-        id: "disc_1",
-        companyName: "ABC (Pvt) Ltd",
-        auditorName: "Mr. Karunaratne (Chartered Accountant)",
-        topic: "Reconciliation of Taxable Income & GL Variance",
-        category: "Tax Computation",
-        lastMessage: "You: We have attached the updated breakdown for the November discrepancy.",
-        lastUpdated: "10 mins ago",
-        unreadCount: 0,
-        status: "Open",
-        messages: [
-          {
-            id: "m_1",
-            sender: "Mr. Karunaratne (Auditor)",
-            senderRole: "Auditor",
-            text: "Hello ABC team, we noticed a minor variance in November 2025 General Ledger reconciliation. Could you clarify the entries on line 42?",
-            timestamp: "Yesterday, 14:30",
-          },
-          {
-            id: "m_2",
-            sender: "Admin User (You)",
-            senderRole: "Company",
-            text: "Hello! Our finance team reviewed the ledger. It was a timing difference in supplier invoice recognition.",
-            timestamp: "Today, 09:15",
-          },
-          {
-            id: "m_3",
-            sender: "Admin User (You)",
-            senderRole: "Company",
-            text: "We have attached the updated breakdown for the November discrepancy under Documents.",
-            timestamp: "10 mins ago",
-          },
-        ],
-      },
-      {
-        id: "disc_2",
-        companyName: "ABC (Pvt) Ltd",
-        auditorName: "Mr. Karunaratne (Chartered Accountant)",
-        topic: "Depreciation Rates Confirmation for FY2025/26",
-        category: "Fixed Assets",
-        lastMessage: "You: Yes, straight-line depreciation rates have been applied consistently.",
-        lastUpdated: "3 hours ago",
-        unreadCount: 0,
-        status: "Open",
-        messages: [
-          {
-            id: "m_4",
-            sender: "Mr. Karunaratne (Auditor)",
-            senderRole: "Auditor",
-            text: "Please confirm if straight-line basis (20% for motor vehicles, 12.5% for equipment) was maintained consistently with the previous financial year.",
-            timestamp: "Yesterday, 11:20",
-          },
-          {
-            id: "m_5",
-            sender: "Admin User (You)",
-            senderRole: "Company",
-            text: "Yes, straight-line depreciation rates have been applied consistently across all asset classes per Inland Revenue Act guidelines.",
-            timestamp: "3 hours ago",
-          },
-        ],
-      },
-      {
-        id: "disc_3",
-        companyName: "ABC (Pvt) Ltd",
-        auditorName: "Mr. Karunaratne (Chartered Accountant)",
-        topic: "BOI Export Tax Exemption Status & Certificate",
-        category: "Exemptions & Relief",
-        lastMessage: "Auditor: Verified and approved. We have incorporated the 14% rate.",
-        lastUpdated: "1 day ago",
-        unreadCount: 0,
-        status: "Closed",
-        messages: [
-          {
-            id: "m_6",
-            sender: "Admin User (You)",
-            senderRole: "Company",
-            text: "We have uploaded our BOI tax exemption agreement copy under Client Documents.",
-            timestamp: "2 days ago",
-          },
-          {
-            id: "m_7",
-            sender: "Mr. Karunaratne (Auditor)",
-            senderRole: "Auditor",
-            text: "Verified and approved. We have incorporated the 14% concessional export rate into the preliminary CIT computation.",
-            timestamp: "1 day ago",
-          },
-        ],
-      },
-    ],
+    assignedAuditor: null as any,
+    threads: [],
   };
 }
 
@@ -944,84 +711,27 @@ export async function getCompanyFullSettings(): Promise<CompanyFullSettings> {
       }
     }
   } catch {
-    // Fallback to rich Sri Lankan business defaults
+    // Fallback to real user empty baseline
   }
 
   return {
     profile: {
-      companyName: profile.companyName || "ABC (Pvt) Ltd",
-      tradingName: "ABC Tech Solutions",
-      registrationNumber: profile.registrationNumber || "PV 00123456",
-      tinNumber: profile.tinNumber || "134578291",
-      vatNumber: "134578291-7000",
-      isSvatRegistered: true,
-      svatNumber: "SVAT004921",
+      companyName: profile.companyName || "",
+      tradingName: "",
+      registrationNumber: profile.registrationNumber || "",
+      tinNumber: profile.tinNumber || "",
+      vatNumber: "",
+      isSvatRegistered: false,
+      svatNumber: "",
       citTaxRateCategory: "standard_30",
       financialYear: profile.financialYear || "2025/26",
-      contactEmail: profile.contactEmail || "admin@abc.lk",
-      contactPhone: profile.contactPhone || "+94 11 234 5678",
-      registeredAddress: "Level 14, West Tower, World Trade Center, Colombo 01, Sri Lanka",
-      industrySector: "Information Technology & Software Services",
+      contactEmail: profile.contactEmail || "",
+      contactPhone: profile.contactPhone || "",
+      registeredAddress: "",
+      industrySector: "",
     },
-    auditor: {
-      firmName: "K. Karunaratne & Co. (Chartered Accountants)",
-      firmRegNo: "CAF-10482",
-      leadAuditorName: "Sunil Karunaratne, FCA",
-      leadAuditorEmail: "sunil.k@karunaratne.lk",
-      leadAuditorPhone: "+94 11 258 4930",
-      icaslMemberNo: "FCA-4820",
-      engagementYear: "2025/26",
-      status: "Active",
-      permissions: {
-        canViewDocuments: true,
-        canEditAdjustments: true,
-        canSignOffReturn: true,
-        canDirectFileIRD: false,
-      },
-      assignedDate: "2025-04-01",
-    },
-    team: [
-      {
-        id: "ft_1",
-        name: "Samantha Perera",
-        initials: "SP",
-        email: "samantha@abc.pvt.lk",
-        role: "Owner",
-        status: "Active",
-        lastActive: "Today at 09:15 AM",
-        canSignReturns: true,
-      },
-      {
-        id: "ft_2",
-        name: "Nihal Fernando",
-        initials: "NF",
-        email: "nihal@abc.pvt.lk",
-        role: "Finance Director",
-        status: "Active",
-        lastActive: "Yesterday at 04:30 PM",
-        canSignReturns: true,
-      },
-      {
-        id: "ft_3",
-        name: "Dilini Jayawardena",
-        initials: "DJ",
-        email: "dilini@abc.pvt.lk",
-        role: "Senior Accountant",
-        status: "Active",
-        lastActive: "3 hours ago",
-        canSignReturns: false,
-      },
-      {
-        id: "ft_4",
-        name: "Kavindu Silva",
-        initials: "KS",
-        email: "kavindu.s@abc.pvt.lk",
-        role: "Tax Officer",
-        status: "Invited",
-        lastActive: "Invitation pending",
-        canSignReturns: false,
-      },
-    ],
+    auditor: null as any,
+    team: [],
     preferences: {
       accountingStandard: "SLFRS_SMES",
       currency: "LKR",
@@ -1043,59 +753,13 @@ export async function getCompanyFullSettings(): Promise<CompanyFullSettings> {
       inAppNotifications: true,
     },
     security: {
-      twoFactorAuth: true,
+      twoFactorAuth: false,
       sessionTimeoutMinutes: 60,
       ipRestriction: false,
-      allowedIps: "203.143.16.0/24",
+      allowedIps: "",
       dataEncryptionStandard: "AES-256 (TLS 1.3 enforced)",
     },
-    auditTrail: [
-      {
-        id: "at_1",
-        action: "CIT Return 2025/26 submitted for Auditor Review",
-        actor: "Samantha Perera",
-        actorRole: "Owner",
-        timestamp: "2026-09-07 16:45:10",
-        timeAgo: "Yesterday",
-        ipAddress: "123.231.104.22",
-      },
-      {
-        id: "at_2",
-        action: "Auditor document request acknowledged: Ledger Q4",
-        actor: "Nihal Fernando",
-        actorRole: "Finance Director",
-        timestamp: "2026-09-07 14:12:00",
-        timeAgo: "Yesterday",
-        ipAddress: "123.231.104.22",
-      },
-      {
-        id: "at_3",
-        action: "Auditor permissions updated: canSignOffReturn enabled",
-        actor: "Samantha Perera",
-        actorRole: "Owner",
-        timestamp: "2026-09-06 11:20:30",
-        timeAgo: "2 days ago",
-        ipAddress: "123.231.104.22",
-      },
-      {
-        id: "at_4",
-        action: "AI OCR extracted Fixed Asset Schedule with 92% confidence",
-        actor: "AI Engine",
-        actorRole: "System Service",
-        timestamp: "2026-09-05 18:05:44",
-        timeAgo: "3 days ago",
-        ipAddress: "System",
-      },
-      {
-        id: "at_5",
-        action: "Quarterly Advance Tax Installment #2 reconciled",
-        actor: "Dilini Jayawardena",
-        actorRole: "Senior Accountant",
-        timestamp: "2026-09-04 10:15:20",
-        timeAgo: "4 days ago",
-        ipAddress: "123.231.104.25",
-      },
-    ],
+    auditTrail: [],
   };
 }
 

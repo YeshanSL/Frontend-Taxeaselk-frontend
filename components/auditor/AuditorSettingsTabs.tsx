@@ -797,7 +797,7 @@ export default function AuditorSettingsTabs({
                 <Input
                   type="email"
                   required
-                  placeholder="e.g. ruwan.j@karunaratne.lk"
+                  placeholder="e.g. associate@auditfirm.lk"
                   value={inviteForm.email}
                   onChange={(e) =>
                     setInviteForm((f) => ({ ...f, email: e.target.value }))

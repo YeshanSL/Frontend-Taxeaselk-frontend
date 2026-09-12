@@ -91,7 +91,7 @@ export default function InviteAuditorButton() {
   const [firmName, setFirmName] = useState("");
   const [loading, setLoading] = useState(false);
   const [invitedAuditor, setInvitedAuditor] = useState<string | null>(null);
-  const [currentCompany, setCurrentCompany] = useState<string>("ABC Holdings (Pvt) Ltd");
+  const [currentCompany, setCurrentCompany] = useState<string>("");
   const [assignedAuditor, setAssignedAuditor] = useState<{ firm: string; email: string; name?: string } | null>(null);
   const [confirmSwitchTarget, setConfirmSwitchTarget] = useState<{ email: string; firm: string; name?: string } | null>(null);
   const [disengaging, setDisengaging] = useState(false);
@@ -99,13 +99,25 @@ export default function InviteAuditorButton() {
   useEffect(() => {
     async function syncCompanyAndAuditor() {
       try {
-        let company = "ABC Holdings (Pvt) Ltd";
+        let company = "";
         const savedSettings = localStorage.getItem("taxease_company_settings");
         if (savedSettings) {
           const parsed = JSON.parse(savedSettings);
           if (parsed.companyName) company = parsed.companyName;
         }
+        if (!company) {
+          const userStr = localStorage.getItem("taxease_user");
+          if (userStr) {
+            const u = JSON.parse(userStr);
+            if (u.company_name || u.companyName) company = u.company_name || u.companyName;
+          }
+        }
         setCurrentCompany(company);
+
+        if (!company) {
+          setAssignedAuditor(null);
+          return;
+        }
 
         // Fetch from backend engagement endpoint
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -530,13 +542,13 @@ export default function InviteAuditorButton() {
                     /* Manual Invitation Form */
                     <form onSubmit={handleManualInvite} className="space-y-4">
                       <p className="text-xs text-gray-500">
-                        Enter the email and audit firm of your existing certified accountant or auditor to grant them access to this tax computation file.
+                        Enter your auditor's Practitioner ID (e.g. <strong className="font-mono text-brand-blue">AUD-XXXXXXXX</strong>) or their registered email to grant them exclusive access to your statutory workspace.
                       </p>
 
-                      <Field label={t("business.inviteAuditor.auditorEmail")}>
+                      <Field label="Auditor Email or User ID">
                         <Input
-                          type="email"
-                          placeholder="auditor@firm.lk"
+                          type="text"
+                          placeholder="auditor@firm.lk or AUD-XXXXXXXX"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           required
@@ -546,10 +558,9 @@ export default function InviteAuditorButton() {
                       <Field label={t("business.inviteAuditor.auditorFirm")}>
                         <Input
                           type="text"
-                          placeholder="e.g. Mr. Karunaratne & Associates"
+                          placeholder="e.g. KPMG / Ernst & Young / Private Firm"
                           value={firmName}
                           onChange={(e) => setFirmName(e.target.value)}
-                          required
                         />
                       </Field>
 

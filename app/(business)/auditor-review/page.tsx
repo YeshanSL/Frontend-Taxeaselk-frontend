@@ -30,7 +30,7 @@ export default async function AuditorReviewPage() {
         <AssignedAuditorCard
           auditorName={data.auditorName}
           auditorFirm={data.auditorFirm}
-          auditorEmail="audit@karunaratne.lk"
+          auditorEmail={data.auditorEmail}
           reviewStatus={data.reviewStatus}
           submittedDate={data.submittedDate}
           expectedByDate={data.expectedByDate}

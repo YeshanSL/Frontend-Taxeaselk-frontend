@@ -166,78 +166,90 @@ export default function AuditorIssuesManager({ initialIssues }: Props) {
         <p className="mb-4 font-semibold text-gray-800">
           {t("business.auditorReview.issuesTitle")}
         </p>
-        <div className="divide-y divide-gray-50">
-          {issues.map((issue) => (
-            <div
-              key={issue.id}
-              id={`issue-${issue.id}`}
-              className="flex gap-3 py-5 first:pt-0 last:pb-0"
-            >
+        {issues.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 mb-3">
+              <Check className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-semibold text-gray-800">No Auditor Queries or Exceptions</p>
+            <p className="mt-1 text-xs text-gray-500 max-w-md">
+              Your auditor has not raised any exceptions or document clarification requests yet. As your audit review proceeds, any inquiries will appear here.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {issues.map((issue) => (
               <div
-                className={
-                  issue.status === "action_required"
-                    ? "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-50"
-                    : "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-50"
-                }
+                key={issue.id}
+                id={`issue-${issue.id}`}
+                className="flex gap-3 py-5 first:pt-0 last:pb-0"
               >
-                <AlertTriangle
+                <div
                   className={
                     issue.status === "action_required"
-                      ? "h-4 w-4 text-status-critical"
-                      : "h-4 w-4 text-status-warning"
+                      ? "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-50"
+                      : "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-50"
                   }
-                />
-              </div>
-              <div className="flex-1">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone={issue.status === "action_required" ? "critical" : "warning"}>
-                      {issue.status === "action_required"
-                        ? t("status.reviewRequired")
-                        : t("common.pending")}
-                    </Badge>
-                    {issue.response && (
-                      <Badge tone="info">{t("status.processed")}</Badge>
-                    )}
-                    <p className="font-semibold text-gray-900">{issue.title}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openIssueModal(issue)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-brand-blue/30 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-brand-blue hover:bg-brand-blue hover:text-white transition-colors cursor-pointer shadow-sm"
-                  >
-                    {t("business.auditorReview.respond")} →
-                  </button>
+                >
+                  <AlertTriangle
+                    className={
+                      issue.status === "action_required"
+                        ? "h-4 w-4 text-status-critical"
+                        : "h-4 w-4 text-status-warning"
+                    }
+                  />
                 </div>
-                <p className="mt-2 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
-                  &ldquo;{issue.comment}&rdquo;
-                </p>
-                <p className="mt-2 text-xs text-gray-400">
-                  Source: {issue.source}
-                </p>
-
-                {/* Show user response if submitted */}
-                {issue.response && (
-                  <div className="mt-2.5 rounded-lg border border-blue-100 bg-blue-50/60 p-2.5 text-xs text-brand-blue">
-                    <span className="font-semibold">{t("business.auditorReview.replyToAuditor")}: </span>
-                    {issue.response}
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge tone={issue.status === "action_required" ? "critical" : "warning"}>
+                        {issue.status === "action_required"
+                          ? t("status.reviewRequired")
+                          : t("common.pending")}
+                      </Badge>
+                      {issue.response && (
+                        <Badge tone="info">{t("status.processed")}</Badge>
+                      )}
+                      <p className="font-semibold text-gray-900">{issue.title}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openIssueModal(issue)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-brand-blue/30 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-brand-blue hover:bg-brand-blue hover:text-white transition-colors cursor-pointer shadow-sm"
+                    >
+                      {t("business.auditorReview.respond")} →
+                    </button>
                   </div>
-                )}
+                  <p className="mt-2 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
+                    &ldquo;{issue.comment}&rdquo;
+                  </p>
+                  <p className="mt-2 text-xs text-gray-400">
+                    Source: {issue.source}
+                  </p>
 
-                {/* Show attached file if uploaded */}
-                {issue.attachedFileName && (
-                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600">
-                    <FileText className="h-3.5 w-3.5 text-brand-blue shrink-0" />
-                    <span className="font-medium text-gray-800">{issue.attachedFileName}</span>
-                    {issue.attachedFileSize && (
-                      <span className="text-gray-400">({issue.attachedFileSize})</span>
-                    )}
-                  </div>
-                )}
+                  {/* Show user response if submitted */}
+                  {issue.response && (
+                    <div className="mt-2.5 rounded-lg border border-blue-100 bg-blue-50/60 p-2.5 text-xs text-brand-blue">
+                      <span className="font-semibold">{t("business.auditorReview.replyToAuditor")}: </span>
+                      {issue.response}
+                    </div>
+                  )}
+
+                  {/* Show attached file if uploaded */}
+                  {issue.attachedFileName && (
+                    <div className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600">
+                      <FileText className="h-3.5 w-3.5 text-brand-blue shrink-0" />
+                      <span className="font-medium text-gray-800">{issue.attachedFileName}</span>
+                      {issue.attachedFileSize && (
+                        <span className="text-gray-400">({issue.attachedFileSize})</span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* Pop up Issue Modal */}

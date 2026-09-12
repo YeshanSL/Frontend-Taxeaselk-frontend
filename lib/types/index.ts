@@ -142,6 +142,7 @@ export interface AuditorReviewIssue {
 export interface AuditorReviewSummary {
   auditorName: string;
   auditorFirm: string;
+  auditorEmail?: string;
   reviewStatus: string; // e.g. "Waiting for Review"
   submittedDate: string;
   expectedByDate: string;

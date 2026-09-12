@@ -21,8 +21,10 @@ function nextLocalId() {
 export default function DocumentsManager({ initial }: { initial: DocumentsSummary }) {
   const { t } = useLanguage();
   const [documents, setDocuments] = useState<DocumentRow[]>(initial.documents);
-  const [missingCount] = useState(initial.missingCount);
-  const [currentCompany, setCurrentCompany] = useState<string>("ABC Holdings (Pvt) Ltd");
+  const requiredCategories = useMemo(() => ["Financial Statements", "Trial Balance", "General Ledger", "Fixed Assets", "Previous CIT"], []);
+  const uploadedTypes = useMemo(() => new Set(documents.map((d) => d.type)), [documents]);
+  const missingCount = useMemo(() => requiredCategories.filter((cat) => !uploadedTypes.has(cat)).length, [requiredCategories, uploadedTypes]);
+  const [currentCompany, setCurrentCompany] = useState<string>("");
   const [toastMessage, setToastMessage] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
@@ -182,7 +184,7 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
                 {t("status.connected")}
               </span>
             </div>
-            <p className="text-sm font-bold text-gray-900">{currentCompany}</p>
+            <p className="text-sm font-bold text-gray-900">{currentCompany || "Your Company"}</p>
           </div>
         </div>
       </div>

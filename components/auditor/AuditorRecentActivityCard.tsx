@@ -90,28 +90,35 @@ export default function AuditorRecentActivityCard({ initialActivities }: Props) 
         </span>
       </div>
 
-      <div className="flex flex-col gap-3.5">
-        {activities.map((activity) => (
-          <div key={activity.id} className="flex items-start gap-2.5 transition-all">
-            {renderIcon(activity.type)}
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-800 truncate">
-                {activity.title}
-              </p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-xs font-medium text-brand-blue truncate">
-                  {activity.company}
-                </span>
-                <span className="text-gray-300 text-xs">•</span>
-                <span className="text-xs text-gray-400 whitespace-nowrap">
-                  {activity.timeAgo}
-                </span>
+      {activities.length === 0 ? (
+        <div className="py-6 text-center">
+          <p className="text-xs text-gray-400">No audit activity logged yet.</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3.5">
+          {activities.map((activity) => (
+            <div key={activity.id} className="flex items-start gap-2.5 transition-all">
+              {renderIcon(activity.type)}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-800 truncate">
+                  {activity.title}
+                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-xs font-medium text-brand-blue truncate">
+                    {activity.company}
+                  </span>
+                  <span className="text-gray-300 text-xs">•</span>
+                  <span className="text-xs text-gray-400 whitespace-nowrap">
+                    {activity.timeAgo}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </Card>
+
   );
 }
 

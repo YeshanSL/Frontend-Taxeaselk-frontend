@@ -78,15 +78,23 @@ export default function AuditorPriorityReviews({ initialReviews }: Props) {
         </Link>
       </div>
 
-      <div className="mt-4 divide-y divide-gray-50">
-        {reviews.map((review) => {
-          const isApproved = approvedCompanies.includes(review.companyName);
+      {reviews.length === 0 ? (
+        <div className="mt-6 flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 p-8 text-center bg-gray-50/50">
+          <p className="text-sm font-semibold text-gray-700">No Priority Reviews</p>
+          <p className="mt-1 text-xs text-gray-500 max-w-sm">
+            You do not have any client audits requiring urgent attention right now. Assigned companies and submitted tax packs will appear here.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-4 divide-y divide-gray-50">
+          {reviews.map((review) => {
+            const isApproved = approvedCompanies.includes(review.companyName);
 
-          return (
-            <div
-              key={review.companyName}
-              className="flex flex-col gap-3 py-5 first:pt-2 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
-            >
+            return (
+              <div
+                key={review.companyName}
+                className="flex flex-col gap-3 py-5 first:pt-2 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+              >
               <div className="flex-1">
                 <Badge tone={isApproved ? "success" : TAG_TONE[review.tag]}>
                   {review.tagLabel}
@@ -134,6 +142,7 @@ export default function AuditorPriorityReviews({ initialReviews }: Props) {
           );
         })}
       </div>
+      )}
     </Card>
   );
 }

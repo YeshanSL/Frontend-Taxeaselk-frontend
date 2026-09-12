@@ -5,7 +5,7 @@ import { Field, Input, Select } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import { CompanySettings } from "@/lib/types";
 import { updateCompanyTaxProfile } from "@/lib/api/business";
-import { Building2, FileText, CheckCircle2 } from "lucide-react";
+import { Building2, FileText, CheckCircle2, ShieldCheck, Copy, Check } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function CompanySettingsForm({
@@ -14,20 +14,22 @@ export default function CompanySettingsForm({
   initial: CompanySettings;
 }) {
   const { t } = useLanguage();
+  const [userId, setUserId] = useState("");
+  const [copiedId, setCopiedId] = useState(false);
   const [form, setForm] = useState<CompanySettings>({
-    companyName: initial.companyName || "ABC (Pvt) Ltd",
-    tradingName: initial.tradingName || "ABC Tech Solutions",
-    registrationNumber: initial.registrationNumber || "PV 00123456",
-    tinNumber: initial.tinNumber || "134578291",
-    vatNumber: initial.vatNumber || "134578291-7000",
-    isSvatRegistered: initial.isSvatRegistered ?? true,
-    svatNumber: initial.svatNumber || "SVAT004921",
+    companyName: initial.companyName || "",
+    tradingName: initial.tradingName || "",
+    registrationNumber: initial.registrationNumber || "",
+    tinNumber: initial.tinNumber || "",
+    vatNumber: initial.vatNumber || "",
+    isSvatRegistered: initial.isSvatRegistered ?? false,
+    svatNumber: initial.svatNumber || "",
     citTaxRateCategory: initial.citTaxRateCategory || "standard_30",
     financialYear: initial.financialYear || "2025/26",
-    contactEmail: initial.contactEmail || "admin@abc.lk",
-    contactPhone: initial.contactPhone || "+94 11 234 5678",
-    registeredAddress: initial.registeredAddress || "Level 14, West Tower, World Trade Center, Colombo 01, Sri Lanka",
-    industrySector: initial.industrySector || "Information Technology & Software Services",
+    contactEmail: initial.contactEmail || "",
+    contactPhone: initial.contactPhone || "",
+    registeredAddress: initial.registeredAddress || "",
+    industrySector: initial.industrySector || "",
   });
 
   const [saving, setSaving] = useState(false);
@@ -43,7 +45,6 @@ export default function CompanySettingsForm({
             ...prev,
             ...parsed,
           }));
-          return;
         }
 
         const savedUser = localStorage.getItem("taxease_user");
@@ -51,6 +52,8 @@ export default function CompanySettingsForm({
           const u = JSON.parse(savedUser);
           const name = u.company_name || u.display_name || u.companyName;
           const email = u.email;
+          const uId = u.formatted_id || (u.id ? `BIZ-${u.id.replace(/-/g, "").slice(0, 8).toUpperCase()}` : "");
+          if (uId) setUserId(uId);
           if (name || email) {
             setForm((prev) => ({
               ...prev,
@@ -84,7 +87,7 @@ export default function CompanySettingsForm({
 
     const updatedSettings: CompanySettings = {
       ...form,
-      companyName: form.companyName.trim() || "ABC (Pvt) Ltd",
+      companyName: form.companyName.trim(),
       financialYear: form.financialYear.trim() || "2025/26",
     };
 
@@ -126,6 +129,37 @@ export default function CompanySettingsForm({
             {t("common.saved")}
           </div>
         )}
+      </div>
+
+      {/* Workspace User ID Card */}
+      <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3.5 flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-brand-blue">
+            <ShieldCheck className="h-4 w-4" />
+          </div>
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-900">
+              Verified Business User ID
+            </span>
+            <p className="font-mono text-xs font-semibold text-gray-800">
+              {userId || "BIZ-ACCOUNT"}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (userId) {
+              navigator.clipboard.writeText(userId);
+              setCopiedId(true);
+              setTimeout(() => setCopiedId(false), 2000);
+            }
+          }}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-xs font-semibold text-brand-blue hover:bg-blue-50 cursor-pointer shadow-2xs transition-colors"
+        >
+          {copiedId ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+          <span>{copiedId ? "Copied" : "Copy User ID"}</span>
+        </button>
       </div>
 
       {/* Section 1: Entity Information */}

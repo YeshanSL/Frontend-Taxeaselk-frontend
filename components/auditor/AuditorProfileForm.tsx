@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { Field, Input } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import { AuditorProfileSettings } from "@/lib/types";
+import { ShieldCheck, Copy, Check } from "lucide-react";
 
 // The "Profile" tab form from the auditor Settings Figma screen.
 export default function AuditorProfileForm({
@@ -12,10 +13,26 @@ export default function AuditorProfileForm({
   initial: AuditorProfileSettings;
 }) {
   const [form, setForm] = useState(initial);
+  const [userId, setUserId] = useState("");
+  const [copiedId, setCopiedId] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    try {
+      const userStr = localStorage.getItem("taxease_user");
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        const uId = u.formatted_id || (u.id ? `AUD-${u.id.replace(/-/g, "").slice(0, 8).toUpperCase()}` : "");
+        if (uId) setUserId(uId);
+        if (u.email && !form.email) {
+          setForm((prev) => ({ ...prev, email: u.email }));
+        }
+      }
+    } catch {}
+  }, []);
 
   // Revoke the object URL when it's replaced or the component unmounts,
   // so we don't leak memory across repeated photo changes.
@@ -109,6 +126,37 @@ export default function AuditorProfileForm({
           className="hidden"
           onChange={(e) => handlePhotoSelected(e.target.files?.[0])}
         />
+      </div>
+
+      {/* Auditor Practitioner User ID Card */}
+      <div className="rounded-xl border border-purple-100 bg-purple-50/60 p-3.5 mb-6 flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
+            <ShieldCheck className="h-4 w-4" />
+          </div>
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-purple-900">
+              Verified Auditor Practitioner ID
+            </span>
+            <p className="font-mono text-xs font-semibold text-gray-800">
+              {userId || "AUD-PRACTITIONER"}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (userId) {
+              navigator.clipboard.writeText(userId);
+              setCopiedId(true);
+              setTimeout(() => setCopiedId(false), 2000);
+            }
+          }}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-purple-200 bg-white px-2.5 py-1 text-xs font-semibold text-purple-700 hover:bg-purple-50 cursor-pointer shadow-2xs transition-colors"
+        >
+          {copiedId ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+          <span>{copiedId ? "Copied" : "Copy Auditor ID"}</span>
+        </button>
       </div>
 
       {/* Section: Personal & Contact Details */}

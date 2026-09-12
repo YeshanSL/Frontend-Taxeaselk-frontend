@@ -86,9 +86,9 @@ export default function AuditorDocumentChecklist({
   selectedCategory,
   onSelectCategory,
   onBrowseForCategory,
-  companyName = "ABC Holdings (Pvt) Ltd",
-  assignedAuditorName = "Mr. A. Karunaratne (FCA)",
-  assignedAuditorFirm = "Karunaratne & Associates",
+  companyName = "",
+  assignedAuditorName = "Assigned Auditor",
+  assignedAuditorFirm = "Chartered Accountants",
 }: Props) {
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(STATUTORY_CIT_CHECKLIST);
 

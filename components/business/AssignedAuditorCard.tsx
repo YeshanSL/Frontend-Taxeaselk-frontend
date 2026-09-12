@@ -21,7 +21,7 @@ interface AssignedAuditorCardProps {
 export default function AssignedAuditorCard({
   auditorName,
   auditorFirm,
-  auditorEmail = "audit@karunaratne.lk",
+  auditorEmail = "",
   reviewStatus,
   submittedDate,
   expectedByDate,
@@ -29,27 +29,36 @@ export default function AssignedAuditorCard({
 }: AssignedAuditorCardProps) {
   const [rateModalOpen, setRateModalOpen] = useState(false);
   const [clientRating, setClientRating] = useState<number | null>(null);
-  const [companyName, setCompanyName] = useState<string>("ABC (Pvt) Ltd");
+  const [companyName, setCompanyName] = useState<string>("");
   const [currentStatus, setCurrentStatus] = useState<string>(reviewStatus);
   const [currentReviewedPercent, setCurrentReviewedPercent] = useState<number>(reviewedPercent);
 
   useEffect(() => {
     function loadExistingRating() {
       try {
-        let company = "ABC (Pvt) Ltd";
+        let company = "";
         const savedSettings = localStorage.getItem("taxease_company_settings");
         if (savedSettings) {
           const parsed = JSON.parse(savedSettings);
           if (parsed.companyName) company = parsed.companyName;
         }
+        if (!company) {
+          const savedUser = localStorage.getItem("taxease_user");
+          if (savedUser) {
+            const parsedUser = JSON.parse(savedUser);
+            company = parsedUser.company_name || parsedUser.display_name || "";
+          }
+        }
         setCompanyName(company);
 
         // Check for client review in localStorage
-        const savedReview = localStorage.getItem(`taxease_auditor_review_${company}_${auditorEmail}`);
-        if (savedReview) {
-          const parsedReview = JSON.parse(savedReview);
-          if (parsedReview.rating) {
-            setClientRating(parsedReview.rating);
+        if (auditorEmail) {
+          const savedReview = localStorage.getItem(`taxease_auditor_review_${company}_${auditorEmail}`);
+          if (savedReview) {
+            const parsedReview = JSON.parse(savedReview);
+            if (parsedReview.rating) {
+              setClientRating(parsedReview.rating);
+            }
           }
         }
 
@@ -85,6 +94,31 @@ export default function AssignedAuditorCard({
       window.removeEventListener("taxease_audit_status_updated", handleStatusUpdate);
     };
   }, [auditorEmail]);
+
+  if (!auditorName || auditorName.trim() === "" || auditorName === "Not Assigned") {
+    return (
+      <Card className="p-6 relative overflow-hidden border-dashed border-gray-300 bg-gray-50/50">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+              <User className="h-6 w-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-gray-900 text-base">No Statutory Auditor Appointed Yet</h3>
+                <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600">
+                  Unassigned
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1 max-w-xl">
+                Under Sec. 154 of the Sri Lanka Companies Act, every company must appoint a licensed auditor. Invite your auditor using the &quot;Invite Statutory Auditor&quot; button above to begin document review and sign-off.
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <>

@@ -101,7 +101,7 @@ export default function DashboardPipelineProgress({
   }, []);
 
   const isApproved = liveStatus === "Approved" || progressPercent >= 100;
-  const effectivePercent = isApproved ? 100 : progressPercent;
+  const effectivePercent = progressPercent;
 
   return (
     <Card className="mt-6 p-6 shadow-sm border border-gray-200/90 bg-white">
@@ -165,18 +165,12 @@ export default function DashboardPipelineProgress({
           };
           const Icon = cfg.icon;
           const href = step.href || cfg.defaultHref;
-          const isAuditStage = step.label === "Auditor Inquiries" || step.label === "Audit Sign-Off";
-          const currentStepPercent = (isApproved && isAuditStage) ? 100 : step.progressPercent;
-          const isDone = currentStepPercent >= 100 || (isApproved && isAuditStage) || step.state === "done";
+          const currentStepPercent = step.progressPercent;
+          const isDone = currentStepPercent >= 100 || step.state === "done";
           const isWarning = !isDone && step.state === "warning";
-          const displayRatio = (isApproved && step.label === "Auditor Inquiries")
-            ? "5/5 Resolved"
-            : (isApproved && step.label === "Audit Sign-Off")
-            ? "Signed Off"
-            : step.ratioLabel;
-          const displaySublabel = (isApproved && isAuditStage)
-            ? (step.label === "Auditor Inquiries" ? "All inquiries cleared by auditor" : "Audited & Certified for RAMIS submission")
-            : step.sublabel;
+          const displayRatio = step.ratioLabel;
+          const displaySublabel = step.sublabel;
+
 
           return (
             <Link
