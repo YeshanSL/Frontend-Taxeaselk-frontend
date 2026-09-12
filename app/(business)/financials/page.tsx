@@ -1,10 +1,11 @@
-import { getFinancialsSummary, generateAiFinancialReport } from "@/lib/api/business";
+import { getFinancialsSummary, generateAiFinancialReport, getCompanySettings } from "@/lib/api/business";
 import FinancialsView from "@/components/business/FinancialsView";
 
 // Executive Financial & Statutory Tax Intelligence Hub
 export default async function FinancialsPage() {
+  const settings = await getCompanySettings();
   const [data, report] = await Promise.all([
-    getFinancialsSummary(),
+    getFinancialsSummary(settings?.companyName),
     generateAiFinancialReport(),
   ]);
 

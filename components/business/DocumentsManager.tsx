@@ -21,9 +21,19 @@ function nextLocalId() {
 export default function DocumentsManager({ initial }: { initial: DocumentsSummary }) {
   const { t } = useLanguage();
   const [documents, setDocuments] = useState<DocumentRow[]>(initial.documents);
-  const requiredCategories = useMemo(() => ["Financial Statements", "Trial Balance", "General Ledger", "Fixed Assets", "Previous CIT"], []);
-  const uploadedTypes = useMemo(() => new Set(documents.map((d) => d.type)), [documents]);
-  const missingCount = useMemo(() => requiredCategories.filter((cat) => !uploadedTypes.has(cat)).length, [requiredCategories, uploadedTypes]);
+  const missingCount = useMemo(() => {
+    const requiredKeys = ["financial", "trial", "ledger", "asset", "cit"];
+    let fulfilled = 0;
+    for (const key of requiredKeys) {
+      const hasMatch = documents.some((d) => {
+        const t = (d.type || "").toLowerCase();
+        const n = (d.name || "").toLowerCase();
+        return t.includes(key) || n.includes(key) || (key === "cit" && (n.includes("tax") || n.includes("return")));
+      });
+      if (hasMatch) fulfilled += 1;
+    }
+    return Math.max(0, 5 - fulfilled);
+  }, [documents]);
   const [currentCompany, setCurrentCompany] = useState<string>("");
   const [toastMessage, setToastMessage] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -66,18 +76,9 @@ export default function DocumentsManager({ initial }: { initial: DocumentsSummar
     };
   }, []);
 
-  // Hydrate from localStorage or re-fetch from backend on mount & company change
+  // Fetch from backend on mount & company change to ensure 100% sync with Supabase
   useEffect(() => {
     const cacheKey = `taxease_docs_${currentCompany || "default"}`;
-    try {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0 && documents.length === 0) {
-          setDocuments(parsed);
-        }
-      }
-    } catch {}
 
     async function loadBackendDocuments() {
       try {

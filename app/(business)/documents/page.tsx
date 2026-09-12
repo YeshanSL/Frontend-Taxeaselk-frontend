@@ -4,14 +4,8 @@ import T from "@/components/layout/T";
 import { getDocumentsSummary, getCompanySettings } from "@/lib/api/business";
 
 export default async function DocumentsPage() {
-  const [initialDocs, settings] = await Promise.all([
-    getDocumentsSummary(),
-    getCompanySettings(),
-  ]);
-
-  const data = (initialDocs.documents.length === 0 && settings.companyName)
-    ? await getDocumentsSummary(settings.companyName)
-    : initialDocs;
+  const settings = await getCompanySettings();
+  const data = await getDocumentsSummary(settings?.companyName);
 
   return (
     <div>

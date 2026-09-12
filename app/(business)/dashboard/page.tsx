@@ -12,10 +12,8 @@ import { getDashboardSummary, getCompanySettings } from "@/lib/api/business";
 // so this page has no idea whether the data is mocked or coming from
 // the real FastAPI backend.
 export default async function DashboardPage() {
-  const [data, settings] = await Promise.all([
-    getDashboardSummary(),
-    getCompanySettings(),
-  ]);
+  const settings = await getCompanySettings();
+  const data = await getDashboardSummary(settings?.companyName);
 
   return (
     <div>
@@ -36,10 +34,14 @@ export default async function DashboardPage() {
           label={<T k="business.dashboard.documents" />}
           value={`${data.documentsUploaded} / ${data.documentsTotal}`}
           hint={
-            <T
-              k="business.dashboard.pendingUpload"
-              params={{ count: data.documentsTotal - data.documentsUploaded }}
-            />
+            data.documentsTotal <= data.documentsUploaded ? (
+              <span className="text-emerald-600 font-medium">All statutory docs gathered</span>
+            ) : (
+              <T
+                k="business.dashboard.pendingUpload"
+                params={{ count: Math.max(0, data.documentsTotal - data.documentsUploaded) }}
+              />
+            )
           }
         />
         <StatCard

@@ -68,7 +68,7 @@ function formatLKR(val: any, fallback: string): string {
   return fallback;
 }
 
-export async function getDashboardSummary(): Promise<DashboardSummary> {
+export async function getDashboardSummary(companyName?: string): Promise<DashboardSummary> {
   // 1. Sync real document & checklist metrics (Stage 1: Financial Data & Stage 2: AI Extraction)
   let docsUploaded = 0;
   let docsProcessed = 0;
@@ -77,7 +77,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   let docRows: DocumentRow[] = [];
 
   try {
-    const docs = await getDocumentsSummary();
+    const docs = await getDocumentsSummary(companyName);
     if (docs) {
       docsUploaded = docs.uploadedCount;
       docsProcessed = docs.processedCount;
@@ -88,7 +88,6 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   } catch {
     // Keep fallback defaults
   }
-  const docsTotal = docsUploaded + docsMissing;
 
   // Real Stage 1: Document Gathering (Statutory CIT Checklist Fulfillment)
   // Required items: Financial Statements, Trial Balance, General Ledger, Fixed Assets, Previous CIT
@@ -102,9 +101,8 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     });
     if (matched) requiredProvidedCount += 1;
   }
-  if (requiredProvidedCount === 0 && docsUploaded > 0) {
-    requiredProvidedCount = Math.min(5, Math.max(1, docsUploaded - 2));
-  }
+  const docsTotal = 5; // 5 Core Statutory Return Documents
+  const docsUploadedCount = requiredProvidedCount;
   const stage1Percent = Math.min(100, Math.round((requiredProvidedCount / 5) * 100));
 
   // Real Stage 2: AI Data Extraction (OCR & table parsing completeness)
@@ -152,7 +150,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   // Retrieve accounting profit for dashboard metric tiles
   let accountingProfit = "Rs. 0.00";
   try {
-    const fin = await getFinancialsSummary();
+    const fin = await getFinancialsSummary(companyName);
     if (fin?.accountingProfit) {
       accountingProfit = fin.accountingProfit;
     }
@@ -224,7 +222,8 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 
   try {
     const authHeaders = await getAuthHeaders();
-    const dashRes = await fetch(`${API_URL}/api/dashboard`, {
+    const query = companyName ? `?company_name=${encodeURIComponent(companyName)}` : "";
+    const dashRes = await fetch(`${API_URL}/api/dashboard${query}`, {
       cache: "no-store",
       headers: authHeaders,
     });
@@ -254,21 +253,21 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
           ? "Under Review"
           : "Waiting";
 
-      let documentsUploaded = docsUploaded;
-      let documentsTotal = docsTotal;
+      let documentsUploaded = docsUploadedCount;
+      let documentsTotal = 5;
 
-      if (backendData.metrics?.documents_uploaded !== undefined) {
-        documentsUploaded = Number(backendData.metrics.documents_uploaded);
-        const missing = backendData.metrics?.documents_missing !== undefined
-          ? Number(backendData.metrics.documents_missing)
-          : docsMissing;
-        documentsTotal = documentsUploaded + missing;
-      } else if (backendData.metrics?.documents_ratio) {
+      if (backendData.metrics?.documents_ratio) {
         const docParts = String(backendData.metrics.documents_ratio).split("/").map((s) => parseInt(s.trim(), 10));
         if (!isNaN(docParts[0]) && !isNaN(docParts[1])) {
           documentsUploaded = docParts[0];
           documentsTotal = docParts[1];
         }
+      } else if (backendData.metrics?.documents_total !== undefined && backendData.metrics?.documents_uploaded !== undefined) {
+        documentsUploaded = Number(backendData.metrics.documents_uploaded);
+        documentsTotal = Number(backendData.metrics.documents_total);
+      } else if (backendData.metrics?.documents_uploaded !== undefined) {
+        documentsUploaded = Math.min(5, Number(backendData.metrics.documents_uploaded));
+        documentsTotal = 5;
       }
 
       // Merge backend step overrides if present, otherwise use realSteps
@@ -383,10 +382,11 @@ export async function getDocumentsSummary(companyName?: string): Promise<Documen
   };
 }
 
-export async function getFinancialsSummary(): Promise<FinancialsSummary> {
+export async function getFinancialsSummary(companyName?: string): Promise<FinancialsSummary> {
   try {
     const authHeaders = await getAuthHeaders();
-    const res = await fetch(`${API_URL}/api/financials`, {
+    const query = companyName ? `?company_name=${encodeURIComponent(companyName)}` : "";
+    const res = await fetch(`${API_URL}/api/financials${query}`, {
       cache: "no-store",
       headers: authHeaders,
     });
