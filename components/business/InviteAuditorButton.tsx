@@ -244,7 +244,7 @@ export default function InviteAuditorButton() {
         auditor_email: targetEmail,
         firm_name: targetFirm,
         auditor_name: auditorName || targetFirm,
-        status: "Active",
+        status: "Pending Acceptance",
       };
       localStorage.setItem(`taxease_assigned_auditor_${currentCompany}`, JSON.stringify(assignedRecord));
       localStorage.setItem("taxease_last_assigned_auditor", JSON.stringify(assignedRecord));

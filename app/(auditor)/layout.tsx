@@ -16,9 +16,9 @@ const navItems: NavItem[] = [
   { href: "/auditor-dashboard", labelKey: "sidebar.dashboard", icon: <LayoutGrid className="h-4 w-4" /> },
   { href: "/companies", labelKey: "sidebar.companies", icon: <Building2 className="h-4 w-4" /> },
   { href: "/auditor-documents", labelKey: "sidebar.documents", icon: <FileText className="h-4 w-4" /> },
-  { href: "/responses", labelKey: "sidebar.responses", icon: <FolderDown className="h-4 w-4" />, badge: 3 },
-  { href: "/requests", labelKey: "sidebar.requests", icon: <Inbox className="h-4 w-4" />, badge: 3 },
-  { href: "/auditor-discussions", labelKey: "sidebar.discussions", icon: <MessagesSquare className="h-4 w-4" />, badge: 1 },
+  { href: "/responses", labelKey: "sidebar.responses", icon: <FolderDown className="h-4 w-4" /> },
+  { href: "/requests", labelKey: "sidebar.requests", icon: <Inbox className="h-4 w-4" /> },
+  { href: "/auditor-discussions", labelKey: "sidebar.discussions", icon: <MessagesSquare className="h-4 w-4" /> },
   { href: "/auditor-settings", labelKey: "sidebar.settings", icon: <SettingsIcon className="h-4 w-4" /> },
 ];
 
@@ -40,6 +40,7 @@ export default function AuditorLayout({
         userEmail="auditor@example.com"
         userInitials="PA"
         settingsHref="/auditor-settings"
+        badgeHrefs={["/requests", "/responses", "/auditor-discussions"]}
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar

@@ -37,6 +37,7 @@ export default async function BusinessLayout({
         userEmail="admin@abc.lk"
         userInitials="AU"
         settingsHref="/settings"
+        badgeHrefs={["/discussions"]}
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar

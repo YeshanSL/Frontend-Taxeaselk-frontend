@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -68,6 +68,62 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
   const [invitationsModalOpen, setInvitationsModalOpen] = useState(false);
   const [invitationFilter, setInvitationFilter] = useState<"ALL" | "PENDING" | "ACCEPTED">("ALL");
   const [invitationFeedback, setInvitationFeedback] = useState("");
+
+  // Live Invitations Hydration & Deep-link handling
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("openInvitations") === "true") {
+        setInvitationsModalOpen(true);
+      }
+    } catch {}
+
+    async function loadInvitations() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const token = typeof window !== "undefined" ? localStorage.getItem("taxease_token") : null;
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch(`${apiUrl}/api/auditor/invitations`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.invitations)) {
+            const mapped: ClientInvitation[] = data.invitations.map((i: any) => ({
+              id: String(i.id),
+              companyName: i.company_name || "Corporate Client",
+              registrationNumber: i.registration_number || "PV 00294812",
+              tinNumber: i.tin_number || "192847291-0000",
+              financialYear: i.tax_year || "2025/26",
+              senderName: i.auditor_name || "Client Representative",
+              senderEmail: i.email || "finance@client.lk",
+              note: "Statutory Tax Audit appointment request for Corporate Income Tax review.",
+              receivedAt: i.created_at || "Recently",
+              status: (String(i.status).toLowerCase() === "accepted"
+                ? "accepted"
+                : String(i.status).toLowerCase() === "declined"
+                ? "declined"
+                : "pending") as any,
+              estimatedTurnover: "Rs. 25.0M",
+            }));
+            setInvitations(mapped);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load auditor client invitations:", err);
+      }
+    }
+
+    loadInvitations();
+    window.addEventListener("taxease_invitations_updated", loadInvitations);
+    window.addEventListener("taxease_notifications_updated", loadInvitations);
+    window.addEventListener("storage", loadInvitations);
+    return () => {
+      window.removeEventListener("taxease_invitations_updated", loadInvitations);
+      window.removeEventListener("taxease_notifications_updated", loadInvitations);
+      window.removeEventListener("storage", loadInvitations);
+    };
+  }, []);
 
   const [form, setForm] = useState({
     name: "",
@@ -251,6 +307,9 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
         method: "POST",
         headers,
       });
+      window.dispatchEvent(new Event("taxease_auditor_updated"));
+      window.dispatchEvent(new Event("taxease_invitations_updated"));
+      window.dispatchEvent(new Event("taxease_notifications_updated"));
     } catch {
       // Offline fallback
     }
@@ -272,6 +331,9 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
         method: "POST",
         headers,
       });
+      window.dispatchEvent(new Event("taxease_auditor_updated"));
+      window.dispatchEvent(new Event("taxease_invitations_updated"));
+      window.dispatchEvent(new Event("taxease_notifications_updated"));
     } catch {
       // Offline fallback
     }
@@ -565,12 +627,49 @@ export default function CompaniesManager({ initial }: { initial: CompaniesSummar
                           <span className="text-gray-400">({inv.senderEmail})</span>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {/* Quick View Company Profile Button */}
+                          <Button
+                            variant="secondary"
+                            className="text-xs py-1 px-2.5 text-brand-blue hover:bg-blue-50 hover:border-blue-200 border-gray-200 shadow-2xs"
+                            icon={<Eye className="h-3.5 w-3.5 text-brand-blue" />}
+                            onClick={() => {
+                              const match = companies.find(
+                                (c) => c.name.toLowerCase() === inv.companyName.toLowerCase()
+                              );
+                              if (match) {
+                                setViewCompany(match);
+                              } else {
+                                setViewCompany({
+                                  id: inv.id,
+                                  name: inv.companyName,
+                                  financialYear: inv.financialYear,
+                                  citStatus: "Under Review",
+                                  subStatusLabel: "Pending Statutory Appointment",
+                                  criticalCount: 0,
+                                  warningsCount: 0,
+                                  progressPercent: 10,
+                                  dueDate: "15 Nov 2026",
+                                  tin: inv.tinNumber,
+                                  registrationNumber: inv.registrationNumber,
+                                  businessCategory: "General Corporate Client",
+                                  contactEmail: inv.senderEmail,
+                                  contactPhone: "+94 11 234 5678",
+                                  contactPerson: inv.senderName,
+                                  address: "Colombo, Sri Lanka",
+                                  taxOffice: "Corporate Metro Branch, Inland Revenue Department",
+                                });
+                              }
+                            }}
+                          >
+                            Quick View Profile
+                          </Button>
+
                           {isPending && (
                             <>
                               <Button
                                 variant="secondary"
-                                className="text-xs py-1 px-2.5 text-gray-600 hover:text-red-600"
+                                className="text-xs py-1 px-2.5 text-gray-600 hover:text-red-600 hover:bg-red-50 hover:border-red-200"
                                 onClick={() => handleDeclineInvitation(inv)}
                               >
                                 Decline

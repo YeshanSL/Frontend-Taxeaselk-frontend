@@ -11,7 +11,7 @@ import { Field, Input, Select } from "@/components/ui/Input";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { AuditorRequestsSummary, AuditorRequestRow } from "@/lib/types";
 
-export default function RequestsManager({ initial }: { initial: AuditorRequestsSummary }) {
+export default function RequestsManager({ initial, companies = [] }: { initial: AuditorRequestsSummary; companies: { id: string; name: string }[] }) {
   const { t } = useLanguage();
   const [requests, setRequests] = useState<AuditorRequestRow[]>(initial.requests);
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,7 +23,7 @@ export default function RequestsManager({ initial }: { initial: AuditorRequestsS
 
   // Form State
   const [form, setForm] = useState({
-    company_id: "c0000000-0000-0000-0000-000000000001",
+    company_name: companies.length > 0 ? companies[0].name : "",
     title: "",
     description: "",
     category: "General Inquiry",
@@ -100,7 +100,7 @@ export default function RequestsManager({ initial }: { initial: AuditorRequestsS
           setModalOpen(false);
           setSuccessMsg("");
           setForm({
-            company_id: "c0000000-0000-0000-0000-000000000001",
+            company_name: companies.length > 0 ? companies[0].name : "",
             title: "",
             description: "",
             category: "General Inquiry",
@@ -332,6 +332,28 @@ export default function RequestsManager({ initial }: { initial: AuditorRequestsS
               </div>
             ) : (
               <form onSubmit={handleCreateRequest} className="mt-4 flex flex-col gap-4">
+                <Field label="Client Company">
+                  {companies.length > 0 ? (
+                    <Select
+                      required
+                      value={form.company_name}
+                      onChange={(e) => setForm((f) => ({ ...f, company_name: e.target.value }))}
+                    >
+                      <option value="" disabled>Select assigned company</option>
+                      {companies.map((c) => (
+                        <option key={c.id} value={c.name}>{c.name}</option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <Input
+                      required
+                      placeholder="e.g. Mr.Company(PVT)LTD or ABC Holdings"
+                      value={form.company_name}
+                      onChange={(e) => setForm((f) => ({ ...f, company_name: e.target.value }))}
+                    />
+                  )}
+                </Field>
+
                 <Field label={t("auditor.requests.requestTitle")}>
                   <Input
                     required

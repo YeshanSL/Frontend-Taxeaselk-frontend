@@ -1,9 +1,11 @@
 import RequestsManager from "@/components/auditor/RequestsManager";
-import { getAuditorRequestsSummary } from "@/lib/api/auditor";
+import { getAuditorRequestsSummary, getCompaniesSummary } from "@/lib/api/auditor";
 
 export default async function RequestsPage() {
-  const data = await getAuditorRequestsSummary();
+  const [data, companiesData] = await Promise.all([
+    getAuditorRequestsSummary(),
+    getCompaniesSummary(),
+  ]);
 
-  return <RequestsManager initial={data} />;
+  return <RequestsManager initial={data} companies={companiesData.companies} />;
 }
-
